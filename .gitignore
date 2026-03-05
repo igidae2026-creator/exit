@@ -2,3 +2,5 @@ artifact_store/
 metrics.jsonl
 events.jsonl
 __pycache__/
+state/*.json
+logs/
