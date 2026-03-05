@@ -1,0 +1,23 @@
+Implement operations scripts.
+
+Directory:
+ops/
+
+Files:
+Run-METAOS.ps1
+METAOS.env
+replay.ps1
+healthcheck.ps1
+install-runtime.ps1
+start-metaos.ps1
+stop-metaos.ps1
+rotate-instance.ps1
+.gitignore
+README_OPERATIONS.md
+
+Run-METAOS.ps1 commands:
+start
+stop
+health
+replay
+rotate
