@@ -1,8 +1,12 @@
 import multiprocessing as mp
 import random, json, uuid, os, time
+import shutil
 from datetime import datetime, timezone
+from domains import load_domains
 
 ART="artifact_store"
+MAX_WORKERS = mp.cpu_count() * 4
+domains = [d for d in load_domains() if hasattr(d, "generate")]
 
 def now():
     return datetime.now(timezone.utc).isoformat()
@@ -21,7 +25,7 @@ def strat():
 def mutate(s):
     return {k:max(0,min(1,v+random.uniform(-0.2,0.2))) for k,v in s.items()}
 
-def evals(s):
+def evaluate(s):
     score = s["quality"]*0.3+s["novelty"]*0.25+s["diversity"]*0.2+s["efficiency"]*0.15-s["cost"]*0.1
     s["score"]=score
     metric(s)
@@ -34,18 +38,30 @@ def artifact(s):
     json.dump(s,open(f"{p}/artifact.json","w"))
     log("artifact",{"id":aid})
 
+def cleanup():
+    files = os.listdir("artifact_store")
+    if len(files) > 5000:
+        remove = files[:2000]
+        for r in remove:
+            shutil.rmtree(f"artifact_store/{r}", ignore_errors=True)
+
 def worker(_):
-    s=mutate(strat())
-    score=evals(s)
+    d = random.choice(domains)
+    s = d.generate()
+    s = mutate(s)
+    score = evaluate(s)
     artifact(s)
     return score
 
-def run():
-    pool=mp.Pool(mp.cpu_count())
+def engine():
+    workers = min(MAX_WORKERS, mp.cpu_count() * 4)
+    pool = mp.Pool(workers)
     while True:
-        scores=pool.map(worker,range(mp.cpu_count()))
-        print("tick:",sum(scores)/len(scores))
+        scores = pool.map(worker, range(workers))
+        avg = sum(scores) / len(scores)
+        print("tick score:", avg, "workers:", workers)
+        cleanup()
         time.sleep(1)
 
 if __name__=="__main__":
-    run()
+    engine()
