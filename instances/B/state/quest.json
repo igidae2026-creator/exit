@@ -1,0 +1,1 @@
+{"id": "1772758781", "created_at": "2026-03-06T00:59:41.576764+00:00", "domain_hint": null, "target": {"min_score": 0.863, "min_novelty": 0.414, "min_diversity": 0.627}, "ttl_ticks": 759, "tick_start": 4080, "wins": 7, "fails": 0}

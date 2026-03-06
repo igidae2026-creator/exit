@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib
 import json
 import multiprocessing as mp
-import hashlib
-
 import os
 import random
 import shutil
@@ -13,10 +11,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable
-from .quest import ensure_quest, update_quest
-from .replay_engine import replay_sample
-from .shared_replay import sample_shared, publish_to_shared
-from .swarm_policy import should_publish, cleanup_shared
+from core.quest import ensure_quest, update_quest
 
 try:
     import psutil  # type: ignore
@@ -49,7 +44,6 @@ EVENTS_PATH = ROOT / "events.jsonl"
 LOG_ARCHIVE_DIR = ROOT / "logs" / "archive"
 
 _DOMAIN_GENERATE_CACHE: dict[str, Callable[[], Any] | None] = {}
-_CURRENT_QUEST: dict[str, Any] | None = None
 _LLM_GENERATOR: Callable[[str, dict[str, Any]], Any] | None = None
 _LLM_RESOLVED = False
 
@@ -391,7 +385,7 @@ def worker(task: tuple[dict[str, float], list[str], int]) -> dict[str, Any]:
         llm_fn = resolve_llm_generator()
         if llm_fn is not None and domain_name:
             try:
-                context = {"tick": tick, "domain": domain_name, "base_strategy": base_strategy, "quest": _CURRENT_QUEST}
+                context = {"tick": tick, "domain": domain_name, "base_strategy": base_strategy}
                 strategy = normalize_strategy(llm_fn(domain_name, context))
                 if strategy is not None:
                     source = "llm"
@@ -399,13 +393,10 @@ def worker(task: tuple[dict[str, float], list[str], int]) -> dict[str, Any]:
                 strategy = None
 
         if strategy is None and domain_name:
-            domain_generate = resolve_domain_generate(domain_name)
-            if domain_generate is not None:
+            generator = resolve_domain_generate(domain_name)
+            if generator is not None:
                 try:
-                    base_strategy = replay_sample()
-                    if base_strategy is None:
-                        base_strategy = domain_generate()
-                    strategy = normalize_strategy(base_strategy)
+                    strategy = normalize_strategy(generator())
                     if strategy is not None:
                         source = f"domain:{domain_name}"
                 except Exception:
@@ -461,15 +452,6 @@ def run_daemon() -> None:
         while True:
             try:
                 tick += 1
-
-                # QUEST: direction control
-                quest, quest_changed = ensure_quest(tick, domain_hint=None)
-                quest = update_quest(quest, tick, best_score=best_score)
-                global _CURRENT_QUEST
-                _CURRENT_QUEST = quest
-                if quest_changed:
-                    log_event('quest_changed', {'tick': tick, 'quest': quest})
-
 
                 tasks = [
                     (random.choice(population), domains, tick)
