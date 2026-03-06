@@ -969,3 +969,457 @@
 {"timestamp": "2026-03-06T04:32:35.776444+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15727, "error": "[Errno 2] No such file or directory: 'state'"}}
 {"timestamp": "2026-03-06T04:32:35.794313+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16773, "error": "[Errno 2] No such file or directory: 'state'"}}
 {"timestamp": "2026-03-06T04:32:36.164894+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16770, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:36.760640+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15750, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:36.760642+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15744, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:36.779899+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15728, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:36.794694+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16774, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:37.165384+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16771, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:37.216989+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c8cca9c5-6376-4cf4-9d85-5b4d63e1ab17"}}
+{"timestamp": "2026-03-06T04:32:37.217200+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7ab3f2f9-bf04-4e7c-b322-ca5785974c30"}}
+{"timestamp": "2026-03-06T04:32:37.217362+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "da276f43-d62d-4e53-8cff-0102aeb42a52"}}
+{"timestamp": "2026-03-06T04:32:37.761074+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15751, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:37.761114+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15745, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:37.780311+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15729, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:37.795077+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16775, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:38.165816+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16772, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:38.761447+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15746, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:38.761448+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15752, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:38.780610+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15730, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:38.795505+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16776, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:39.166165+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16773, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:39.217926+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "48064f88-2630-43fe-8c41-45aabaf6ceae"}}
+{"timestamp": "2026-03-06T04:32:39.218133+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "9c98e31c-4fe2-40ba-9efa-c39dafedbe37"}}
+{"timestamp": "2026-03-06T04:32:39.218337+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "cfdc345a-b73f-499d-829d-9434cdb139b3"}}
+{"timestamp": "2026-03-06T04:32:39.761857+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15753, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:39.761874+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15747, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:39.780908+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15731, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:39.795952+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16777, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:40.166579+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16774, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:40.762225+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15754, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:40.762380+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15748, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:40.781224+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15732, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:40.796300+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16778, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:41.166970+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16775, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:41.219335+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "86cc521f-e391-479e-bcb2-1139d7e87c63"}}
+{"timestamp": "2026-03-06T04:32:41.220182+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "5887563f-de0c-48fc-b8c3-9f3f26fa3458"}}
+{"timestamp": "2026-03-06T04:32:41.220815+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "d2989ede-d70f-4ed1-a35f-c71ab7eaebcf"}}
+{"timestamp": "2026-03-06T04:32:41.762753+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15749, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:41.762692+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15755, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:41.781575+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15733, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:41.803484+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16779, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:42.167381+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16776, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:42.763131+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15756, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:42.763151+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15750, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:42.781933+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15734, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:42.803785+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16780, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:43.167811+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16777, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:43.221537+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "9139e532-0067-4539-96a9-a7164d071937"}}
+{"timestamp": "2026-03-06T04:32:43.221935+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "a86e8031-2f41-418e-8174-487a50e218de"}}
+{"timestamp": "2026-03-06T04:32:43.222228+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "4bdab787-2c73-46cf-9a51-1239feb467f5"}}
+{"timestamp": "2026-03-06T04:32:43.763518+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15751, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:43.763506+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15757, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:43.782305+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15735, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:43.804330+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16781, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:44.168209+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16778, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:44.763894+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15752, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:44.763895+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15758, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:44.782679+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15736, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:44.804980+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16782, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:45.168695+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16779, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:45.223082+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "6584c4c4-1f57-4b95-bd3f-4ea8653b3c8a"}}
+{"timestamp": "2026-03-06T04:32:45.223627+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "399f7ed2-3ed5-46f0-8dd8-d24b6224170f"}}
+{"timestamp": "2026-03-06T04:32:45.223990+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "4fed3aab-be16-4494-b549-4c009162465a"}}
+{"timestamp": "2026-03-06T04:32:45.764369+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15753, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:45.764347+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15759, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:45.783101+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15737, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:45.805484+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16783, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:46.169206+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16780, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:46.764790+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15760, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:46.764800+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15754, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:46.783507+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15738, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:46.805910+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16784, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:47.169645+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16781, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:47.224893+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7d2819d6-b56e-45d1-ae19-97b115013672"}}
+{"timestamp": "2026-03-06T04:32:47.225474+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "1e3bbd68-13d7-47d7-99e6-cfa66ffed704"}}
+{"timestamp": "2026-03-06T04:32:47.226109+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "62c16b54-9084-4e6a-a862-5406824c0fca"}}
+{"timestamp": "2026-03-06T04:32:47.765257+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15761, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:47.765261+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15755, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:47.783855+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15739, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:47.806338+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16785, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:48.170125+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16782, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:48.765786+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15762, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:48.765783+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15756, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:48.784266+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15740, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:48.806743+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16786, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:49.170614+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16783, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:49.227006+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "2bf15471-8e3a-4914-87be-fb524d140074"}}
+{"timestamp": "2026-03-06T04:32:49.227504+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "72e2314b-74cf-48a5-8823-2f28cb3f47a1"}}
+{"timestamp": "2026-03-06T04:32:49.227853+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "eb18eea0-7ba6-41a5-b2e7-962c987ad020"}}
+{"timestamp": "2026-03-06T04:32:49.766216+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15763, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:49.766220+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15757, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:49.784682+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15741, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:49.807123+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16787, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:50.171045+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16784, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:50.766666+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15764, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:50.766666+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15758, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:50.785027+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15742, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:50.807469+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16788, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:51.171452+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16785, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:51.228775+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "2e45ab98-be4f-4882-8e98-7d7ac17f55a0"}}
+{"timestamp": "2026-03-06T04:32:51.229264+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "631b2744-d17b-40b4-a2f8-69fb45c33131"}}
+{"timestamp": "2026-03-06T04:32:51.229853+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "8df10ee3-42ce-48ca-93c1-6ede7131daaf"}}
+{"timestamp": "2026-03-06T04:32:51.767112+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15759, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:51.767112+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15765, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:51.785413+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15743, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:51.807992+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16789, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:52.171863+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16786, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:52.767601+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15766, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:52.767697+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15760, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:52.785804+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15744, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:52.808380+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16790, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:53.172289+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16787, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:53.230739+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "eff824c5-fbef-4114-8e6a-419820b1c591"}}
+{"timestamp": "2026-03-06T04:32:53.231247+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "d4490780-1985-4d63-a8c2-f5bfaceaaecc"}}
+{"timestamp": "2026-03-06T04:32:53.231854+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "3aa99bc0-1878-4985-8afc-01cfeb12ff53"}}
+{"timestamp": "2026-03-06T04:32:53.768095+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15767, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:53.768109+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15761, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:53.786160+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15745, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:53.808761+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16791, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:54.172820+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16788, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:54.768540+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15762, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:54.768583+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15768, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:54.786506+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15746, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:54.809175+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16792, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:55.173401+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16789, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:55.232907+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "0ed4cb46-e328-4c66-bd75-00b93c8ce3c7"}}
+{"timestamp": "2026-03-06T04:32:55.233515+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "ea19c053-ac03-4316-b50d-ff6342cf4bb5"}}
+{"timestamp": "2026-03-06T04:32:55.234005+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "98592cf1-5ef4-4b14-ad5c-852360fb5bc9"}}
+{"timestamp": "2026-03-06T04:32:55.769037+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15763, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:55.769048+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15769, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:55.788082+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15747, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:55.809514+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16793, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:56.173945+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16790, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:56.769623+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15764, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:56.769619+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15770, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:56.788542+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15748, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:56.810017+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16794, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:57.174399+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16791, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:57.234889+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "192d9425-0da0-49cd-8d6e-11e51217cf63"}}
+{"timestamp": "2026-03-06T04:32:57.235247+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "36264828-cd3e-4d8d-bd02-8c7b225d08d9"}}
+{"timestamp": "2026-03-06T04:32:57.235517+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "a878f35e-46cf-4640-bf88-53b3b4061e4f"}}
+{"timestamp": "2026-03-06T04:32:57.770225+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15765, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:57.770225+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15771, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:57.789029+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15749, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:57.810564+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16795, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:58.174878+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16792, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:58.770672+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15772, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:58.770677+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15766, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:58.789428+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15750, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:58.810996+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16796, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:59.175357+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16793, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:59.236241+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "d1aab343-febc-4687-a882-4b477aff09e9"}}
+{"timestamp": "2026-03-06T04:32:59.236464+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c584c066-8b75-4a80-8031-4ea626a6d151"}}
+{"timestamp": "2026-03-06T04:32:59.236652+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "97bb657e-1625-4946-8622-987fa0e37dbf"}}
+{"timestamp": "2026-03-06T04:32:59.771119+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15767, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:59.771130+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15773, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:59.789841+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15751, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:32:59.811839+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16797, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:00.175853+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16794, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:00.771569+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15774, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:00.771569+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15768, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:00.790175+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15752, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:00.812274+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16798, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:01.176318+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16795, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:01.237367+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "04c2722c-06a6-47d8-9752-cd0b31011f2e"}}
+{"timestamp": "2026-03-06T04:33:01.237602+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7de2d100-626d-493a-86eb-6a7cd2c444b6"}}
+{"timestamp": "2026-03-06T04:33:01.237888+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "ccf1f326-e633-426e-a46d-531fec4a8863"}}
+{"timestamp": "2026-03-06T04:33:01.772032+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15775, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:01.772033+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15769, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:01.790530+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15753, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:01.812680+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16799, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:02.177013+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16796, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:02.772588+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15776, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:02.772694+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15770, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:02.791230+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15754, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:02.813148+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16800, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:03.177899+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16797, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:03.239135+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "ea3a5c22-8594-410b-b91c-ec1e4f9fc818"}}
+{"timestamp": "2026-03-06T04:33:03.239589+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c9b9ad09-2409-4587-85d4-197d33427372"}}
+{"timestamp": "2026-03-06T04:33:03.239969+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7be8f5ad-f6f3-4707-857e-ebb99edbe2d2"}}
+{"timestamp": "2026-03-06T04:33:03.773245+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15777, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:03.773451+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15771, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:03.791834+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15755, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:03.813560+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16801, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:04.178427+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16798, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:04.774006+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15778, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:04.774164+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15772, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:04.792230+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15756, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:04.814074+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16802, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:05.178931+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16799, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:05.240816+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "8f4efe09-955c-4f35-a43c-e6a9f39c0f47"}}
+{"timestamp": "2026-03-06T04:33:05.241138+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "056739a7-d376-4dcf-a83a-05dd0f771658"}}
+{"timestamp": "2026-03-06T04:33:05.241399+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "175f6338-5757-4697-b9db-8f10a772a346"}}
+{"timestamp": "2026-03-06T04:33:05.774546+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15779, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:05.774578+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15773, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:05.792659+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15757, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:05.814613+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16803, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:06.179467+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16800, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:06.775107+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15774, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:06.775104+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15780, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:06.793216+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15758, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:06.815035+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16804, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:07.179957+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16801, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:07.242341+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "0c81de5f-60f8-48d4-9709-868dd8a92941"}}
+{"timestamp": "2026-03-06T04:33:07.242572+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "5e032df7-15b9-4ce5-96ed-0ef7438c75fd"}}
+{"timestamp": "2026-03-06T04:33:07.242736+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "318e1e82-d8e2-4374-81e2-ab162f3ab2c0"}}
+{"timestamp": "2026-03-06T04:33:07.775731+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15775, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:07.775867+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15781, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:07.793716+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15759, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:07.815477+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16805, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:08.180511+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16802, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:08.776381+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15776, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:08.776680+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15782, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:08.794170+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15760, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:08.816010+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16806, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:09.181172+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16803, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:09.243470+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "b5491485-5ea6-4aa8-ba66-54c534cc0270"}}
+{"timestamp": "2026-03-06T04:33:09.243684+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "4ebdd8ee-61cf-4e59-b747-5b65b441d463"}}
+{"timestamp": "2026-03-06T04:33:09.243853+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "bada5a2c-5e37-4f2d-bf8f-3c7b7075cc68"}}
+{"timestamp": "2026-03-06T04:33:09.777029+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15777, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:09.777123+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15783, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:09.794644+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15761, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:09.816513+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16807, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:10.181732+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16804, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:10.777648+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15778, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:10.777895+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15784, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:10.795053+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15762, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:10.816916+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16808, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:11.182252+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16805, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:11.244832+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "8c4b0adc-751f-4123-b742-57e284662e2c"}}
+{"timestamp": "2026-03-06T04:33:11.245184+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c6f2a17d-e47a-4228-b20c-f1458a3c1019"}}
+{"timestamp": "2026-03-06T04:33:11.245493+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "ce2f26ab-987a-4c20-806d-12e2908e5805"}}
+{"timestamp": "2026-03-06T04:33:11.778455+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15779, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:11.778521+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15785, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:11.795467+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15763, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:11.817363+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16809, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:12.182772+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16806, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:12.778933+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15780, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:12.778939+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15786, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:12.795862+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15764, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:12.817784+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16810, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:13.183243+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16807, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:13.246403+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "6de468bf-ad6a-4aad-91de-b746f8f41720"}}
+{"timestamp": "2026-03-06T04:33:13.247038+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "3edc6bbf-0ad7-4818-84ce-a860bfdbd60a"}}
+{"timestamp": "2026-03-06T04:33:13.247614+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c6a96c6e-7e16-41b5-9b50-c61ec8679cf8"}}
+{"timestamp": "2026-03-06T04:33:13.779399+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15781, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:13.779402+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15787, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:13.796391+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15765, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:13.818172+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16811, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:14.183687+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16808, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:14.779869+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15788, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:14.779902+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15782, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:14.796818+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15766, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:14.818579+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16812, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:15.184133+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16809, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:15.248385+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "1ed0c9fc-efcd-436c-b4f7-87c6de62abde"}}
+{"timestamp": "2026-03-06T04:33:15.248617+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "a8136c82-3ece-4306-b06f-d59b4ba44b53"}}
+{"timestamp": "2026-03-06T04:33:15.248793+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "cbdeace3-dbab-480e-a10e-2161bbabf635"}}
+{"timestamp": "2026-03-06T04:33:15.780364+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15783, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:15.780381+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15789, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:15.797423+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15767, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:15.819019+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16813, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:16.184647+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16810, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:16.780857+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15784, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:16.780859+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15790, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:16.797941+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15768, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:16.819677+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16814, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:17.185207+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16811, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:17.249568+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "a1ca8558-e68d-4731-b809-3f9b5fd4f5dc"}}
+{"timestamp": "2026-03-06T04:33:17.249937+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "dabe0de8-7ed6-46d4-af1a-2447253a8d58"}}
+{"timestamp": "2026-03-06T04:33:17.250192+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "be983f3f-3d3e-4c9e-8d1e-fe44fe1dd69a"}}
+{"timestamp": "2026-03-06T04:33:17.781310+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15791, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:17.781314+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15785, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:17.798358+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15769, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:17.820145+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16815, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:18.186025+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16812, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:18.781817+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15792, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:18.781821+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15786, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:18.798792+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15770, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:18.820513+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16816, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:19.186632+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16813, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:19.251869+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "1467ae12-910f-42fd-8f00-c512cb2cd6cd"}}
+{"timestamp": "2026-03-06T04:33:19.252298+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "73bbcabc-017b-4741-ae20-c097e97a1c00"}}
+{"timestamp": "2026-03-06T04:33:19.252501+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "9e37db9b-b497-4ae5-ba5b-be62eb3be7b0"}}
+{"timestamp": "2026-03-06T04:33:19.782278+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15793, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:19.782364+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15787, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:19.799177+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15771, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:19.820920+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16817, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:20.187410+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16814, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:20.782777+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15788, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:20.782781+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15794, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:20.799567+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15772, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:20.821361+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16818, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:21.187867+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16815, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:21.253269+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "9a92daf7-9b64-4434-a22b-055ca5d3d764"}}
+{"timestamp": "2026-03-06T04:33:21.253638+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "079ddb30-7882-4075-bb9f-de8e02198999"}}
+{"timestamp": "2026-03-06T04:33:21.254026+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "5e3d0969-9277-4866-8f4d-fac3b46877bc"}}
+{"timestamp": "2026-03-06T04:33:21.783329+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15789, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:21.783328+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15795, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:21.800053+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15773, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:21.821845+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16819, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:22.188375+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16816, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:22.783870+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15790, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:22.783854+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15796, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:22.800518+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15774, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:22.822252+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16820, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:23.188912+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16817, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:23.254941+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "87972690-a7f6-4a23-ae6e-9db4b567149c"}}
+{"timestamp": "2026-03-06T04:33:23.255315+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "adae70fb-43a0-4453-985c-3caa98c19472"}}
+{"timestamp": "2026-03-06T04:33:23.255625+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "86b70bd0-cb78-47bd-b619-ee35bc5f7a71"}}
+{"timestamp": "2026-03-06T04:33:23.784333+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15797, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:23.784338+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15791, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:23.801014+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15775, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:23.822699+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16821, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:24.189392+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16818, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:24.784787+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15798, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:24.784788+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15792, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:24.801394+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15776, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:24.823221+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16822, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:25.189922+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16819, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:25.256343+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "8142ef81-defe-485a-9c9f-000662de1ebe"}}
+{"timestamp": "2026-03-06T04:33:25.256565+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "2b30bf58-03ff-48ae-9021-5e277536d9b5"}}
+{"timestamp": "2026-03-06T04:33:25.256816+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "10ba0017-dc69-4b2e-9f60-dc636d0c3851"}}
+{"timestamp": "2026-03-06T04:33:25.785251+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15793, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:25.785251+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15799, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:25.801799+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15777, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:25.823837+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16823, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:26.190499+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16820, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:26.785739+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15800, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:26.785739+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15794, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:26.802205+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15778, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:26.824342+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16824, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:27.191169+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16821, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:27.258040+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "626c27d2-5607-4596-a2b3-3ec85f7d71d0"}}
+{"timestamp": "2026-03-06T04:33:27.258704+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "52531e21-e373-4e1f-818f-69c1ec88e579"}}
+{"timestamp": "2026-03-06T04:33:27.259242+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "dfe42e0b-0b27-4a6a-a887-8806953ad555"}}
+{"timestamp": "2026-03-06T04:33:27.786212+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15801, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:27.786229+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15795, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:27.802675+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15779, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:27.825155+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16825, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:28.191793+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16822, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:28.786706+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15802, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:28.786824+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15796, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:28.803024+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15780, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:28.825786+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16826, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:29.192293+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16823, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:29.259969+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "ee0e9a35-b425-45ac-b467-fe5e04ecd543"}}
+{"timestamp": "2026-03-06T04:33:29.260263+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c453b638-b21a-4dc4-8169-6638147fe5b4"}}
+{"timestamp": "2026-03-06T04:33:29.260465+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "c61c5387-47a1-488e-9a97-a472e57efba6"}}
+{"timestamp": "2026-03-06T04:33:29.787557+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15797, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:29.787581+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15803, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:29.803403+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15781, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:29.826154+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16827, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:30.192917+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16824, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:30.788376+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15804, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:30.788375+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15798, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:30.803779+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15782, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:30.826510+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16828, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:31.193657+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16825, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:31.261119+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "5de1d05f-0a6c-4041-ba16-63494cbc7b08"}}
+{"timestamp": "2026-03-06T04:33:31.261348+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "f0ef6ce7-6e05-4cf0-91d3-608c1c1cb2e9"}}
+{"timestamp": "2026-03-06T04:33:31.261527+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "16954bcc-1f8c-4512-bc4c-d18dccb7b5be"}}
+{"timestamp": "2026-03-06T04:33:31.788939+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15805, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:31.788939+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15799, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:31.804099+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15783, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:31.826839+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16829, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:32.194518+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16826, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:32.789465+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15800, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:32.789451+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15806, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:32.804470+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15784, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:32.827190+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16830, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:33.195112+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16827, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:33.262298+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "0fa133d1-0efa-48d3-8e0c-03c24ff68e35"}}
+{"timestamp": "2026-03-06T04:33:33.262614+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "6e54359c-333b-43c6-ae39-1facbfea9724"}}
+{"timestamp": "2026-03-06T04:33:33.262839+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "13c0562a-58c7-4657-abe9-cbfc80ea2de2"}}
+{"timestamp": "2026-03-06T04:33:33.789940+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15807, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:33.789941+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15801, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:33.804898+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15785, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:33.827546+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16831, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:34.195610+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16828, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:34.790398+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15802, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:34.790665+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15808, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:34.805234+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15786, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:34.827961+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16832, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:35.196122+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16829, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:35.263768+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "1af76719-d3fc-46af-84d4-4f285386d778"}}
+{"timestamp": "2026-03-06T04:33:35.264263+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "522aed5b-445a-42b2-8cbc-4e9287dbbbc9"}}
+{"timestamp": "2026-03-06T04:33:35.264893+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7cf6f6f2-0a0c-4aed-8cba-6205915ed605"}}
+{"timestamp": "2026-03-06T04:33:35.791124+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15803, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:35.791237+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15809, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:35.805582+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15787, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:35.828372+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16833, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:36.196655+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16830, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:36.791730+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15804, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:36.791750+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15810, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:36.806306+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15788, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:36.828857+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16834, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:37.197192+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16831, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:37.265816+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "de4d21dd-3cd8-47bc-9d52-7e9303f3ff57"}}
+{"timestamp": "2026-03-06T04:33:37.266445+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "bbc7ce4b-ad76-421c-bd58-039d182b0561"}}
+{"timestamp": "2026-03-06T04:33:37.267102+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "95d22c7f-b412-4479-9fbd-8e6335078ad4"}}
+{"timestamp": "2026-03-06T04:33:37.792172+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15811, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:37.792172+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15805, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:37.806694+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15789, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:37.829287+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16835, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:38.197589+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16832, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:38.792607+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15806, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:38.792606+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15812, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:38.807036+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15790, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:38.829982+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16836, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:39.198025+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16833, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:39.267917+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "aaa1dfcc-a5b1-460f-ab89-46284b4d6df3"}}
+{"timestamp": "2026-03-06T04:33:39.268351+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "9356e7a8-6f52-47f1-9782-e0395ea413ac"}}
+{"timestamp": "2026-03-06T04:33:39.268715+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "3c4404cc-29ac-45c8-95c8-7c2976acbf87"}}
+{"timestamp": "2026-03-06T04:33:39.793038+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15807, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:39.793038+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15813, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:39.807402+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15791, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:39.830572+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16837, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:40.198483+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16834, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:40.793490+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15814, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:40.793493+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15808, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:40.807758+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15792, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:40.831008+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16838, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:41.198964+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16835, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:41.269506+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "1248c661-d27a-4dc1-b024-e64f6118aa1b"}}
+{"timestamp": "2026-03-06T04:33:41.269841+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "97b9d018-64bd-480f-a217-1977012be58e"}}
+{"timestamp": "2026-03-06T04:33:41.270070+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "5fe4bbc6-7562-43d8-ae97-3b71e7eb4907"}}
+{"timestamp": "2026-03-06T04:33:41.793917+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15815, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:41.793918+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15809, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:41.808108+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15793, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:41.831369+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16839, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:42.199445+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16836, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:42.794466+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15816, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:42.794468+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15810, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:42.808481+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15794, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:42.831799+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16840, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:43.199928+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16837, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:43.270937+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "05ce007f-975b-4c57-ad8b-9761c6b4f034"}}
+{"timestamp": "2026-03-06T04:33:43.271171+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "132cfd42-421a-4a66-9410-44b88f64fc7b"}}
+{"timestamp": "2026-03-06T04:33:43.271333+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7c4c23ee-ab97-4376-baba-b088739dad4c"}}
+{"timestamp": "2026-03-06T04:33:43.795009+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15817, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:43.795010+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15811, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:43.808846+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15795, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:43.832236+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16841, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:44.200650+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16838, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:44.795694+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15812, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:44.795698+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15818, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:44.809248+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15796, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:44.832801+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16842, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:45.201265+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16839, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:45.272302+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "f1d75e2c-e9b3-44f3-9c15-03d915006f3c"}}
+{"timestamp": "2026-03-06T04:33:45.272875+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "7bb6a36f-bcee-4b7b-bbb4-24d49dcc0c6d"}}
+{"timestamp": "2026-03-06T04:33:45.273394+00:00", "event_type": "artifact_created", "payload": {"artifact_id": "0faded00-779c-492c-8a29-c55f8b83c606"}}
+{"timestamp": "2026-03-06T04:33:45.796748+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15813, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:45.796783+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15819, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:45.809902+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 15797, "error": "[Errno 2] No such file or directory: 'state'"}}
+{"timestamp": "2026-03-06T04:33:45.833314+00:00", "event_type": "daemon_tick_error", "payload": {"tick": 16843, "error": "[Errno 2] No such file or directory: 'state'"}}
