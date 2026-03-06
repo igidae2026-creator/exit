@@ -11,6 +11,13 @@ import traceback
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping
 
+from metaos.observer.pressure_engine import pressure
+from metaos.policy.evolve_policy import evolve
+from metaos.registry.artifact_registry import register
+from metaos.runtime.oed_orchestrator import step as oed_step
+from metaos.runtime.quota_allocator import allocate
+from metaos.runtime.quest_system import spawn_quest
+
 
 StageHandler = Callable[[MutableMapping[str, Any]], Any]
 
@@ -82,3 +89,32 @@ class RuntimeLoop:
 
 def _noop_handler(_: MutableMapping[str, Any]) -> None:
     return None
+
+
+def oed_extension(metrics: Mapping[str, float], policy: MutableMapping[str, float], workers: int) -> tuple[dict[str, Any], dict[str, float], int]:
+    p = pressure(metrics)
+    q = spawn_quest(p)
+    workers = allocate(p, workers)
+    policy = evolve(policy, p)
+    register(
+        {"quest": q, "policy": dict(policy), "pressure": p, "workers": workers},
+        "root",
+        "quest",
+        score=float(metrics.get("score", 0.0)),
+        novelty=float(metrics.get("novelty", 0.0)),
+        diversity=float(metrics.get("diversity", 0.0)),
+        cost=float(metrics.get("cost", 0.0)),
+        quest=q,
+        policy=policy,
+    )
+    return q, policy, workers
+
+
+def oed_phase2(
+    metrics: Mapping[str, float],
+    policy: Mapping[str, float] | None,
+    workers: int,
+    domain: str = "default",
+    parent: str | None = None,
+) -> dict[str, Any]:
+    return oed_step(metrics=metrics, policy=policy, workers=workers, domain=domain, parent=parent)

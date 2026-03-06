@@ -1,0 +1,18 @@
+{"t": 1772781819.7388294, "kind": "pressure", "payload": {"novelty_pressure": 0.69, "diversity_pressure": 0.5800000000000001, "efficiency_pressure": 0.18, "repair_pressure": 0.03, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781819.7388575, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781819.738873, "kind": "policy", "payload": {"selection_weight_score": 0.4707, "selection_weight_novelty": 0.2398, "selection_weight_diversity": 0.2129, "selection_weight_efficiency": 0.0802, "mutation_rate": 0.2402, "share_threshold": 0.734}}
+{"t": 1772781819.8753378, "kind": "pressure", "payload": {"novelty_pressure": 0.72, "diversity_pressure": 0.61, "efficiency_pressure": 0.11, "repair_pressure": 0.02, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781819.8754046, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781819.8754463, "kind": "policy", "payload": {"selection_weight_score": 0.4377, "selection_weight_novelty": 0.2281, "selection_weight_diversity": 0.2277, "selection_weight_efficiency": 0.1147, "mutation_rate": 0.2713, "share_threshold": 0.7397}}
+{"t": 1772781960.007894, "kind": "pressure", "payload": {"novelty_pressure": 0.69, "diversity_pressure": 0.5800000000000001, "efficiency_pressure": 0.18, "repair_pressure": 0.03, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781960.0079217, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781960.0079396, "kind": "policy", "payload": {"selection_weight_score": 0.4254, "selection_weight_novelty": 0.2484, "selection_weight_diversity": 0.1924, "selection_weight_efficiency": 0.1205, "mutation_rate": 0.2538, "share_threshold": 0.7381}}
+{"t": 1772781960.0858593, "kind": "pressure", "payload": {"novelty_pressure": 0.72, "diversity_pressure": 0.61, "efficiency_pressure": 0.11, "repair_pressure": 0.02, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781960.0858886, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781960.0859077, "kind": "policy", "payload": {"selection_weight_score": 0.4797, "selection_weight_novelty": 0.2436, "selection_weight_diversity": 0.1712, "selection_weight_efficiency": 0.0724, "mutation_rate": 0.2597, "share_threshold": 0.7531}}
+{"t": 1772781966.3402703, "kind": "pressure", "payload": {"novelty_pressure": 0.69, "diversity_pressure": 0.5800000000000001, "efficiency_pressure": 0.18, "repair_pressure": 0.03, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781966.3402958, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781966.3403115, "kind": "policy", "payload": {"selection_weight_score": 0.465, "selection_weight_novelty": 0.2693, "selection_weight_diversity": 0.1959, "selection_weight_efficiency": 0.1205, "mutation_rate": 0.2567, "share_threshold": 0.745}}
+{"t": 1772781966.4017093, "kind": "pressure", "payload": {"novelty_pressure": 0.72, "diversity_pressure": 0.61, "efficiency_pressure": 0.11, "repair_pressure": 0.02, "domain_shift_pressure": 0.0, "reframing_pressure": 0.0, "lineage_pressure": 0.0}}
+{"t": 1772781966.4017315, "kind": "quest", "payload": {"type": "exploration", "mode": "novelty"}}
+{"t": 1772781966.4017465, "kind": "policy", "payload": {"selection_weight_score": 0.4452, "selection_weight_novelty": 0.2221, "selection_weight_diversity": 0.2082, "selection_weight_efficiency": 0.1233, "mutation_rate": 0.2588, "share_threshold": 0.7426}}
