@@ -1,43 +1,54 @@
-# METAOS Constitution
+# METAOS CONSTITUTION
 
-METAOS is a Personal Autonomous Exploration Operating System.
+METAOS는 개인 자율 운영체계(Personal Autonomous Operating System)이다.
 
-METAOS exists to explore possibility space.
+## Core Principle
 
 Ceilings are not set.
-They are discovered through exploration.
+They are reached.
 
-METAOS is exploration-driven, not goal-driven.
+METAOS는 목표 기반 시스템이 아니라 탐색 기반 시스템이다.
 
-Human role:
+explore → detect ceiling → stabilize → monitor → explore again
 
-Architect  
-Observer  
-Signal Source  
+## Human Role
 
-Human control is optional.
+Human은 운영자가 아니다.
 
-Core loop:
+허용된 역할:
+- Architect
+- Observer
+- Signal source
 
-signal → strategy → artifact → metrics → mutation → next strategy
+Human intervention은 선택 사항이다.
 
-Artifacts are immutable.
+## System Nature
 
-Logs are append-only.
+METAOS는 다음 특성을 가진다.
 
-Primary logs:
+- Autonomous
+- Self-running
+- Domain independent
+- Constraint aware
+- Exploration driven
 
-events.jsonl  
-signals.jsonl  
-strategies.jsonl  
-artifact_registry.jsonl  
-metrics.jsonl  
-decisions.jsonl  
+## Artifact Principle
 
-State is derived through event replay.
+Artifact는 시스템이 생성한 결과물이다.
+Artifact는 immutable이다.
+수정은 새로운 artifact 생성으로 처리한다.
 
-Instances never share state or strategy.
+## Evolution Principle
 
-Only insights may be exchanged between instances.
+Strategy mutation은 시스템이 수행한다.
+Human은 mutation source가 아니라 perturbation source이다.
 
-Supervisor coordinates instances without modifying artifacts or logs.
+## Domain Principle
+
+도메인은 독립적으로 진화한다.
+
+Domain autonomy + Shared intelligence
+
+## Final Definition
+
+METAOS는 Personal Autonomous Exploration OS이다.

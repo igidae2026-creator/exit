@@ -1,0 +1,9 @@
+# METAOS ACCESS CONTROL
+
+Roles
+
+L0_ROOT
+L1_DELEGATED_MANAGER
+L2_TASK_EXECUTOR
+
+Sole sovereign system.

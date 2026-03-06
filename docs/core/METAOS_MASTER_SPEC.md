@@ -1,26 +1,54 @@
-# METAOS Master Specification
+# METAOS MASTER SPEC
 
-METAOS operates through an exploration loop.
+METAOS는 개인용 자율 탐색 운영체계다.
 
-signal → strategy → artifact → metrics → mutation → next strategy
+Loop:
 
-Signals introduce exploration opportunities.
+signal → strategy → artifact → metrics → strategy
 
-Sources include:
+## Architecture
 
-external environment  
-human input  
-system feedback  
-random exploration  
+METAOS
+├ kernel
+├ loop
+├ signal
+├ domains
+├ strategy
+├ artifact
+├ data
+├ observer
+└ validation
 
-Strategies transform signals into exploration programs.
+## Kernel
 
-Artifacts are immutable outputs of exploration.
+Kernel은 중앙 제어 시스템이다.
 
-Metrics evaluate artifact outcomes.
+구성:
 
-Mutation generates new strategies.
+- State Machine
+- Policy Engine
+- Loop Controller
+- Validation Manager
+- Runtime Dispatcher
 
-All actions generate events stored in events.jsonl.
+Kernel은 domain logic을 실행하지 않는다.
 
-State is derived by replaying events.
+## Loop Model
+
+Exploration
+Ceiling Detection
+Stabilization
+Monitoring
+Re-Exploration
+
+## Data Model
+
+Source of Truth
+
+events.jsonl
+metrics.jsonl
+artifact_registry.jsonl
+
+Derived
+
+state.json
