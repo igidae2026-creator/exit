@@ -1,0 +1,14 @@
+[Unit]
+Description=METAOS instance %i
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/metaos/app
+ExecStart=/opt/metaos/app/ops/run-instance.sh %i
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

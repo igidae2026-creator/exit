@@ -39,19 +39,32 @@ MUTATION_NOISE = 0.08
 TICK_SLEEP_SECONDS = 1.0
 LOG_ROTATE_BYTES = 50 * 1024 * 1024
 
-ROOT = Path(__file__).resolve().parents[1]
-DOMAINS_DIR = ROOT / "domains"
-ARTIFACT_DIR = ROOT / "artifact_store"
-STATE_DIR = ROOT / "state"
+APP_ROOT = Path(os.getenv("METAOS_APP_DIR", Path(__file__).resolve().parents[1]))
+INSTANCE_DIR = Path(os.getenv("METAOS_INSTANCE_DIR", APP_ROOT / "state"))
+SHARED_ARTIFACTS_DIR = Path(os.getenv("METAOS_SHARED_ARTIFACTS_DIR", APP_ROOT / "shared_artifacts"))
+LOG_DIR = Path(os.getenv("METAOS_LOG_DIR", APP_ROOT / "logs"))
+
+DOMAINS_DIR = APP_ROOT / "domains"
+ARTIFACT_DIR = SHARED_ARTIFACTS_DIR
+STATE_DIR = INSTANCE_DIR
 CHECKPOINT_PATH = STATE_DIR / "checkpoint.json"
-METRICS_PATH = ROOT / "metrics.jsonl"
-EVENTS_PATH = ROOT / "events.jsonl"
-LOG_ARCHIVE_DIR = ROOT / "logs" / "archive"
+METRICS_PATH = LOG_DIR / "metrics.jsonl"
+EVENTS_PATH = LOG_DIR / "events.jsonl"
+LOG_ARCHIVE_DIR = LOG_DIR / "archive"
+HEARTBEAT_PATH = STATE_DIR / "heartbeat"
 
 _DOMAIN_GENERATE_CACHE: dict[str, Callable[[], Any] | None] = {}
 _CURRENT_QUEST: dict[str, Any] | None = None
 _LLM_GENERATOR: Callable[[str, dict[str, Any]], Any] | None = None
 _LLM_RESOLVED = False
+
+
+def touch_heartbeat() -> None:
+    try:
+        HEARTBEAT_PATH.parent.mkdir(parents=True, exist_ok=True)
+        HEARTBEAT_PATH.touch()
+    except Exception:
+        pass
 
 
 def now_iso() -> str:
@@ -440,6 +453,8 @@ def create_pool(worker_count: int) -> mp.pool.Pool:
 def run_daemon() -> None:
     ARTIFACT_DIR.mkdir(parents=True, exist_ok=True)
     STATE_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    LOG_ARCHIVE_DIR.mkdir(parents=True, exist_ok=True)
 
     domains = load_domains()
     population, best_score, tick = load_checkpoint()

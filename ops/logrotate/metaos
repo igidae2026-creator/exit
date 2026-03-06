@@ -1,0 +1,7 @@
+/var/log/metaos/*/*.jsonl {
+  daily
+  rotate 14
+  compress
+  missingok
+  copytruncate
+}

@@ -1,0 +1,6 @@
+[Unit]
+Description=METAOS cleanup
+
+[Service]
+Type=oneshot
+ExecStart=/opt/metaos/app/ops/cleanup-artifacts.sh
