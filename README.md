@@ -11,6 +11,30 @@ GENESIS is the top-level system law:
 - [Architecture Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
 - [Why METAOS](/home/meta_os/metaos/docs/architecture/WHY_METAOS.md)
 
+Hierarchy:
+- `GENESIS`: canonical execution kernel
+- `METAOS-A`: domain exploration unit
+- `METAOS-B`: exploration manager
+- `METAOS-C`: civilization engine
+
+Canonical package owners:
+- `genesis/`
+- `metaos_a/`
+- `metaos_b/`
+- `metaos_c/`
+- `artifact/`
+- `domains/`
+- `validation/`
+- `runtime/`
+- `app/`
+
+Deprecated compatibility surfaces remain transitional only:
+- `core/`
+- `kernel/`
+- `evolution/`
+- `metaos/kernel/`
+- `metaos/runtime/`
+
 ## Why Use METAOS
 
 Use METAOS when you need a long-running exploration system that continuously signals, generates, evaluates, selects, mutates, archives, and replays evolving artifacts under invariant constraints.
@@ -33,6 +57,14 @@ Use METAOS when you need a long-running exploration system that continuously sig
 - artifact lineage and replayable civilization memory
 - runtime policy evolution without restart
 - domain autonomy behind a minimal kernel and explicit validation laws
+
+## Operational Maturity
+
+- philosophically complete
+- operationally durable
+- release-shaped
+- replay-safe
+- long-run ready
 
 ## Local Validation
 

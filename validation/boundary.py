@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 
-HUMAN_KEYS = {"constitution", "goal", "acceptance"}
+HUMAN_KEYS = {"goal", "essence", "constraints", "acceptance"}
 SYSTEM_KEYS = {"exploration", "implementation", "validation", "evolution"}
 
 

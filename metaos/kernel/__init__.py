@@ -1,3 +1,3 @@
-from metaos.kernel.replay import replay_state
+from genesis.replay import replay_state
 
 __all__ = ["replay_state"]

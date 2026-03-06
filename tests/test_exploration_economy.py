@@ -28,3 +28,5 @@ def test_allocate_resources_returns_selection_and_slots() -> None:
     assert "selection_weights" in out
     assert "domain_genome" in out["selection_weights"]
     assert out["runtime_slot_allocation"]["exploration_slots"] >= 1
+    assert out["exploration_budget"] >= 3
+    assert out["selection_budget"] >= 0.0

@@ -19,8 +19,23 @@ What METAOS uniquely enables:
 - domain autonomy without kernel contamination
 - explicit laws and validation around architectural boundaries
 
+Operational Maturity:
+- philosophically complete
+- operationally durable
+- release-shaped
+- replay-safe
+- long-run ready
+
 Reference stack:
 - [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
 - [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
 - [Layers](/home/meta_os/metaos/docs/architecture/LAYERS.md)
 - [Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
+
+Execution hierarchy:
+- GENESIS -> METAOS-A -> METAOS-B -> METAOS-C
+
+Canonical execution ownership:
+- GENESIS is the canonical execution kernel.
+- METAOS-A, METAOS-B, and METAOS-C are the canonical higher layers.
+- Deprecated surfaces exist only for transitional import compatibility.

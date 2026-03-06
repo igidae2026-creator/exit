@@ -10,6 +10,10 @@ METAOS is a bounded autonomous exploration civilization engine that:
 - keeps domain logic outside the kernel
 
 Canonical package boundaries:
+- `genesis`: canonical execution kernel
+- `metaos_a`: domain exploration unit
+- `metaos_b`: exploration manager
+- `metaos_c`: civilization engine
 - `kernel`: truth, replay, invariants, supervisor
 - `runtime`: orchestration, economy, pressure, civilization
 - `artifact`: storage, registry, lineage, archive

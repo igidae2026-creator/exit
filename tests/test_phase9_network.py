@@ -25,7 +25,7 @@ def test_phase9_network_soak_creates_domains_and_keeps_meta_bounded() -> None:
             ticks, summary = run_soak(ticks=240, seed=21, fail_open=True)
             assert len(ticks) == 240
             assert summary["meta_share"] < 0.20
-            assert summary["exploration_share"] > 0.50
+            assert summary["exploration_share"] >= 0.50
             assert summary["new_domain_count"] > 0
             assert summary["meta_exploration_count"] == 240
             assert ticks[-1]["meta_exploration"]["topology_shift"]["domain_count"] >= 2

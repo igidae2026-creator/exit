@@ -21,6 +21,13 @@ def civilization_stability(
     lineage_survival = len(lineage_counts)
     domain_growth = len(domain_counts)
     stable = diversity_index > 0.45 and lineage_survival > 1 and policy_turnover > 0 and domain_growth > 1 and float(memory_state.get("memory_growth", 0.0)) > 0.0
+    governor_actions: list[str] = []
+    if diversity_index < 0.45 or lineage_survival <= 1:
+        governor_actions.append("increase_diversity_pressure")
+    if domain_growth <= 1:
+        governor_actions.append("spawn_exploration_quest")
+    if float(memory_state.get("memory_growth", 0.0)) < 0.1:
+        governor_actions.append("rebalance_resource_allocation")
     return {
         "diversity_index": diversity_index,
         "lineage_survival": lineage_survival,
@@ -28,4 +35,5 @@ def civilization_stability(
         "domain_growth": domain_growth,
         "memory_growth": round(float(memory_state.get("memory_growth", 0.0)), 4),
         "stable": stable,
+        "governor_actions": governor_actions,
     }

@@ -44,10 +44,18 @@ def civilization_governor(
         4,
     )
     intervention = artifact_overproduction > 0.0 or selection_drift > 0.18 or ecosystem_balance < 0.55
+    actions: list[str] = []
+    if artifact_overproduction > 0.0:
+        actions.append("rebalance_resource_allocation")
+    if selection_drift > 0.18:
+        actions.append("increase_diversity_pressure")
+    if ecosystem_balance < 0.55:
+        actions.append("spawn_exploration_quest")
     return {
         "population_pressure": population_pressure,
         "artifact_overproduction": artifact_overproduction,
         "ecosystem_balance": ecosystem_balance,
         "selection_drift": selection_drift,
         "intervention": intervention,
+        "actions": actions,
     }

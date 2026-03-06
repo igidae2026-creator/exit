@@ -44,7 +44,7 @@ def _clear_env() -> None:
 def test_genesis_boundary_validation() -> None:
     out = validate_boundary(
         {
-            "human": ["constitution", "goal", "acceptance"],
+            "human": ["goal", "essence", "constraints", "acceptance"],
             "system": ["exploration", "implementation", "validation", "evolution"],
         }
     )

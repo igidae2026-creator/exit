@@ -10,4 +10,4 @@ def test_civilization_governor_detects_drift_and_intervention() -> None:
     )
     assert set(out) >= {"population_pressure", "artifact_overproduction", "ecosystem_balance", "selection_drift"}
     assert out["intervention"] is True
-
+    assert out["actions"]

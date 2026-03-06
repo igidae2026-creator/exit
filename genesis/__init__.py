@@ -1,37 +1,20 @@
-from __future__ import annotations
-
-import importlib
-from types import ModuleType
-from typing import Any
-
-
-def _missing(*args: Any, **kwargs: Any) -> Any:
-    raise RuntimeError("genesis compatibility shim target is unavailable")
-
-
-def _load_target(name: str) -> ModuleType | None:
-    for candidate in (f"metaos.kernel.{name}", f"kernel.{name}"):
-        try:
-            return importlib.import_module(candidate)
-        except ModuleNotFoundError:
-            continue
-    return None
-
-
-def _export_module(name: str) -> dict[str, Any]:
-    module = _load_target(name)
-    if module is None:
-        return {"__all__": [], "_missing": _missing}
-    names = getattr(module, "__all__", None)
-    if not names:
-        names = [key for key in vars(module) if not key.startswith("_")]
-    exported = {key: getattr(module, key) for key in names}
-    exported["__all__"] = list(names)
-    return exported
-
+from genesis.dispatcher import dispatch
+from genesis.invariants import enforce
+from genesis.replay import CANONICAL_PRESSURE_KEYS, replay_state
+from genesis.spine import append_artifact_registry, append_event, append_metrics
+from genesis.state_machine import tick_phase
+from genesis.supervisor import guarded_step
+from genesis.validator import validate_runtime
 
 __all__ = [
-    "_export_module",
-    "_load_target",
-    "_missing",
+    "CANONICAL_PRESSURE_KEYS",
+    "append_artifact_registry",
+    "append_event",
+    "append_metrics",
+    "dispatch",
+    "enforce",
+    "guarded_step",
+    "replay_state",
+    "tick_phase",
+    "validate_runtime",
 ]

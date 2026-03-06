@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
-for s in $(systemctl list-units 'metaos@*' --no-legend | awk '{print $1}'); do
-  systemctl is-active $s
-done
-df -h /var/lib/metaos || true
+set -euo pipefail
+
+export PYTHONPATH="${PYTHONPATH:-$PWD}"
+if [ -f ".venv/bin/activate" ]; then
+  . .venv/bin/activate
+fi
+
+python -m app.cli replay-check >/dev/null
+python -m app.cli health >/dev/null

@@ -8,6 +8,7 @@ __pycache__/
 .venv/
 venv/
 .env
+.metaos_runtime.bak.*
 
 .metaos_runtime/
 artifact_store/
@@ -41,3 +42,7 @@ data/metrics.jsonl
 .mypy_cache/
 .ruff_cache/
 .DS_Store
+snapshots/
+validation_output/
+tmp_validation_output/
+*.bak.*
