@@ -1,0 +1,13 @@
+Implement artifact store.
+
+File:
+core/artifact.py
+
+artifact_store/
+artifact_id/
+
+Rules:
+immutable
+sha256 hash
+metadata stored
+creation logged.

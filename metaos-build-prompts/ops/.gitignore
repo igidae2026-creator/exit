@@ -1,0 +1,10 @@
+# Runtime state
+instances/
+
+# Logs and temp files
+*.log
+*.tmp
+*.pid
+
+# PowerShell artifacts
+*.ps1xml

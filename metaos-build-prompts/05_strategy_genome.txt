@@ -1,0 +1,18 @@
+Implement strategy genome and mutation.
+
+Files:
+core/strategy_genome.py
+core/mutation.py
+
+Strategy fields:
+id
+domain
+eval_axes
+mutation_ops
+budget
+parent
+
+Mutation:
+perturb
+swap
+recombine

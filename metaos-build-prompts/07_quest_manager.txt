@@ -1,0 +1,12 @@
+Implement quest manager.
+
+File:
+runtime/quest_manager.py
+
+Lifecycle:
+proposed
+selected
+retired
+
+Quest = exploration objective.
+Generated from signals or metrics.

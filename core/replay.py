@@ -1,115 +1,118 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
+from pathlib import Path
+from typing import Any, Dict, List, Mapping
 
-from core.event_log import read_events, read_metrics
-from core.registry import read_registry
+from core.log import AppendOnlyLogger
 
 
 @dataclass(slots=True)
 class ReplayState:
-    tick: int = 0
-    best_score: float = float("-inf")
-    latest_metrics: dict[str, float] = field(default_factory=dict)
-    metric_history: list[dict[str, float]] = field(default_factory=list)
-    quest_history: list[dict[str, Any]] = field(default_factory=list)
-    active_quest: dict[str, Any] | None = None
-    policies: list[dict[str, Any]] = field(default_factory=list)
-    artifacts: dict[str, dict[str, Any]] = field(default_factory=dict)
-    artifacts_by_kind: dict[str, int] = field(default_factory=dict)
-    domain_history: list[str] = field(default_factory=list)
-    supervisor_mode: str = "normal"
-    retry_count: int = 0
-    plateau_streak: int = 0
-    last_error: str | None = None
+    events_seen: int = 0
+    artifacts: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    quests: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    current_policies: Dict[str, str] = field(default_factory=dict)
+    policy_history: List[Dict[str, Any]] = field(default_factory=list)
+    metrics_history: List[Dict[str, float]] = field(default_factory=list)
+    repairs: List[Dict[str, Any]] = field(default_factory=list)
+    domain_genomes: Dict[str, Dict[str, Any]] = field(default_factory=dict)
+    pressure_snapshots: List[Dict[str, float]] = field(default_factory=list)
+    quota_decisions: List[Dict[str, Any]] = field(default_factory=list)
+    supervisor_actions: List[Dict[str, Any]] = field(default_factory=list)
+    tick_summaries: List[Dict[str, Any]] = field(default_factory=list)
+    lineages: Dict[str, int] = field(default_factory=dict)
+
+    def lineage_concentration(self) -> float:
+        total = sum(self.lineages.values())
+        if total <= 0:
+            return 0.0
+        return max(self.lineages.values()) / total
 
 
-def replay(data_dir: str = "data") -> list[dict[str, Any]]:
-    return list(read_events(data_dir))
-
-
-def replay_state(data_dir: str = "data") -> ReplayState:
+def rebuild_runtime_state(log_dir: str | Path = "data") -> ReplayState:
+    logger = AppendOnlyLogger(log_dir=log_dir)
     state = ReplayState()
 
-    for row in read_registry(data_dir):
-        artifact_id = str(row.get("artifact_id") or "")
-        if not artifact_id:
+    for record in logger.replay_artifact_registry():
+        state.events_seen += 1
+        if record.event_type != "artifact_registered":
             continue
-        state.artifacts[artifact_id] = row
-        kind = str(row.get("kind") or "unknown")
-        state.artifacts_by_kind[kind] = state.artifacts_by_kind.get(kind, 0) + 1
-        domain = str(row.get("domain") or "")
-        if domain:
-            state.domain_history.append(domain)
-        score = row.get("score")
-        if isinstance(score, (int, float)) and float(score) > state.best_score:
-            state.best_score = float(score)
-        tick = row.get("tick")
-        if isinstance(tick, int):
-            state.tick = max(state.tick, tick)
-
-    for row in read_metrics(data_dir):
-        payload = row.get("payload", {})
-        if not isinstance(payload, dict):
+        payload = dict(record.payload)
+        artifact_id = str(payload.get("artifact_id", ""))
+        metadata = payload.get("metadata")
+        if not artifact_id or not isinstance(metadata, dict):
             continue
-        metric_row = {
-            key: float(value)
-            for key, value in payload.items()
-            if isinstance(value, (int, float))
-        }
-        if metric_row:
-            state.metric_history.append(metric_row)
-            state.latest_metrics = metric_row
-            score = metric_row.get("score")
-            if score is not None:
-                if score > state.best_score:
-                    state.best_score = score
-                    state.plateau_streak = 0
-                else:
-                    state.plateau_streak += 1
-        tick = payload.get("tick")
-        if isinstance(tick, int):
-            state.tick = max(state.tick, tick)
+        state.artifacts[artifact_id] = payload
+        if metadata.get("artifact_type") == "strategy_genome":
+            lineage_id = str(metadata.get("lineage_id") or "root")
+            state.lineages[lineage_id] = state.lineages.get(lineage_id, 0) + 1
 
-    for row in read_events(data_dir):
-        payload = row.get("payload", {})
-        if not isinstance(payload, dict):
+    for record in logger.replay_metrics():
+        state.events_seen += 1
+        if record.event_type != "metrics":
             continue
-        event_type = str(row.get("event_type") or "")
-        tick = payload.get("tick")
-        if isinstance(tick, int):
-            state.tick = max(state.tick, tick)
-        if event_type in {"quest_selected", "quest_changed"}:
-            quest = payload.get("quest")
-            if isinstance(quest, dict):
-                state.quest_history.append(quest)
-                state.active_quest = quest
-        elif event_type == "policy_evolved":
-            policy = payload.get("policy")
-            if isinstance(policy, dict):
-                state.policies.append(policy)
-        elif event_type == "supervisor_retry_once":
-            state.retry_count += 1
-            state.last_error = str(payload.get("error") or "retry")
-        elif event_type == "safe_mode_entered":
-            state.supervisor_mode = "safe_mode"
-            state.last_error = str(payload.get("reason") or "safe_mode")
-        elif event_type == "supervisor_checkpoint_restore":
-            state.supervisor_mode = "checkpoint_restore"
-        elif event_type == "quota_downshift":
-            state.supervisor_mode = "quota_downshift"
-        elif event_type == "cycle_completed":
-            if payload.get("supervisor_mode"):
-                state.supervisor_mode = str(payload["supervisor_mode"])
-            score = payload.get("best_score")
-            if isinstance(score, (int, float)):
-                if float(score) > state.best_score:
-                    state.best_score = float(score)
-                    state.plateau_streak = 0
-                else:
-                    state.plateau_streak += 1
+        state.metrics_history.append({k: float(v) for k, v in record.payload.items() if isinstance(v, (int, float))})
 
-    if state.best_score == float("-inf"):
-        state.best_score = 0.0
+    for record in logger.replay_events():
+        state.events_seen += 1
+        payload = dict(record.payload)
+        if record.event_type == "quest_proposed":
+            quest = dict(payload.get("quest", {}))
+            quest_id = str(quest.get("quest_id", ""))
+            if quest_id:
+                state.quests[quest_id] = quest
+        elif record.event_type == "quest_selected":
+            quest_id = str(payload.get("quest_id", ""))
+            if quest_id and quest_id in state.quests:
+                state.quests[quest_id]["state"] = "selected"
+        elif record.event_type == "quest_retired":
+            quest_id = str(payload.get("quest_id", ""))
+            if quest_id and quest_id in state.quests:
+                state.quests[quest_id]["state"] = "retired"
+                state.quests[quest_id]["retired_reason"] = payload.get("reason")
+        elif record.event_type in ("policy_registered", "policy_swapped"):
+            state.policy_history.append(payload)
+            policy_name = str(payload.get("policy_name", ""))
+            artifact_id = str(payload.get("artifact_id", ""))
+            if policy_name and artifact_id:
+                state.current_policies[policy_name] = artifact_id
+        elif record.event_type in ("repair_attempt", "repair_failed", "repair_succeeded"):
+            state.repairs.append({"event_type": record.event_type, **payload})
+        elif record.event_type == "domain_genome_loaded":
+            adapter = str(payload.get("adapter", "canonical_domain"))
+            state.domain_genomes[adapter] = payload
+        elif record.event_type == "pressure_snapshot":
+            state.pressure_snapshots.append({k: float(v) for k, v in payload.items() if isinstance(v, (int, float))})
+        elif record.event_type == "quota_decision":
+            state.quota_decisions.append(payload)
+        elif record.event_type == "supervisor_action":
+            state.supervisor_actions.append(payload)
+        elif record.event_type == "tick_completed":
+            state.tick_summaries.append(payload)
+
     return state
+
+
+def archive_pressure(state: ReplayState, *, window: int = 5) -> Dict[str, float]:
+    recent_metrics = state.metrics_history[-window:]
+    novelty_values = [row.get("novelty", 0.0) for row in recent_metrics]
+    diversity_values = [row.get("diversity", 0.0) for row in recent_metrics]
+
+    novelty_avg = (sum(novelty_values) / len(novelty_values)) if novelty_values else 1.0
+    diversity_avg = (sum(diversity_values) / len(diversity_values)) if diversity_values else 1.0
+    recent_repairs = state.repairs[-window:]
+    recent_failures = len([row for row in recent_repairs if row.get("event_type") == "repair_failed"])
+    concentration = state.lineage_concentration()
+
+    return {
+        "exploration": round(max(0.0, 1.0 - novelty_avg), 6),
+        "repair": round(min(1.0, recent_failures / max(1, window)), 6),
+        "diversity": round(max(0.0, concentration - 0.45) + max(0.0, 0.45 - diversity_avg), 6),
+        "replay": round(min(1.0, (len(state.tick_summaries[-window:]) / max(1, window)) * 0.5 + recent_failures * 0.1), 6),
+        "collapse": round(max(0.0, concentration - 0.68), 6),
+        "lineage_concentration": round(concentration, 6),
+    }
+
+
+__all__ = ["ReplayState", "archive_pressure", "rebuild_runtime_state"]

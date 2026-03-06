@@ -1,13 +1,20 @@
+"""METAOS core runtime loop.
+
+Pipeline order:
+signal -> strategy -> artifact -> metrics -> mutation -> quest -> decision -> log
+"""
+
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass
-from typing import Any, Callable, Mapping, MutableMapping
+import traceback
+from dataclasses import dataclass, field
+from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping
 
 
-StageHandler = Callable[[MutableMapping[str, Any]], Mapping[str, Any] | None]
+StageHandler = Callable[[MutableMapping[str, Any]], Any]
 
-DEFAULT_STAGE_ORDER = (
+DEFAULT_STAGE_ORDER: List[str] = [
     "signal",
     "strategy",
     "artifact",
@@ -16,59 +23,62 @@ DEFAULT_STAGE_ORDER = (
     "quest",
     "decision",
     "log",
-)
+]
 
 
 @dataclass(slots=True)
 class LoopConfig:
+    """Config for an infinite, tick-driven runtime loop."""
+
     tick_seconds: float = 1.0
-    stage_order: tuple[str, ...] = DEFAULT_STAGE_ORDER
+    stage_order: Iterable[str] = field(default_factory=lambda: tuple(DEFAULT_STAGE_ORDER))
 
 
 class RuntimeLoop:
-    """Small deterministic runtime loop used by the existing orchestrator."""
+    """Runs stage handlers in a fixed order on every tick."""
 
-    def __init__(
-        self,
-        handlers: Mapping[str, StageHandler],
-        config: LoopConfig | None = None,
-    ) -> None:
-        self.handlers = dict(handlers)
+    def __init__(self, handlers: Mapping[str, StageHandler], config: LoopConfig | None = None) -> None:
         self.config = config or LoopConfig()
+        self._stage_order = list(self.config.stage_order)
+        self._handlers: Dict[str, StageHandler] = dict(handlers)
 
-    def run_once(self, ctx: MutableMapping[str, Any] | None = None) -> MutableMapping[str, Any]:
-        state: MutableMapping[str, Any] = {
+    def run_forever(self) -> None:
+        """Run the pipeline forever, sleeping for tick_seconds between iterations."""
+        while True:
+            started = time.monotonic()
+            self.step()
+            elapsed = time.monotonic() - started
+            remaining = self.config.tick_seconds - elapsed
+            if remaining > 0:
+                time.sleep(remaining)
+
+    def step(self) -> Dict[str, Any]:
+        """Run one full tick with error isolation per stage."""
+        context: Dict[str, Any] = {
             "tick_started_at": time.time(),
-            "tick_completed_at": None,
             "stage_results": {},
             "errors": [],
         }
-        if ctx:
-            state.update(ctx)
 
-        stage_results = state["stage_results"]
-        errors = state["errors"]
-
-        for stage in self.config.stage_order:
-            handler = self.handlers.get(stage)
-            if handler is None:
-                continue
+        for stage_name in self._stage_order:
+            handler = self._handlers.get(stage_name, _noop_handler)
+            if stage_name == "log":
+                context["tick_completed_at"] = time.time()
             try:
-                result = handler(state)
-                stage_results[stage] = dict(result or {})
-            except Exception as exc:
-                error = {"stage": stage, "error": str(exc)}
-                errors.append(error)
-                stage_results[stage] = {"ok": False, "error": str(exc)}
+                context["stage_results"][stage_name] = handler(context)
+            except Exception as exc:  # noqa: BLE001 - isolate stage faults
+                context["errors"].append(
+                    {
+                        "stage": stage_name,
+                        "error": f"{type(exc).__name__}: {exc}",
+                        "traceback": traceback.format_exc(),
+                    }
+                )
+                context["stage_results"][stage_name] = None
 
-        state["tick_completed_at"] = time.time()
-        return state
+        context.setdefault("tick_completed_at", time.time())
+        return context
 
-    def run_forever(self) -> None:
-        while True:
-            started = time.time()
-            self.run_once()
-            elapsed = time.time() - started
-            sleep_for = max(0.0, self.config.tick_seconds - elapsed)
-            if sleep_for > 0:
-                time.sleep(sleep_for)
+
+def _noop_handler(_: MutableMapping[str, Any]) -> None:
+    return None

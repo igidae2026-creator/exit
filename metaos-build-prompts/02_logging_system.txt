@@ -1,0 +1,17 @@
+Implement append-only logging.
+
+File:
+core/log.py
+
+Logs:
+events.jsonl
+strategies.jsonl
+metrics.jsonl
+
+Fields:
+timestamp
+event_type
+payload
+
+Atomic append only.
+Replay compatible.

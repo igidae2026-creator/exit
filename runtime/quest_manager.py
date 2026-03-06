@@ -11,11 +11,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional
+from typing import Any, Dict, Iterable, List, Literal, Mapping, Optional, Sequence
 import threading
 import uuid
 
 QuestState = Literal["proposed", "selected", "retired"]
+QuestSource = Literal["signal", "metrics", "manual", "archive", "pressure", "supervisor"]
 
 
 METRIC_QUEST_HINTS: Dict[str, str] = {
@@ -33,7 +34,7 @@ class Quest:
 
     title: str
     description: str
-    source: Literal["signal", "metrics", "manual"]
+    source: QuestSource
     state: QuestState = "proposed"
     priority: float = 0.5
     quest_id: str = field(default_factory=lambda: f"q_{uuid.uuid4().hex[:12]}")
@@ -78,7 +79,7 @@ class QuestManager:
         *,
         title: str,
         description: str,
-        source: Literal["signal", "metrics", "manual"],
+            source: QuestSource,
         priority: float = 0.5,
         source_payload: Optional[Mapping[str, Any]] = None,
         metadata: Optional[Mapping[str, Any]] = None,
@@ -95,6 +96,47 @@ class QuestManager:
         with self._lock:
             self._quests[quest.quest_id] = quest
         return quest
+
+    def has_active_reframing_quest(self) -> bool:
+        with self._lock:
+            for quest in self._quests.values():
+                if quest.state == "retired":
+                    continue
+                if quest.metadata.get("quest_type") == "reframing_quest":
+                    return True
+        return False
+
+    def generate_reframing_quest(
+        self,
+        *,
+        reasons: Sequence[str],
+        metrics: Optional[Mapping[str, Any]] = None,
+        pressure: Optional[Mapping[str, float]] = None,
+        lineage_share: float = 0.0,
+        source: QuestSource = "pressure",
+    ) -> Quest:
+        unique_reasons = list(dict.fromkeys(str(reason) for reason in reasons if reason)) or ["exploration_plateau"]
+        reason_text = ", ".join(unique_reasons)
+        framing = _build_reframing(unique_reasons, dict(metrics or {}), dict(pressure or {}), lineage_share)
+        return self.propose(
+            title=f"Reframe exploration: {unique_reasons[0]}",
+            description=(
+                "Shift the current exploration frame instead of repeating the same repair loop. "
+                f"Triggers: {reason_text}. New framing: {framing['summary']}."
+            ),
+            source=source,
+            priority=0.95,
+            source_payload={
+                "reasons": unique_reasons,
+                "metrics": dict(metrics or {}),
+                "pressure": dict(pressure or {}),
+                "lineage_share": lineage_share,
+            },
+            metadata={
+                "quest_type": "reframing_quest",
+                "framing": framing,
+            },
+        )
 
     def generate_from_signal(
         self,
@@ -164,7 +206,13 @@ class QuestManager:
             proposed = self.list("proposed")
             if not proposed:
                 return None
-            proposed.sort(key=lambda q: (-q.priority, q.created_at))
+            proposed.sort(
+                key=lambda q: (
+                    0 if q.metadata.get("quest_type") == "reframing_quest" else 1,
+                    -q.priority,
+                    q.created_at,
+                )
+            )
             return self.select(proposed[0].quest_id)
 
     def retire(self, quest_id: str, *, reason: str = "completed") -> Quest:
@@ -249,3 +297,94 @@ def _now_iso() -> str:
 
 def _clamp(value: float, low: float, high: float) -> float:
     return max(low, min(high, value))
+
+
+def reframing_triggers(
+    *,
+    novelty_history: Sequence[float],
+    diversity_history: Sequence[float],
+    score_history: Sequence[float],
+    repair_failures: int,
+    lineage_share: float,
+    repeated_low_diversity_cycles: int,
+    plateau_window: int = 4,
+    plateau_tolerance: float = 0.02,
+    novelty_floor: float = 0.35,
+    lineage_threshold: float = 0.68,
+    repair_failure_threshold: int = 2,
+    low_diversity_threshold: int = 3,
+) -> list[str]:
+    reasons: list[str] = []
+
+    if len(score_history) >= plateau_window:
+        recent = list(score_history[-plateau_window:])
+        if max(recent) - min(recent) <= plateau_tolerance:
+            reasons.append("exploration_plateau")
+
+    if novelty_history:
+        recent_novelty = list(novelty_history[-plateau_window:])
+        if recent_novelty and sum(recent_novelty) / len(recent_novelty) <= novelty_floor:
+            reasons.append("novelty_collapse")
+
+    if repair_failures >= repair_failure_threshold:
+        reasons.append("repeated_repair_failure")
+
+    if lineage_share >= lineage_threshold:
+        reasons.append("lineage_concentration")
+
+    if repeated_low_diversity_cycles >= low_diversity_threshold:
+        reasons.append("repeated_low_diversity_cycles")
+
+    if diversity_history:
+        recent_diversity = list(diversity_history[-plateau_window:])
+        if recent_diversity and max(recent_diversity) <= 0.35:
+            reasons.append("repeated_low_diversity_cycles")
+
+    return list(dict.fromkeys(reasons))
+
+
+def _framing_focus(reasons: Sequence[str]) -> str:
+    if "lineage_concentration" in reasons:
+        return "fork underrepresented lineages and select against concentration"
+    if "repeated_repair_failure" in reasons:
+        return "shift from repair-heavy cycles into alternate evaluation routes"
+    if "novelty_collapse" in reasons:
+        return "expand novelty through less-used mutation priors"
+    return "reseed exploration around canonical-domain blind spots"
+
+
+def _framing_experiment(reasons: Sequence[str]) -> str:
+    if "repeated_low_diversity_cycles" in reasons:
+        return "allocate quota toward exploration and replay minority lineages"
+    if "exploration_plateau" in reasons:
+        return "replace the active quest policy with a higher novelty threshold"
+    return "swap to a diversity-biased selection policy"
+
+
+def _framing_constraint(lineage_share: float) -> str:
+    if lineage_share >= 0.68:
+        return "dominant lineage cannot consume more than 55% of next-cycle selections"
+    return "canonical domain only; no cross-domain expansion"
+
+
+def _framing_summary(focus: str, experiment: str) -> str:
+    return f"{focus}; {experiment}"
+
+
+def _build_reframing(
+    reasons: Sequence[str],
+    metrics: Mapping[str, Any],
+    pressure: Mapping[str, float],
+    lineage_share: float,
+) -> Dict[str, Any]:
+    focus = _framing_focus(reasons)
+    experiment = _framing_experiment(reasons)
+    constraint = _framing_constraint(lineage_share)
+    return {
+        "focus": focus,
+        "experiment": experiment,
+        "constraint": constraint,
+        "summary": _framing_summary(focus, experiment),
+        "metrics_snapshot": dict(metrics),
+        "pressure_snapshot": dict(pressure),
+    }
