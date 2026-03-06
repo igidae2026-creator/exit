@@ -5,6 +5,7 @@ from pathlib import Path
 
 from core.artifact import create_artifact
 from core.event_log import append_event, append_jsonl, ensure_spine
+from core.quest import ensure_quest
 from core.kernel_adapter import KernelAdapter
 from core.replay import replay_state
 from core.supervisor import Supervisor
@@ -80,6 +81,42 @@ def test_plateau_causes_reexploration_or_meta_quest(tmp_path: Path) -> None:
     pressures = compute_pressures(state)
     quest = generate_quest(pressures, state, tick=state.tick + 1)
     assert quest["quest_type"] in {"exploration", "meta"}
+
+
+def test_pressure_vector_generation(tmp_path: Path) -> None:
+    data_dir = tmp_path / "data"
+    ensure_spine(data_dir)
+    for tick in range(1, 4):
+        append_jsonl(
+            data_dir / "metrics.jsonl",
+            {
+                "timestamp": str(tick),
+                "event_type": "metrics",
+                "payload": {"tick": tick, "score": 0.4, "novelty": 0.1, "diversity": 0.1, "efficiency": 0.2},
+            },
+        )
+        append_event("cycle_completed", {"tick": tick, "best_score": 0.4, "supervisor_mode": "normal"}, data_dir=data_dir)
+    pressures = compute_pressures(replay_state(str(data_dir)))
+    assert set(pressures) == {
+        "novelty_pressure",
+        "diversity_pressure",
+        "efficiency_pressure",
+        "repair_pressure",
+        "domain_shift_pressure",
+        "reframing_pressure",
+    }
+
+
+def test_quest_regeneration(tmp_path: Path) -> None:
+    quest_path = tmp_path / "state" / "quest.json"
+    original = ensure_quest(1, pressure_vector={"novelty_pressure": 0.1}, plateau_streak=0, path=str(quest_path))[0]
+    original["ttl_ticks"] = 1
+    from core.quest import save_quest
+
+    save_quest(original, str(quest_path))
+    regenerated, changed = ensure_quest(3, pressure_vector={"novelty_pressure": 0.9}, plateau_streak=2, path=str(quest_path))
+    assert changed is True
+    assert regenerated["id"] != original["id"]
 
 
 def test_supervisor_safe_mode_path_does_not_crash(tmp_path: Path) -> None:

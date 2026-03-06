@@ -15,23 +15,25 @@ def now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def load_quest() -> dict[str, Any] | None:
-    if not os.path.exists(QUEST_PATH):
+def load_quest(path: str | None = None) -> dict[str, Any] | None:
+    target = path or QUEST_PATH
+    if not os.path.exists(target):
         return None
     try:
-        with open(QUEST_PATH, "r", encoding="utf-8") as handle:
+        with open(target, "r", encoding="utf-8") as handle:
             row = json.load(handle)
     except Exception:
         return None
     return row if isinstance(row, dict) else None
 
 
-def save_quest(quest: Mapping[str, Any]) -> None:
-    os.makedirs("state", exist_ok=True)
-    tmp = f"{QUEST_PATH}.tmp"
+def save_quest(quest: Mapping[str, Any], path: str | None = None) -> None:
+    target = path or QUEST_PATH
+    os.makedirs(os.path.dirname(target) or ".", exist_ok=True)
+    tmp = f"{target}.tmp"
     with open(tmp, "w", encoding="utf-8") as handle:
         json.dump(dict(quest), handle, ensure_ascii=False, indent=2)
-    os.replace(tmp, QUEST_PATH)
+    os.replace(tmp, target)
 
 
 def build_quest(
@@ -97,8 +99,9 @@ def ensure_quest(
     *,
     pressure_vector: Mapping[str, float] | None = None,
     plateau_streak: int = 0,
+    path: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
-    quest = load_quest()
+    quest = load_quest(path)
     if quest is None:
         quest = build_quest(
             choose_quest_type(pressure_vector, plateau_streak=plateau_streak),
@@ -106,7 +109,7 @@ def ensure_quest(
             pressures=pressure_vector,
             tick=tick,
         )
-        save_quest(quest)
+        save_quest(quest, path)
         return quest, True
 
     age = tick - int(quest.get("tick_start", 0))
@@ -118,7 +121,7 @@ def ensure_quest(
             pressures=pressure_vector,
             tick=tick,
         )
-        save_quest(quest)
+        save_quest(quest, path)
         return quest, True
 
     return quest, False
@@ -129,6 +132,7 @@ def update_quest(
     tick: int,
     best_score: float,
     last_metrics: Mapping[str, float] | None = None,
+    path: str | None = None,
 ) -> dict[str, Any]:
     updated = dict(quest)
     target = dict(updated.get("target", {}))
@@ -147,5 +151,5 @@ def update_quest(
     updated["target"] = target
     updated["updated_at"] = now()
     updated["tick_last_seen"] = tick
-    save_quest(updated)
+    save_quest(updated, path)
     return updated

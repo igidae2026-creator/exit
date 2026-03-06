@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Iterator, Mapping
 
+from core.constitution_guard import assert_writable
+
 
 @dataclass(slots=True, frozen=True)
 class SpinePaths:
@@ -41,6 +43,7 @@ def ensure_spine(data_dir: str | Path = "data") -> SpinePaths:
 
 def append_jsonl(path: str | Path, record: Mapping[str, Any]) -> None:
     target = Path(path)
+    assert_writable([target])
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = json.dumps(dict(record), ensure_ascii=True, separators=(",", ":")) + "\n"
     fd = os.open(str(target), os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o644)

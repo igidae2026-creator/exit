@@ -58,3 +58,27 @@ def choose_parent_ids(replay_state: object, *, limit: int = 2) -> list[str]:
         if len(parent_ids) >= limit:
             break
     return parent_ids
+
+
+def signal(replay_state: object) -> dict[str, Any]:
+    return {
+        "tick": int(getattr(replay_state, "tick", 0) or 0) + 1,
+        "artifact_count": len(getattr(replay_state, "artifacts", {}) or {}),
+        "best_score": float(getattr(replay_state, "best_score", 0.0) or 0.0),
+    }
+
+
+def archive(replay_state: object) -> dict[str, Any]:
+    return archive_pressure_hook(replay_state)
+
+
+def selection(replay_state: object) -> dict[str, Any]:
+    return {"parent_ids": choose_parent_ids(replay_state)}
+
+
+def mutation(policy: dict[str, Any], pressures: dict[str, float]) -> dict[str, Any]:
+    return {
+        "selection_bias": policy.get("selection_bias", "novelty"),
+        "mutation_scale": policy.get("mutation_scale", 0.1),
+        "pressure_bias": max(pressures.get("novelty_pressure", 0.0), pressures.get("repair_pressure", 0.0)),
+    }

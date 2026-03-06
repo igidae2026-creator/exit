@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
+from artifact.lineage import lineage_concentration
 from runtime.diversity_guard import detect_collapse
 
 
@@ -38,10 +39,17 @@ def compute_pressures(replay_state: object) -> dict[str, float]:
     if novelty_pressure >= 0.6 and diversity_pressure >= 0.6:
         domain_shift_pressure = max(domain_shift_pressure, 0.8)
 
+    reframing_pressure = 0.0
+    if plateau_streak >= 3:
+        reframing_pressure = max(reframing_pressure, 0.6)
+    if lineage_concentration() >= 0.45:
+        reframing_pressure = max(reframing_pressure, 0.75)
+
     return {
         "novelty_pressure": round(novelty_pressure, 6),
         "diversity_pressure": round(diversity_pressure, 6),
         "efficiency_pressure": round(efficiency_pressure, 6),
         "repair_pressure": round(_clamp01(repair_pressure), 6),
         "domain_shift_pressure": round(_clamp01(domain_shift_pressure), 6),
+        "reframing_pressure": round(_clamp01(reframing_pressure), 6),
     }
