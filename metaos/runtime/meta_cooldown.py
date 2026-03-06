@@ -35,4 +35,6 @@ def quest_cooldown(recent_state: Mapping[str, Any]) -> dict[str, Any]:
         "repair_locked": repair_locked,
         "preferred_type": preferred,
         "force_exploration": meta_share > 0.60,
+        "cross_domain_bias": meta_share > 0.45,
+        "reframing_bias": meta_share > 0.45 and not reframing_locked,
     }

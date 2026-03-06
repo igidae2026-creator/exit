@@ -7,6 +7,17 @@ from typing import Any, Mapping
 
 
 DEFAULT_DOMAIN_POOL = ".metaos_runtime/domain_pool.json"
+_SEED_DOMAINS = {
+    "default": {"name": "default", "genome": {"name": "default", "constraints": {}, "evaluation_recipe": {"score": 1.0}, "mutation_priors": {"mutation_rate": 0.2}}},
+    "default_variant": {
+        "name": "default_variant",
+        "genome": {"name": "default_variant", "constraints": {"stability": 0.6}, "evaluation_recipe": {"score": 0.96}, "mutation_priors": {"mutation_rate": 0.24}},
+    },
+    "exploration_variant": {
+        "name": "exploration_variant",
+        "genome": {"name": "exploration_variant", "constraints": {"novelty": 0.7}, "evaluation_recipe": {"score": 0.92}, "mutation_priors": {"mutation_rate": 0.28}},
+    },
+}
 
 
 def _pool_path() -> Path:
@@ -18,15 +29,18 @@ def _pool_path() -> Path:
 def _load() -> dict[str, dict[str, Any]]:
     path = _pool_path()
     if not path.exists():
-        return {"default": {"name": "default", "genome": None}}
+        return dict(_SEED_DOMAINS)
     try:
         with path.open("r", encoding="utf-8") as handle:
             payload = json.load(handle)
     except Exception:
-        return {"default": {"name": "default", "genome": None}}
+        return dict(_SEED_DOMAINS)
     if isinstance(payload, dict) and payload:
-        return {str(key): dict(value) if isinstance(value, Mapping) else {"name": str(key), "genome": value} for key, value in payload.items()}
-    return {"default": {"name": "default", "genome": None}}
+        out = {str(key): dict(value) if isinstance(value, Mapping) else {"name": str(key), "genome": value} for key, value in payload.items()}
+        for key, value in _SEED_DOMAINS.items():
+            out.setdefault(key, dict(value))
+        return out
+    return dict(_SEED_DOMAINS)
 
 
 def _save(pool: Mapping[str, Any]) -> None:
@@ -41,9 +55,25 @@ def register_domain(name: str, genome: Mapping[str, Any] | None = None) -> dict[
     return dict(pool[str(name)])
 
 
+def ensure_seed_domains() -> dict[str, dict[str, Any]]:
+    pool = _load()
+    changed = False
+    for key, value in _SEED_DOMAINS.items():
+        if key not in pool:
+            pool[key] = dict(value)
+            changed = True
+    if changed:
+        _save(pool)
+    return pool
+
+
+def domain_names() -> list[str]:
+    return sorted(ensure_seed_domains())
+
+
 def list_domains() -> list[str]:
-    return sorted(_load())
+    return domain_names()
 
 
 def get_domain(name: str) -> dict[str, Any] | None:
-    return _load().get(str(name))
+    return ensure_seed_domains().get(str(name))

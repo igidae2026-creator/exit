@@ -26,7 +26,8 @@ def test_oed_phase4_returns_market_budgets_and_routing() -> None:
             assert "market" in state
             assert "budgets" in state
             assert "routing" in state
-            assert state["routing"]["selected_domain"] == "default"
+            assert "default" in state["routing"]["routing_weights"]
+            assert state["routing"]["selected_domain"] in state["routing"]["routing_weights"]
             assert int(state["budgets"]["effective_workers"]) >= 1
         finally:
             os.environ.pop("METAOS_REGISTRY", None)

@@ -1,0 +1,57 @@
+from __future__ import annotations
+
+from typing import Any, Mapping, Sequence
+
+
+def civilization_governor(
+    history: Sequence[Mapping[str, Any]],
+    ecology: Mapping[str, float],
+    market: Mapping[str, float],
+) -> dict[str, Any]:
+    rows = list(history or [])[-24:]
+    ecology = dict(ecology or {})
+    market = dict(market or {})
+    selections = [
+        str(
+            (
+                row.get("civilization_selection", {})
+                if isinstance(row.get("civilization_selection"), Mapping)
+                else {}
+            ).get("selected_artifact_type", "")
+        )
+        for row in rows
+    ]
+    selections = [item for item in selections if item]
+    total = len(selections) or 1
+    dominant_share = max((selections.count(item) / total for item in set(selections)), default=0.0)
+    population_pressure = round(max(0.0, dominant_share - 0.45), 4)
+    artifact_overproduction = round(max(0.0, dominant_share - 0.60), 4)
+    ecosystem_balance = round(
+        max(
+            0.0,
+            min(
+                1.0,
+                (
+                    float(ecology.get("novelty_health", 0.5))
+                    + float(ecology.get("diversity_health", 0.5))
+                    + float(ecology.get("efficiency_health", 0.5))
+                    + float(ecology.get("repair_health", 0.5))
+                )
+                / 4.0,
+            ),
+        ),
+        4,
+    )
+    selection_drift = round(
+        max(0.0, dominant_share - float(ecology.get("diversity_health", 0.5)) * 0.5 - float(market.get("selection_bias", 0.0)) * 0.2),
+        4,
+    )
+    intervention = artifact_overproduction > 0.0 or selection_drift > 0.18 or ecosystem_balance < 0.55
+    return {
+        "population_pressure": population_pressure,
+        "artifact_overproduction": artifact_overproduction,
+        "ecosystem_balance": ecosystem_balance,
+        "selection_drift": selection_drift,
+        "intervention": intervention,
+    }
+

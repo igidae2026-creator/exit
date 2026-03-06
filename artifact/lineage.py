@@ -1,61 +1,58 @@
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from core.registry import read_registry
+
+
+def build_lineage_view(rows: Iterable[Mapping[str, Any]]) -> dict[str, list[str]]:
+    graph: dict[str, list[str]] = defaultdict(list)
+    for row in rows:
+        artifact_id = str(row.get("artifact_id", ""))
+        refs = row.get("refs", {}) if isinstance(row.get("refs"), Mapping) else {}
+        parents = [str(parent) for parent in refs.get("parents", []) if parent]
+        graph.setdefault(artifact_id, [])
+        for parent in parents:
+            graph[parent].append(artifact_id)
+    return dict(graph)
 
 
 def _rows(data_dir: str = "data") -> list[dict[str, Any]]:
     return [dict(row) for row in read_registry(data_dir)]
 
 
-def parent_map(data_dir: str = "data") -> dict[str, list[str]]:
+def parent_map(rows: Iterable[Mapping[str, Any]]) -> dict[str, list[str]]:
     mapping: dict[str, list[str]] = {}
-    for row in _rows(data_dir):
-        artifact_id = str(row.get("artifact_id") or "")
-        if artifact_id:
-            mapping[artifact_id] = [str(parent) for parent in row.get("parent_ids", []) if parent]
+    for row in rows:
+        artifact_id = str(row.get("artifact_id", ""))
+        refs = row.get("refs", {}) if isinstance(row.get("refs"), Mapping) else {}
+        parents = refs.get("parents", []) if refs else row.get("parent_ids", [])
+        mapping[artifact_id] = [str(parent) for parent in parents if parent]
     return mapping
 
 
-def lineage_chain(artifact_id: str, data_dir: str = "data") -> list[dict[str, Any]]:
-    by_id = {str(row.get("artifact_id") or ""): row for row in _rows(data_dir) if row.get("artifact_id")}
-    chain: list[dict[str, Any]] = []
-    current = artifact_id
+def lineage_chain(artifact_id: str, rows: Iterable[Mapping[str, Any]]) -> list[str]:
+    parents = parent_map(rows)
+    chain: list[str] = []
+    current = str(artifact_id)
     seen: set[str] = set()
-    while current and current not in seen and current in by_id:
-        row = by_id[current]
-        chain.append(row)
+    while current and current not in seen:
+        chain.append(current)
         seen.add(current)
-        parents = [str(parent) for parent in row.get("parent_ids", []) if parent]
-        current = parents[0] if parents else ""
+        lineage_parents = parents.get(current, [])
+        current = lineage_parents[0] if lineage_parents else ""
     return chain
 
 
-def lineage_roots(data_dir: str = "data") -> dict[str, str]:
-    roots: dict[str, str] = {}
-    for artifact_id in parent_map(data_dir):
-        chain = lineage_chain(artifact_id, data_dir)
-        roots[artifact_id] = str(chain[-1].get("artifact_id")) if chain else artifact_id
-    return roots
-
-
 def lineage_graph(data_dir: str = "data") -> dict[str, list[str]]:
-    graph: dict[str, list[str]] = defaultdict(list)
-    for artifact_id, parents in parent_map(data_dir).items():
-        if not parents:
-            graph.setdefault(artifact_id, [])
-            continue
-        for parent in parents:
-            graph[parent].append(artifact_id)
-    return dict(graph)
+    return build_lineage_view(_rows(data_dir))
 
 
 def lineage_counts(data_dir: str = "data") -> dict[str, int]:
     counts: dict[str, int] = defaultdict(int)
     for row in _rows(data_dir):
-        metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+        metadata = row.get("metadata") if isinstance(row.get("metadata"), Mapping) else {}
         lineage_id = str(metadata.get("lineage_id") or row.get("artifact_id") or "root")
         counts[lineage_id] += 1
     return dict(counts)

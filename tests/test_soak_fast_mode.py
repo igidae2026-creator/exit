@@ -81,14 +81,21 @@ def test_soak_fast_mode_summary_matches_shape() -> None:
     with _soak_env():
         ticks, summary = run_soak(ticks=20, seed=11, fail_open=True)
         assert len(ticks) == 20
-        assert set(summary) == {
+        assert {
             "max_workers",
             "min_workers",
             "avg_workers",
             "repair_count",
+            "work_count",
+            "exploration_count",
+            "cross_domain_count",
+            "selected_domain_counts",
+            "selected_artifact_type_counts",
             "meta_count",
             "reframing_count",
+            "meta_share",
+            "exploration_share",
             "freeze_count",
-        }
+        }.issubset(summary)
         assert isinstance(summary["avg_workers"], float)
         assert summary["max_workers"] >= summary["min_workers"]

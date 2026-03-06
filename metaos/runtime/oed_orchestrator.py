@@ -6,39 +6,49 @@ from typing import Any, Mapping
 
 from metaos.archive.archive import save
 from metaos.archive.civilization_memory import remember
+from metaos.domains.domain_crossbreed import crossbreed
 from metaos.domains.domain_genome import DomainGenome
 from metaos.domains.domain_genome_mutation import mutate_domain_genome
 from metaos.domains.domain_recombination import recombine
 from metaos.observer.metrics_history import novelty_drop, plateau
 from metaos.observer.metrics_history import tail as metrics_tail
-from metaos.observer.pressure_engine import pressure
 from metaos.policy.evaluation_artifact import load_all as load_evaluations
 from metaos.policy.evolve_evaluation import evolve_evaluation
 from metaos.policy.evolve_policy import evolve
 from metaos.policy.policy_stack import default_policy_stack, evolve_policy_stack
 from metaos.runtime.artifact_civilization import (
     register_allocator_artifact,
+    register_civilization_selection_artifact,
+    register_crossbred_domain_artifact,
     register_domain_artifact,
     register_evaluation_artifact,
     register_exploration_strategy_artifact,
     register_policy_artifact,
     register_policy_stack_artifact,
     register_quest_artifact,
+    register_strategy_of_strategy_artifact,
 )
+from metaos.runtime.artifact_population import artifact_population
+from metaos.runtime.civilization_governor import civilization_governor
+from metaos.runtime.civilization_selection import civilization_select
 from metaos.runtime.collapse_guard import detect_guard_state
+from metaos.runtime.domain_pool import ensure_seed_domains, get_domain, register_domain
+from metaos.runtime.meta_exploration import meta_exploration
 from metaos.runtime.domain_router import route
+from metaos.runtime.evaluation_ecology import evaluation_ecology
+from metaos.runtime.exploration_economy import exploration_economy
 from metaos.runtime.evolve_exploration_strategy import evolve_strategy
 from metaos.runtime.exploration_market_stability import stabilize_market
 from metaos.runtime.exploration_strategy_artifact import load_all as load_exploration_strategies
 from metaos.runtime.meta_cooldown import quest_cooldown
 from metaos.runtime.meta_quest_engine import meta_quest
-from metaos.runtime.pressure_market import market
-from metaos.runtime.pressure_ecology import stabilize_pressure
 from metaos.runtime.recovery_allocator import recover_budgets
 from metaos.registry.lineage_graph import concentration
-from metaos.runtime.quota_allocator import allocate
 from metaos.runtime.repair_system import emit_repair_artifact
-from metaos.runtime.quest_system import spawn_quest
+from metaos.runtime.strategy_of_strategy import evolve_strategy_of_strategy, load_all as load_strategy_of_strategy
+from signal.pressure import pressure_frame
+from strategy.quota import quota_frame
+from strategy.quest_portfolio import active_quest, quest_slots
 
 
 def _normalize_stack(policy: Mapping[str, Any] | None) -> dict[str, dict[str, float]]:
@@ -250,6 +260,101 @@ def _soften_worker_budget(
     return out
 
 
+def _clamp_weight(value: float, low: float = 0.0, high: float = 1.0) -> float:
+    return max(low, min(high, float(value)))
+
+
+def _normalize_weights(weights: Mapping[str, float]) -> dict[str, float]:
+    total = sum(max(0.0, float(value)) for value in weights.values()) or 1.0
+    out = {key: round(max(0.0, float(value)) / total, 4) for key, value in weights.items()}
+    correction = round(1.0 - sum(out.values()), 4)
+    last_key = next(reversed(out))
+    out[last_key] = round(out[last_key] + correction, 4)
+    return out
+
+
+def _apply_strategy_mutation(
+    strategy: Mapping[str, float],
+    mutation: Mapping[str, float],
+) -> dict[str, float]:
+    merged = {key: _clamp_weight(float(strategy.get(key, 0.0)) + float(mutation.get(key, 0.0))) for key in strategy}
+    return _normalize_weights(merged)
+
+
+def _apply_evaluation_mutation(
+    evaluation: Mapping[str, float],
+    mutation: Mapping[str, float],
+) -> dict[str, float]:
+    merged = {
+        key: round(_clamp_weight(float(evaluation.get(key, 0.0)) + float(mutation.get(key, 0.0)), 0.05, 0.55), 4)
+        for key in evaluation
+    }
+    return _normalize_weights(merged)
+
+
+def _candidate_summaries(
+    pressure: Mapping[str, float],
+    market_state: Mapping[str, float],
+    ecology: Mapping[str, float],
+) -> list[dict[str, Any]]:
+    novelty_gap = 1.0 - float(ecology.get("novelty_health", 0.5))
+    diversity_gap = 1.0 - float(ecology.get("diversity_health", 0.5))
+    exploration_gap = 1.0 - float(ecology.get("exploration_health", 0.5))
+    repair_gap = 1.0 - float(ecology.get("repair_health", 0.5))
+    return [
+        {"type": "strategy", "base_score": 0.22 + 0.06 * float(market_state.get("mutation_bias", 0.0)) + 0.03 * novelty_gap},
+        {"type": "policy", "base_score": 0.32 + 0.08 * float(ecology.get("efficiency_health", 0.5)) + 0.05 * float(ecology.get("lineage_health", 0.5))},
+        {"type": "evaluation", "base_score": 0.35 + 0.22 * novelty_gap + 0.12 * diversity_gap},
+        {"type": "exploration_strategy", "base_score": 0.18 + 0.08 * exploration_gap + 0.04 * float(pressure.get("novelty_pressure", 0.0))},
+        {"type": "strategy_of_strategy", "base_score": 0.24 + 0.22 * exploration_gap + 0.12 * float(pressure.get("domain_shift_pressure", 0.0))},
+        {"type": "domain", "base_score": 0.36 + 0.34 * diversity_gap + 0.18 * float(pressure.get("domain_shift_pressure", 0.0))},
+        {"type": "repair", "base_score": 0.28 + 0.14 * float(pressure.get("repair_pressure", 0.0)) + 0.08 * repair_gap},
+        {"type": "allocator", "base_score": 0.3 + 0.08 * float(market_state.get("selection_bias", 0.0)) + 0.06 * float(ecology.get("efficiency_health", 0.5))},
+    ]
+
+
+def _apply_economy(
+    budgets: Mapping[str, float | int],
+    economy: Mapping[str, float],
+) -> dict[str, float | int]:
+    out = dict(budgets)
+    total_budget = max(float(out.get("workers", out.get("effective_workers", 0))) * 10.0, 40.0)
+    out["mutation_budget"] = round(min(80.0, max(8.0, total_budget * float(economy.get("exploration_budget", 0.3)))), 4)
+    out["domain_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("recombination_budget", 0.18)))), 4)
+    out["policy_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("policy_budget", 0.16)))), 4)
+    out["evaluation_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("evaluation_budget", 0.16)))), 4)
+    return out
+
+
+def _governed_selection(
+    selection: Mapping[str, Any],
+    population: Mapping[str, Any],
+    governance: Mapping[str, Any],
+    *,
+    tick: int,
+) -> dict[str, Any]:
+    out = {
+        "selected_artifact_type": str(selection.get("selected_artifact_type", "policy")),
+        "selection_scores": dict(selection.get("selection_scores", {})) if isinstance(selection.get("selection_scores"), Mapping) else {},
+    }
+    if not bool(governance.get("intervention")):
+        return out
+    population_counts = dict(population.get("population_counts", {})) if isinstance(population.get("population_counts"), Mapping) else {}
+    total = sum(int(value) for value in population_counts.values()) or 1
+    dominant_type = max(population_counts, key=population_counts.get, default="")
+    dominant_share = float(population_counts.get(dominant_type, 0)) / total if dominant_type else 0.0
+    if dominant_share <= 0.60 or out["selected_artifact_type"] != dominant_type:
+        return out
+    alternates = ["policy", "evaluation", "strategy_of_strategy", "domain"]
+    alternates = [name for name in alternates if name != dominant_type]
+    selected = alternates[tick % len(alternates)]
+    scores = dict(out["selection_scores"])
+    scores[selected] = round(max(scores.values(), default=0.5) + 0.0001, 4)
+    out["selected_artifact_type"] = selected
+    out["selection_scores"] = scores
+    return out
+
+
 def step(
     metrics: Mapping[str, float],
     policy: Mapping[str, Any] | None,
@@ -258,14 +363,17 @@ def step(
     parent: str | None = None,
     genome: DomainGenome | None = None,
 ) -> dict[str, Any]:
-    raw_pressure = pressure(metrics)
+    ensure_seed_domains()
+    raw_signal = pressure_frame(metrics)
+    raw_pressure = dict(raw_signal["pressure"])
     plateau_hit = plateau()
     lineage_high = concentration() > 0.45
     novelty_low_sustained = novelty_drop()
     history = metrics_tail(40)
     preliminary_guard = detect_guard_state(history + [{"pressure": raw_pressure, "domain": domain, **dict(metrics)}])
-    stabilized_pressure = stabilize_pressure(raw_pressure, history=history, guard=preliminary_guard)
-    raw_market = market(stabilized_pressure)
+    signal_frame = pressure_frame(metrics, history=history, guard=preliminary_guard)
+    stabilized_pressure = dict(signal_frame["stabilized_pressure"])
+    raw_market = dict(signal_frame["market"])
     previous_market = history[-1].get("stabilized_market") if history and isinstance(history[-1].get("stabilized_market"), Mapping) else history[-1].get("market", {}) if history else {}
     stabilized_market = stabilize_market(raw_market, previous=previous_market, guard=preliminary_guard)
     guard_seed = history + [{"pressure": stabilized_pressure, "stabilized_pressure": stabilized_pressure, "domain": domain, **dict(metrics)}]
@@ -276,17 +384,63 @@ def step(
     policy_stack = _normalize_stack(policy)
     policy_stack = evolve_policy_stack(policy_stack, stabilized_pressure, stabilized_market, cooldown_state=cooldown_state)
     flat_policy_seed = _flat_policy(policy_stack)
+    ecology = evaluation_ecology(history + [{"pressure": stabilized_pressure, "quest": {"type": "work"}, **dict(metrics)}])
     evaluation_rows = load_evaluations()
     current_evaluation = evaluation_rows[-1]["evaluation"] if evaluation_rows else None
     evaluation = evolve_evaluation(current=current_evaluation, pressure=stabilized_pressure, market_state=stabilized_market)
     strategy_rows = load_exploration_strategies()
     current_strategy = strategy_rows[-1]["strategy"] if strategy_rows else None
     exploration_strategy = evolve_strategy(current=current_strategy, pressure=stabilized_pressure, market_state=stabilized_market)
+    strategy_of_strategy_rows = load_strategy_of_strategy()
+    current_strategy_of_strategy = strategy_of_strategy_rows[-1]["strategy_of_strategy"] if strategy_of_strategy_rows else None
+    strategy_of_strategy = evolve_strategy_of_strategy(
+        current=current_strategy_of_strategy,
+        pressure=stabilized_pressure,
+        market=stabilized_market,
+        ecology=ecology,
+    )
+    civilization_selection = civilization_select(
+        _candidate_summaries(stabilized_pressure, stabilized_market, ecology),
+        stabilized_pressure,
+        stabilized_market,
+        ecology,
+    )
+    population = artifact_population(history)
+    governance = civilization_governor(history, ecology, stabilized_market)
+    meta = meta_exploration(history, ecology, population)
+    strategy_of_strategy = _apply_strategy_mutation(
+        strategy_of_strategy,
+        meta.get("strategy_mutation", {}) if isinstance(meta.get("strategy_mutation"), Mapping) else {},
+    )
+    evaluation = _apply_evaluation_mutation(
+        evaluation,
+        meta.get("evaluation_mutation", {}) if isinstance(meta.get("evaluation_mutation"), Mapping) else {},
+    )
+    created_domain = None
+    if isinstance(meta.get("domain_creation"), Mapping) and meta["domain_creation"]:
+        created_domain = register_domain(str(meta["domain_creation"].get("name", "meta_domain")), meta["domain_creation"])
+        meta["domain_creation"] = dict(created_domain)
     if guard["reset_mutation_bias"]:
         stabilized_market["mutation_bias"] = round(min(float(stabilized_market.get("mutation_bias", 0.0)), 0.2), 6)
         policy_stack["mutation"]["rate"] = min(float(policy_stack["mutation"]["rate"]), 0.18)
-    budgets = allocate(stabilized_pressure, workers, market_state=stabilized_market, guard=guard, history=history)
-    budgets = recover_budgets(budgets, guard, history=history)
+    quota = quota_frame(stabilized_pressure, workers, stabilized_market, tick=len(history) + 1, guard=guard, history=history)
+    budgets = recover_budgets(dict(quota.budgets), guard, history=history)
+    economy = exploration_economy(
+        {
+            "pressure": stabilized_pressure,
+            "market": stabilized_market,
+            "ecology": ecology,
+            "population": population,
+            "governance": governance,
+        }
+    )
+    civilization_selection = _governed_selection(
+        civilization_selection,
+        population,
+        governance,
+        tick=len(history) + 1,
+    )
+    budgets = _apply_economy(budgets, economy)
     active_meta_quest = meta_quest(stabilized_pressure, recent_state=recent_state)
     if guard["force_meta"] and active_meta_quest is None and not cooldown_state["meta_locked"] and cooldown_state["preferred_type"] != "exploration":
         active_meta_quest = {
@@ -297,12 +451,14 @@ def step(
             "pressure": {key: round(float(value), 4) for key, value in stabilized_pressure.items()},
             "cooldown": cooldown_state,
         }
-    q = spawn_quest(
+    slots = quest_slots(
         stabilized_pressure,
+        recent_state=recent_state,
         plateau_hit=plateau_hit,
         lineage_high=lineage_high,
         novelty_low_sustained=novelty_low_sustained,
     )
+    q = active_quest(slots)
     if active_meta_quest is not None:
         q = dict(active_meta_quest)
     elif cooldown_state["preferred_type"] == "exploration" and q.get("type") in {"meta", "repair"}:
@@ -328,11 +484,32 @@ def step(
         float(metrics.get("score", 0.0)),
         parent=parent,
     )
+    strategy_of_strategy_artifact_id = register_strategy_of_strategy_artifact(
+        strategy_of_strategy,
+        stabilized_pressure,
+        stabilized_market,
+        ecology,
+        float(metrics.get("score", 0.0)),
+        parent=parent,
+    )
+    civilization_selection_artifact_id = register_civilization_selection_artifact(
+        civilization_selection,
+        parent=parent,
+        score=float(metrics.get("score", 0.0)),
+    )
     repair = emit_repair_artifact(metrics, stabilized_pressure, parent=parent)
     if guard["freeze_export"] and repair is None:
         repair = {"artifact_id": None, "type": "export_freeze"}
     budgets = _soften_worker_budget(budgets, stabilized_pressure, guard, q, repair)
-    routing = route(stabilized_pressure, budgets, domain=domain, guard=guard)
+    routing = route(
+        stabilized_pressure,
+        budgets,
+        domain=domain,
+        guard=guard,
+        ecology=ecology,
+        civilization_selection=civilization_selection,
+        history=history,
+    )
     if guard["force_reframing"]:
         routing["stagnation_escape"] = True
     new_workers = int(budgets["effective_workers"])
@@ -355,6 +532,27 @@ def step(
         else:
             active_genome = mutate_domain_genome(active_genome, step=0.08)
             genome_state = active_genome.as_dict()
+    crossbred_domain_artifact_id: str | None = None
+    if q.get("type") in {"reframing", "meta"} or float(ecology.get("diversity_health", 1.0)) < 0.45:
+        selected_domain_name = str(routing.get("selected_domain", domain))
+        selected_domain = get_domain(selected_domain_name) or {"name": selected_domain_name, "genome": genome_state}
+        secondary = None
+        if selected_domain_name != str(domain):
+            secondary = get_domain(str(domain))
+        crossbred = crossbreed(
+            dict(selected_domain.get("genome") or genome_state),
+            dict(secondary.get("genome")) if secondary and isinstance(secondary.get("genome"), Mapping) else None,
+            stabilized_pressure,
+        )
+        genome_state = crossbred
+        crossbred_domain_artifact_id = register_crossbred_domain_artifact(
+            {"genome": crossbred, "selected_domain": selected_domain_name},
+            parent=parent,
+            score=float(metrics.get("score", 0.0)),
+            novelty=float(metrics.get("novelty", 0.0)),
+            diversity=float(metrics.get("diversity", 0.0)),
+            cost=float(metrics.get("cost", 0.0)),
+        )
     domain_artifact_id = register_domain_artifact(
         {"genome": genome_state, "routing": routing},
         parent=parent,
@@ -379,9 +577,16 @@ def step(
     save("policy", new_policy)
     save("policy_stack", policy_stack)
     save("evaluation", evaluation)
+    save("ecology", ecology)
     save("guard", guard)
     save("stabilized_market", stabilized_market)
+    save("strategy_of_strategy", strategy_of_strategy)
+    save("civilization_selection", civilization_selection)
+    save("population", population)
+    save("governance", governance)
+    save("economy", economy)
     save("cooldown", cooldown_state)
+    save("meta_exploration", meta)
     if repair:
         save("repair", repair)
         remember("repair_artifact", repair)
@@ -393,8 +598,16 @@ def step(
     remember("policy_stack_artifact", {"artifact_id": policy_stack_artifact_id, "policy_stack": policy_stack})
     remember("evaluation_artifact", {"artifact_id": evaluation_artifact_id, "evaluation": evaluation})
     remember("exploration_strategy_artifact", {"artifact_id": exploration_strategy_artifact_id, "strategy": exploration_strategy})
+    remember("strategy_of_strategy_artifact", {"artifact_id": strategy_of_strategy_artifact_id, "strategy_of_strategy": strategy_of_strategy})
+    remember("civilization_selection_artifact", {"artifact_id": civilization_selection_artifact_id, "selection": civilization_selection})
+    remember("population_snapshot", population)
+    remember("governance_snapshot", governance)
+    remember("economy_snapshot", economy)
+    remember("meta_exploration_artifact", meta)
     remember("allocator_artifact", {"artifact_id": allocator_artifact_id, "budgets": budgets})
     remember("domain_genome_snapshot", {"artifact_id": domain_artifact_id, "genome": genome_state, "routing": routing})
+    if crossbred_domain_artifact_id:
+        remember("crossbred_domain_artifact", {"artifact_id": crossbred_domain_artifact_id, "genome": genome_state})
     return {
         "artifact_id": artifact_id,
         "quest": q,
@@ -405,10 +618,18 @@ def step(
         "policy_stack_artifact_id": policy_stack_artifact_id,
         "evaluation_artifact_id": evaluation_artifact_id,
         "exploration_strategy_artifact_id": exploration_strategy_artifact_id,
+        "strategy_of_strategy_artifact_id": strategy_of_strategy_artifact_id,
         "allocator_artifact_id": allocator_artifact_id,
         "domain_artifact_id": domain_artifact_id,
         "evaluation": evaluation,
+        "ecology": ecology,
         "exploration_strategy": exploration_strategy,
+        "strategy_of_strategy": strategy_of_strategy,
+        "civilization_selection": civilization_selection,
+        "population": population,
+        "governance": governance,
+        "economy": economy,
+        "meta_exploration": meta,
         "guard": guard,
         "cooldown": cooldown_state,
         "repair": repair,

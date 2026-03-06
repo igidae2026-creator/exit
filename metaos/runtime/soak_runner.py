@@ -5,6 +5,7 @@ import contextlib
 import json
 import os
 import random
+import uuid
 from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 from unittest.mock import patch
@@ -12,8 +13,11 @@ from unittest.mock import patch
 import metaos.policy.evaluation_artifact as evaluation_artifact
 import metaos.registry.artifact_registry as artifact_registry
 import metaos.runtime.artifact_civilization as artifact_civilization
+import metaos.runtime.domain_pool as domain_pool
+import metaos.runtime.domain_router as domain_router
 import metaos.runtime.exploration_strategy_artifact as exploration_strategy_artifact
 import metaos.runtime.oed_orchestrator as oed_orchestrator
+import metaos.runtime.strategy_of_strategy as strategy_of_strategy_registry
 from metaos.archive.archive import save
 from metaos.archive.civilization_memory import remember
 from metaos.core.supervisor import guarded_step
@@ -57,6 +61,13 @@ def _metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[str, An
         "stabilized_market": state.get("stabilized_market", state.get("market", {})),
         "budgets": state.get("budgets", {}),
         "routing": state.get("routing", {}),
+        "civilization_selection": state.get("civilization_selection", {}),
+        "population": state.get("population", {}),
+        "governance": state.get("governance", {}),
+        "economy": state.get("economy", {}),
+        "ecology": state.get("ecology", {}),
+        "strategy_of_strategy": state.get("strategy_of_strategy", {}),
+        "meta_exploration": state.get("meta_exploration", {}),
         "guard": state.get("guard", {}),
         "repair": state.get("repair"),
     }
@@ -103,8 +114,10 @@ class _FastSoakRuntime:
         self.routing_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
         self.evaluation_rows: list[dict[str, Any]] = []
         self.strategy_rows: list[dict[str, Any]] = []
+        self.strategy_of_strategy_rows: list[dict[str, Any]] = []
         self.parent_counts: collections.Counter[str] = collections.Counter()
         self.total_edges = 0
+        self.domain_pool: dict[str, dict[str, Any]] = domain_pool.ensure_seed_domains()
         self._patches: contextlib.ExitStack | None = None
 
     def __enter__(self) -> _FastSoakRuntime:
@@ -115,9 +128,17 @@ class _FastSoakRuntime:
         stack.enter_context(patch.object(oed_orchestrator, "concentration", self.concentration))
         stack.enter_context(patch.object(oed_orchestrator, "load_evaluations", self.load_evaluations))
         stack.enter_context(patch.object(oed_orchestrator, "load_exploration_strategies", self.load_exploration_strategies))
+        stack.enter_context(patch.object(oed_orchestrator, "load_strategy_of_strategy", self.load_strategy_of_strategy))
+        stack.enter_context(patch.object(oed_orchestrator, "ensure_seed_domains", self.ensure_seed_domains))
+        stack.enter_context(patch.object(oed_orchestrator, "get_domain", self.get_domain))
+        stack.enter_context(patch.object(oed_orchestrator, "register_domain", self.register_domain))
         stack.enter_context(patch.object(artifact_civilization, "_register_artifact", self.register_artifact))
+        stack.enter_context(patch.object(artifact_civilization, "_register_policy", self.register_policy))
         stack.enter_context(patch.object(artifact_civilization, "_register_evaluation", self.register_evaluation))
+        stack.enter_context(patch.object(artifact_civilization, "_register_allocator", self.register_allocator))
         stack.enter_context(patch.object(artifact_civilization, "_register_exploration_strategy", self.register_exploration_strategy))
+        stack.enter_context(patch.object(artifact_civilization, "_register_strategy_of_strategy", self.register_strategy_of_strategy))
+        stack.enter_context(patch.object(domain_router, "domain_names", self.domain_names))
         stack.enter_context(patch.object(oed_orchestrator, "save", self.save))
         stack.enter_context(patch.object(oed_orchestrator, "remember", self.remember))
         stack.enter_context(patch(__name__ + ".save", self.save))
@@ -164,15 +185,40 @@ class _FastSoakRuntime:
     def load_exploration_strategies(self) -> list[dict[str, Any]]:
         return list(self.strategy_rows)
 
+    def load_strategy_of_strategy(self) -> list[dict[str, Any]]:
+        return list(self.strategy_of_strategy_rows)
+
+    def ensure_seed_domains(self) -> dict[str, dict[str, Any]]:
+        return dict(self.domain_pool)
+
+    def domain_names(self) -> list[str]:
+        return sorted(self.domain_pool)
+
+    def get_domain(self, name: str) -> dict[str, Any] | None:
+        row = self.domain_pool.get(str(name))
+        return dict(row) if row else None
+
+    def register_domain(self, name: str, genome: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        row = {"name": str(name), "genome": dict(genome) if isinstance(genome, Mapping) else genome}
+        self.domain_pool[str(name)] = row
+        return dict(row)
+
     def register_artifact(self, data: Any, parent: str | None = None, **kwargs: Any) -> str:
-        artifact_id = artifact_registry.register(data, parent=parent, **kwargs)
+        artifact_id = str(uuid.uuid4())
+        if parent:
+            self.parent_counts[str(parent)] += 1
+            self.total_edges += 1
+        return artifact_id
+
+    def register_policy(self, policy: Mapping[str, Any], pressure: Mapping[str, float], score: float, *, parent: str | None = None) -> str:
+        artifact_id = str(uuid.uuid4())
         if parent:
             self.parent_counts[str(parent)] += 1
             self.total_edges += 1
         return artifact_id
 
     def register_evaluation(self, evaluation: Mapping[str, Any], pressure: Mapping[str, float], score: float, *, parent: str | None = None) -> str:
-        artifact_id = evaluation_artifact.register_evaluation(evaluation, pressure, score, parent=parent)
+        artifact_id = str(uuid.uuid4())
         self.evaluation_rows.append(
             {
                 "id": artifact_id,
@@ -184,6 +230,21 @@ class _FastSoakRuntime:
         )
         return artifact_id
 
+    def register_allocator(
+        self,
+        allocator: Mapping[str, Any],
+        pressure: Mapping[str, float],
+        workers: int,
+        budgets: Mapping[str, float],
+        *,
+        parent: str | None = None,
+    ) -> str:
+        artifact_id = str(uuid.uuid4())
+        if parent:
+            self.parent_counts[str(parent)] += 1
+            self.total_edges += 1
+        return artifact_id
+
     def register_exploration_strategy(
         self,
         strategy: Mapping[str, Any],
@@ -193,7 +254,7 @@ class _FastSoakRuntime:
         *,
         parent: str | None = None,
     ) -> str:
-        artifact_id = exploration_strategy_artifact.register_strategy(strategy, pressure, market, score, parent=parent)
+        artifact_id = str(uuid.uuid4())
         self.strategy_rows.append(
             {
                 "id": artifact_id,
@@ -201,6 +262,30 @@ class _FastSoakRuntime:
                 "strategy": dict(strategy),
                 "pressure": dict(pressure),
                 "market": dict(market),
+                "score": float(score),
+            }
+        )
+        return artifact_id
+
+    def register_strategy_of_strategy(
+        self,
+        strategy_of_strategy: Mapping[str, Any],
+        pressure: Mapping[str, float],
+        market: Mapping[str, float],
+        ecology: Mapping[str, float],
+        score: float,
+        *,
+        parent: str | None = None,
+    ) -> str:
+        artifact_id = str(uuid.uuid4())
+        self.strategy_of_strategy_rows.append(
+            {
+                "id": artifact_id,
+                "parent": parent,
+                "strategy_of_strategy": dict(strategy_of_strategy),
+                "pressure": dict(pressure),
+                "market": dict(market),
+                "ecology": dict(ecology),
                 "score": float(score),
             }
         )
@@ -255,9 +340,22 @@ class _SummaryTracker:
         self.total_workers = 0
         self.count = 0
         self.repair_count = 0
+        self.work_count = 0
+        self.exploration_count = 0
+        self.cross_domain_count = 0
         self.meta_count = 0
         self.reframing_count = 0
         self.freeze_count = 0
+        self.domain_switch_count = 0
+        self.strategy_of_strategy_count = 0
+        self.governor_interventions = 0
+        self.meta_exploration_count = 0
+        self.new_domain_count = 0
+        self._last_selected_domain: str | None = None
+        self.selected_domain_counts: collections.Counter[str] = collections.Counter()
+        self.selected_artifact_type_counts: collections.Counter[str] = collections.Counter()
+        self.artifact_population_counts: collections.Counter[str] = collections.Counter()
+        self.created_domains: set[str] = set()
 
     def update(self, report: Mapping[str, Any]) -> None:
         workers = int(report.get("workers", 0))
@@ -269,10 +367,46 @@ class _SummaryTracker:
             self.repair_count += 1
         quest = report.get("quest", {}) if isinstance(report.get("quest"), Mapping) else {}
         qtype = str(quest.get("type", ""))
+        if qtype == "work":
+            self.work_count += 1
+        if qtype == "exploration":
+            self.exploration_count += 1
         if qtype == "meta":
             self.meta_count += 1
         if qtype == "reframing":
             self.reframing_count += 1
+        routing = report.get("routing", {}) if isinstance(report.get("routing"), Mapping) else {}
+        selected_domain = str(routing.get("selected_domain", report.get("domain", "default")))
+        if selected_domain:
+            self.selected_domain_counts[selected_domain] += 1
+        if self._last_selected_domain is not None and selected_domain and selected_domain != self._last_selected_domain:
+            self.domain_switch_count += 1
+        if selected_domain:
+            self._last_selected_domain = selected_domain
+        if selected_domain and selected_domain != str(report.get("domain", "default")):
+            self.cross_domain_count += 1
+        civilization_selection = report.get("civilization_selection", {}) if isinstance(report.get("civilization_selection"), Mapping) else {}
+        selected_artifact_type = str(civilization_selection.get("selected_artifact_type", ""))
+        if selected_artifact_type:
+            self.selected_artifact_type_counts[selected_artifact_type] += 1
+        if selected_artifact_type == "strategy_of_strategy":
+            self.strategy_of_strategy_count += 1
+        population = report.get("population", {}) if isinstance(report.get("population"), Mapping) else {}
+        population_counts = population.get("population_counts", {}) if isinstance(population.get("population_counts"), Mapping) else {}
+        for artifact_type, count in population_counts.items():
+            self.artifact_population_counts[str(artifact_type)] = int(count)
+        meta_exploration = report.get("meta_exploration", {}) if isinstance(report.get("meta_exploration"), Mapping) else {}
+        if meta_exploration:
+            self.meta_exploration_count += 1
+        domain_creation = meta_exploration.get("domain_creation")
+        if isinstance(domain_creation, Mapping) and domain_creation:
+            name = str(domain_creation.get("name", ""))
+            if name and name not in self.created_domains:
+                self.created_domains.add(name)
+                self.new_domain_count += 1
+        governance = report.get("governance", {}) if isinstance(report.get("governance"), Mapping) else {}
+        if bool(governance.get("intervention")):
+            self.governor_interventions += 1
         guard = report.get("guard", {}) if isinstance(report.get("guard"), Mapping) else {}
         if bool(guard.get("freeze_export")):
             self.freeze_count += 1
@@ -284,8 +418,22 @@ class _SummaryTracker:
             "min_workers": 0 if self.min_workers is None else self.min_workers,
             "avg_workers": round(self.total_workers / count, 4),
             "repair_count": self.repair_count,
+            "work_count": self.work_count,
+            "exploration_count": self.exploration_count,
+            "cross_domain_count": self.cross_domain_count,
+            "domain_switch_count": self.domain_switch_count,
+            "selected_domain_counts": dict(self.selected_domain_counts),
+            "selected_artifact_type_counts": dict(self.selected_artifact_type_counts),
+            "artifact_population_counts": dict(self.artifact_population_counts),
             "meta_count": self.meta_count,
             "reframing_count": self.reframing_count,
+            "strategy_of_strategy_count": self.strategy_of_strategy_count,
+            "meta_exploration_count": self.meta_exploration_count,
+            "new_domain_count": self.new_domain_count,
+            "created_domains": sorted(self.created_domains),
+            "governor_interventions": self.governor_interventions,
+            "meta_share": round(self.meta_count / count, 4),
+            "exploration_share": round(self.exploration_count / count, 4),
             "freeze_count": self.freeze_count,
         }
 
@@ -379,6 +527,13 @@ def run_soak(
                     "stabilized_market": result.get("stabilized_market", result.get("market", {})),
                     "budgets": result.get("budgets", {}),
                     "routing": result.get("routing", {}),
+                    "ecology": result.get("ecology", {}),
+                    "strategy_of_strategy": result.get("strategy_of_strategy", {}),
+                    "meta_exploration": result.get("meta_exploration", {}),
+                    "civilization_selection": result.get("civilization_selection", {}),
+                    "population": result.get("population", {}),
+                    "governance": result.get("governance", {}),
+                    "economy": result.get("economy", {}),
                     "guard": result.get("guard", {}),
                     "cooldown": result.get("cooldown", {}),
                 }

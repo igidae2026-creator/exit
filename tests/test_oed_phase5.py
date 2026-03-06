@@ -29,7 +29,8 @@ def test_oed_phase5_returns_policy_stack_evaluation_meta_and_guard() -> None:
             assert "evaluation" in state
             assert "guard" in state
             assert "meta_quest" in state
-            assert state["routing"]["selected_domain"] == "default"
+            assert "default" in state["routing"]["routing_weights"]
+            assert state["routing"]["selected_domain"] in state["routing"]["routing_weights"]
             assert Path(os.environ["METAOS_EVALUATION_REGISTRY"]).exists()
             assert Path(os.environ["METAOS_EXPLORATION_STRATEGY_REGISTRY"]).exists()
         finally:

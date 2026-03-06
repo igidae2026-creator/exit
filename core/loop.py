@@ -11,12 +11,12 @@ import traceback
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping
 
-from metaos.observer.pressure_engine import pressure
 from metaos.policy.evolve_policy import evolve
 from metaos.registry.artifact_registry import register
 from metaos.runtime.oed_orchestrator import step as oed_step
-from metaos.runtime.quota_allocator import allocate
-from metaos.runtime.quest_system import spawn_quest
+from signal.pressure import pressure_frame
+from strategy.quota import quota_frame
+from strategy.quest_portfolio import active_quest, quest_slots
 
 
 StageHandler = Callable[[MutableMapping[str, Any]], Any]
@@ -92,9 +92,11 @@ def _noop_handler(_: MutableMapping[str, Any]) -> None:
 
 
 def oed_extension(metrics: Mapping[str, float], policy: MutableMapping[str, float], workers: int) -> tuple[dict[str, Any], dict[str, float], int]:
-    p = pressure(metrics)
-    q = spawn_quest(p)
-    workers = allocate(p, workers)
+    signal_frame = pressure_frame(metrics)
+    p = signal_frame["stabilized_pressure"]
+    q = active_quest(quest_slots(p))
+    quota = quota_frame(p, workers, signal_frame["market"], tick=0)
+    workers = int(quota.budgets["effective_workers"])
     policy = evolve(policy, p)
     register(
         {"quest": q, "policy": dict(policy), "pressure": p, "workers": workers},

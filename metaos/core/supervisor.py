@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import json
 import os
-import traceback
 from pathlib import Path
 from typing import Any, Callable
+
+from kernel.supervisor import guarded_step as _guarded_step
 
 
 def _checkpoint_path() -> Path:
@@ -30,16 +31,9 @@ def load_checkpoint(default: Any = None) -> Any:
 
 
 def guarded_step(step_fn: Callable[[Any], Any], state: Any, on_fail: Callable[[Any], Any] | None = None) -> Any:
-    try:
-        out = step_fn(state)
-        save_checkpoint(out or state)
-        return out
-    except Exception:
-        traceback.print_exc()
+    out = _guarded_step(step_fn, state, on_fail=on_fail)
+    if isinstance(out, dict) and out.get("mode") == "safe_mode":
         restored = load_checkpoint(default=state)
-        if on_fail:
-            try:
-                return on_fail(restored)
-            except Exception:
-                traceback.print_exc()
         return restored
+    save_checkpoint(out or state)
+    return out

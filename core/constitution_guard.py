@@ -10,6 +10,8 @@ from typing import Iterable
 IMMUTABLE = {
     "docs/core/METAOS_CONSTITUTION.md",
     "docs/core/METAOS_MASTER_SPEC.md",
+    "docs/00_METAOS_CONSTITUTION.md",
+    "docs/01_METAOS_MASTER_SPEC.md",
 }
 
 
@@ -27,7 +29,14 @@ def _repo_root(start: str | Path | None = None) -> Path:
 
 def immutable_paths(repo_root: str | Path | None = None) -> dict[str, Path]:
     root = _repo_root(repo_root)
-    return {item: root / item for item in IMMUTABLE}
+    candidates = {
+        "docs/core/METAOS_CONSTITUTION.md": [root / "docs/core/METAOS_CONSTITUTION.md", root / "docs/00_METAOS_CONSTITUTION.md"],
+        "docs/core/METAOS_MASTER_SPEC.md": [root / "docs/core/METAOS_MASTER_SPEC.md", root / "docs/01_METAOS_MASTER_SPEC.md"],
+    }
+    resolved: dict[str, Path] = {}
+    for canonical, options in candidates.items():
+        resolved[canonical] = next((path for path in options if path.exists()), options[0])
+    return resolved
 
 
 def check(paths: Iterable[str | Path]) -> None:

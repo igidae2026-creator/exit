@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import os
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Mapping
+
+from artifact.registry import register_envelope
 
 
 DEFAULT_STRATEGY_REGISTRY = ".metaos_runtime/data/exploration_strategy_artifacts.jsonl"
@@ -25,8 +26,15 @@ def register_strategy(
     *,
     parent: str | None = None,
 ) -> str:
+    artifact_id = register_envelope(
+        aclass="strategy",
+        atype="exploration_strategy",
+        spec={"strategy": dict(strategy)},
+        refs={"parents": [parent] if parent else [], "inputs": [], "subjects": [], "context": {}},
+        provenance={"pressure": dict(pressure), "market": dict(market), "score": float(score)},
+    )
     rec = {
-        "id": str(uuid.uuid4()),
+        "id": artifact_id,
         "parent": parent,
         "strategy": dict(strategy),
         "pressure": dict(pressure),
@@ -36,7 +44,7 @@ def register_strategy(
     }
     with _registry_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(rec, ensure_ascii=True) + "\n")
-    return str(rec["id"])
+    return artifact_id
 
 
 def load_all() -> list[dict[str, Any]]:

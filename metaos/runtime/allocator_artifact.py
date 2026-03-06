@@ -3,9 +3,10 @@ from __future__ import annotations
 import json
 import os
 import time
-import uuid
 from pathlib import Path
 from typing import Any, Mapping
+
+from artifact.registry import register_envelope
 
 
 DEFAULT_ALLOCATOR_REGISTRY = ".metaos_runtime/data/allocator_registry.jsonl"
@@ -25,8 +26,15 @@ def register_allocator_artifact(
     *,
     parent: str | None = None,
 ) -> str:
+    artifact_id = register_envelope(
+        aclass="strategy",
+        atype="allocator",
+        spec={"allocator": dict(allocator)},
+        refs={"parents": [parent] if parent else [], "inputs": [], "subjects": [], "context": {"quota": dict(budgets)}},
+        provenance={"pressure": dict(pressure), "workers": int(workers)},
+    )
     rec = {
-        "id": str(uuid.uuid4()),
+        "id": artifact_id,
         "parent": parent,
         "allocator": dict(allocator),
         "pressure": dict(pressure),
@@ -36,7 +44,7 @@ def register_allocator_artifact(
     }
     with _registry_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(rec, ensure_ascii=True) + "\n")
-    return str(rec["id"])
+    return artifact_id
 
 
 def load_all() -> list[dict[str, Any]]:
