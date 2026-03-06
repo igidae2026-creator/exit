@@ -26,6 +26,7 @@ class Supervisor:
         self.artifact_store = ArtifactStore(store_dir=self.adapter.artifact_dir, logger=self.logger, log_dir=self.adapter.data_dir)
         self.policy_runtime = PolicyRuntime(self.artifact_store, self.logger)
         self.quest_manager = QuestManager(max_selected=3)
+        self._hydrated = False
 
     def validate(self) -> dict[str, Any]:
         summary = self.adapter.validate()
@@ -45,7 +46,43 @@ class Supervisor:
             return func()
         except Exception as exc:
             self.logger.log_event("supervisor_action", {"hook": "retry_once", "tick": tick, "error": str(exc)})
-            return func()
+            self.logger.log_event("repair_attempt", {"tick": tick, "reason": "retry_once", "error": str(exc)})
+            try:
+                return func()
+            except Exception as retry_exc:
+                self.mode = "safe_mode"
+                self.logger.log_event("repair_failed", {"tick": tick, "reason": "retry_once", "error": str(retry_exc)})
+                repair_artifact = create_artifact(
+                    "repair",
+                    {"reason": "retry_once_exhausted", "error": str(retry_exc), "mode": self.mode},
+                    parent_ids=[],
+                    domain=self.adapter.domain_name,
+                    source="supervisor",
+                    tick=tick,
+                    artifact_dir=self.adapter.artifact_dir,
+                    data_dir=self.adapter.data_dir,
+                )
+                return {
+                    "tick": tick,
+                    "best_score": 0.0,
+                    "best_artifact_id": repair_artifact.artifact_id,
+                    "population": [],
+                    "population_size": 1,
+                    "candidate_rows": [],
+                    "metrics": {},
+                    "artifact_ids": [repair_artifact.artifact_id],
+                }
+
+    def _hydrate_from_replay(self, replay_state: object) -> None:
+        if self._hydrated:
+            return
+        current_policies = dict(getattr(replay_state, "current_policies", {}) or {})
+        if current_policies:
+            self.policy_runtime.restore_current(current_policies)
+        quest_rows = list(getattr(replay_state, "quests", {}).values() or [])
+        if quest_rows:
+            self.quest_manager.import_quests(quest_rows)
+        self._hydrated = True
 
     def checkpoint_restore(self) -> dict[str, Any]:
         restored = self.adapter.checkpoint_restore()
@@ -76,24 +113,46 @@ class Supervisor:
         self.logger.log_event("supervisor_action", {"hook": "quota_downshift", "tick": tick, "mode": self.mode, "before": quota, "after": downshifted})
         return downshifted
 
+    @staticmethod
+    def _portfolio_signature(item: dict[str, Any]) -> tuple[str, str, str, str]:
+        metadata = item.get("metadata") if isinstance(item.get("metadata"), dict) else {}
+        source_payload = item.get("source_payload") if isinstance(item.get("source_payload"), dict) else {}
+        quest_type = str(item.get("quest_type") or metadata.get("quest_type") or source_payload.get("quest_type") or "work_quest")
+        domain = str(item.get("domain") or metadata.get("domain") or source_payload.get("domain") or "")
+        title = str(item.get("title") or "")
+        description = str(item.get("description") or "")
+        return (quest_type, domain, title, description)
+
     def _sync_quests(self, portfolio: list[dict[str, Any]], tick: int) -> list[dict[str, Any]]:
+        existing_active = [*self.quest_manager.list("selected"), *self.quest_manager.list("proposed")]
+        active_by_signature = {self._portfolio_signature(quest.to_dict()): quest for quest in existing_active}
         active: list[dict[str, Any]] = []
-        existing_active = self.quest_manager.list("selected")
-        if existing_active:
-            active.extend([quest.to_dict() for quest in existing_active])
+        retained_ids: set[str] = set()
         for item in portfolio:
             quest_type = str(item.get("quest_type") or "work_quest")
-            quest = self.quest_manager.propose(
-                title=str(item.get("title") or quest_type),
-                description=str(item.get("description") or quest_type),
-                source="pressure",
-                priority=0.9 if quest_type == "reframing_quest" else 0.6,
-                source_payload=item,
-                metadata={"quest_type": quest_type, "tick": tick, "domain": item.get("domain")},
-            )
-            self.logger.log_event("quest_proposed", {"quest_id": quest.quest_id, "quest": quest.to_dict()})
+            signature = self._portfolio_signature(item)
+            quest = active_by_signature.get(signature)
+            if quest is None:
+                quest = self.quest_manager.propose(
+                    title=str(item.get("title") or quest_type),
+                    description=str(item.get("description") or quest_type),
+                    source="pressure",
+                    priority=0.9 if quest_type == "reframing_quest" else 0.6,
+                    source_payload=item,
+                    metadata={"quest_type": quest_type, "tick": tick, "domain": item.get("domain")},
+                )
+                self.logger.log_event("quest_proposed", {"quest_id": quest.quest_id, "quest": quest.to_dict()})
+            retained_ids.add(quest.quest_id)
             active.append(quest.to_dict())
+        for quest in existing_active:
+            if quest.quest_id in retained_ids:
+                continue
+            retired = self.quest_manager.retire(quest.quest_id, reason="portfolio_refresh")
+            self.logger.log_event("quest_retired", {"quest_id": retired.quest_id, "quest": retired.to_dict()})
         selected: list[dict[str, Any]] = []
+        for quest in self.quest_manager.list("selected"):
+            if quest.quest_id in retained_ids:
+                selected.append(quest.to_dict())
         while len(self.quest_manager.list("selected")) < self.quest_manager.max_selected:
             next_quest = self.quest_manager.select_next()
             if not next_quest:
@@ -104,6 +163,7 @@ class Supervisor:
 
     def run_cycle(self, replay_state: object) -> dict[str, Any]:
         validate_constitution()
+        self._hydrate_from_replay(replay_state)
         tick = int(getattr(replay_state, "tick", 0) or 0) + 1
         self.mode = "normal"
         checkpoint = self.checkpoint_restore()
@@ -126,6 +186,8 @@ class Supervisor:
         )
         if reasons:
             portfolio.insert(0, {"quest_type": "reframing_quest", "title": "Reframe exploration", "description": ", ".join(reasons), "domain": self.adapter.domain_name})
+        if not portfolio:
+            portfolio = [{"quest_type": "work_quest", "title": "Work quest", "description": "Exploit the best current strategy in the canonical domain.", "domain": self.adapter.domain_name}]
         active_quests = self._sync_quests(portfolio[:3], tick)
         self.logger.log_event("quest_portfolio", {"tick": tick, "quests": active_quests})
         for quest in active_quests:
@@ -168,6 +230,7 @@ class Supervisor:
         self._archive_append("quota_decisions", {"tick": tick, **quota})
         self._archive_append("policies", {"tick": tick, "artifacts": policy_record_ids, **policy_bundle})
         self._archive_append("domain_genomes", {"tick": tick, **self.adapter.domain_genome.to_dict()})
+        self.logger.log_event("domain_genome_loaded", {"tick": tick, **self.adapter.domain_genome.to_dict()})
 
         selected = selection(replay_state)
         parent_ids = list(selected.get("parent_ids", []))

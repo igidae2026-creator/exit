@@ -43,7 +43,24 @@ def archive_pressure_hook(replay_state: object, *, archive_limit: int = 5000) ->
 def choose_parent_ids(replay_state: object, *, limit: int = 3) -> list[str]:
     artifacts = getattr(replay_state, "artifacts", {}) or {}
     ranked = sorted(artifacts.values(), key=lambda row: (float(row.get("score") or 0.0), int(row.get("tick") or 0)), reverse=True)
-    return [str(row.get("artifact_id")) for row in ranked[:limit] if row.get("artifact_id")]
+    distinct_candidates: list[tuple[str, str]] = []
+    duplicate_candidates: list[str] = []
+    seen_lineages: set[str] = set()
+    for row in ranked:
+        artifact_id = str(row.get("artifact_id") or "")
+        if not artifact_id:
+            continue
+        metadata = row.get("metadata") if isinstance(row.get("metadata"), dict) else {}
+        lineage_id = str(metadata.get("lineage_id") or artifact_id)
+        if lineage_id in seen_lineages:
+            duplicate_candidates.append(artifact_id)
+            continue
+        distinct_candidates.append((artifact_id, lineage_id))
+        seen_lineages.add(lineage_id)
+    selected = [artifact_id for artifact_id, _lineage_id in distinct_candidates[:limit]]
+    if len(selected) < limit:
+        selected.extend(duplicate_candidates[: max(0, limit - len(selected))])
+    return selected
 
 
 def signal(replay_state: object) -> dict[str, Any]:

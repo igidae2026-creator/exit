@@ -15,6 +15,7 @@ from core.log import AppendOnlyLogger
 from core.policy import PolicyRuntime
 from core.replay import archive_pressure, replay_state
 from core.strategy_genome import StrategyGenome
+from core.supervisor import Supervisor
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
 from runtime.quest_manager import QuestManager, reframing_triggers
 
@@ -88,6 +89,77 @@ class ExplorationCivilizationTests(unittest.TestCase):
             payload = json.loads(replay_cmd.stdout)
             self.assertGreaterEqual(payload["tick"], 3)
             self.assertTrue(payload["domains"])
+
+    def test_execute_cycle_shares_lineage_id_across_candidate_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = KernelAdapter(
+                data_dir=Path(tmp) / "data",
+                artifact_dir=Path(tmp) / "artifact_store",
+                state_dir=Path(tmp) / "state",
+                archive_dir=Path(tmp) / "archive",
+            )
+            result = adapter.execute_cycle(
+                tick=1,
+                quests=[{"id": "q1", "domain": "code_domain"}],
+                policy={"mutation_scale": 0.0},
+                quota={"worker_budget": 2},
+                parent_ids=["parent-lineage"],
+            )
+            state = replay_state(adapter.data_dir, state_dir=adapter.state_dir, archive_dir=adapter.archive_dir)
+            for row in result["candidate_rows"]:
+                lineage_ids = {
+                    str((state.artifacts[artifact_id].get("metadata") or {}).get("lineage_id"))
+                    for artifact_id in row["artifact_ids"]
+                }
+                self.assertEqual(lineage_ids, {"parent-lineage"})
+
+    def test_sync_quests_preserves_hydrated_selected_quest_when_portfolio_matches(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = KernelAdapter(
+                data_dir=Path(tmp) / "data",
+                artifact_dir=Path(tmp) / "artifact_store",
+                state_dir=Path(tmp) / "state",
+                archive_dir=Path(tmp) / "archive",
+            )
+            supervisor = Supervisor(adapter)
+            replay = type(
+                "ReplayStub",
+                (),
+                {
+                    "current_policies": {},
+                    "quests": {
+                        "q_existing": {
+                            "quest_id": "q_existing",
+                            "title": "Work quest",
+                            "description": "Exploit the best current strategy in the canonical domain.",
+                            "source": "pressure",
+                            "state": "selected",
+                            "priority": 0.6,
+                            "source_payload": {
+                                "quest_type": "work_quest",
+                                "title": "Work quest",
+                                "description": "Exploit the best current strategy in the canonical domain.",
+                                "domain": "code_domain",
+                            },
+                            "metadata": {"quest_type": "work_quest", "tick": 1, "domain": "code_domain"},
+                        }
+                    },
+                },
+            )()
+            supervisor._hydrate_from_replay(replay)
+            selected = supervisor._sync_quests(
+                [
+                    {
+                        "quest_type": "work_quest",
+                        "title": "Work quest",
+                        "description": "Exploit the best current strategy in the canonical domain.",
+                        "domain": "code_domain",
+                    }
+                ],
+                tick=2,
+            )
+            self.assertEqual([quest["quest_id"] for quest in selected], ["q_existing"])
+            self.assertEqual(supervisor.quest_manager.get("q_existing").state, "selected")
 
 
 if __name__ == "__main__":

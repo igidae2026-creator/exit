@@ -1,2 +1,0 @@
-{"tick":7179,"adapter":"code_domain","constraints":{"canonical":true},"evaluation_recipe":"core.autonomous_daemon.evaluate_strategy","mutation_priors":{"quality":0.2,"novelty":0.25,"diversity":0.2,"efficiency":0.2,"cost":0.15}}
-{"tick":7180,"adapter":"code_domain","constraints":{"canonical":true},"evaluation_recipe":"core.autonomous_daemon.evaluate_strategy","mutation_priors":{"quality":0.2,"novelty":0.25,"diversity":0.2,"efficiency":0.2,"cost":0.15}}

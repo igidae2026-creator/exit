@@ -54,11 +54,15 @@ def generate_quest_portfolio(replay_state: object, pressure_vector: dict[str, fl
     domains = domain_plugin_names()
     primary = choose_quest_kind(replay_state, pressure_vector)
     portfolio = [quest_payload(primary, pressure_vector, domain="code_domain")]
+    artifact_count = len(getattr(replay_state, "artifacts", {}) or {})
+    noncanonical_domains = [domain for domain in domains if domain != "code_domain"]
 
-    if float(pressure_vector.get("transfer_pressure", 0.0)) >= 0.4 and len(portfolio) < max_quests:
-        portfolio.append(quest_payload("transfer_quest", pressure_vector, domain=domains[min(1, len(domains) - 1)]))
-    if float(pressure_vector.get("diversity_pressure", 0.0)) >= 0.4 and len(portfolio) < max_quests:
-        portfolio.append(quest_payload("exploration_quest", pressure_vector, domain=domains[min(2, len(domains) - 1)]))
+    if noncanonical_domains and (artifact_count == 0 or float(pressure_vector.get("domain_shift_pressure", 0.0)) >= 0.5) and len(portfolio) < max_quests:
+        portfolio.append(quest_payload("exploration_quest", pressure_vector, domain=noncanonical_domains[0]))
+    if float(pressure_vector.get("transfer_pressure", 0.0)) >= 0.4 and noncanonical_domains and len(portfolio) < max_quests:
+        portfolio.append(quest_payload("transfer_quest", pressure_vector, domain=noncanonical_domains[min(1, len(noncanonical_domains) - 1)]))
+    if float(pressure_vector.get("diversity_pressure", 0.0)) >= 0.4 and noncanonical_domains and len(portfolio) < max_quests:
+        portfolio.append(quest_payload("exploration_quest", pressure_vector, domain=noncanonical_domains[min(1, len(noncanonical_domains) - 1)]))
     if float(pressure_vector.get("repair_pressure", 0.0)) >= 0.45 and len(portfolio) < max_quests:
         portfolio.append(quest_payload("meta_quest", pressure_vector, domain="code_domain"))
     return portfolio[:max_quests]

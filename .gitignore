@@ -38,3 +38,6 @@ artifact_store/
 archive/
 data/events.jsonl
 data/metrics.jsonl
+.mypy_cache/
+.ruff_cache/
+.DS_Store

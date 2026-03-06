@@ -7,6 +7,7 @@ from typing import Any, Dict, Iterable, List
 
 from artifact.lineage import lineage_counts as replay_lineage_counts, lineage_graph
 from core.event_log import ensure_spine, read_events, read_metrics, read_registry
+from domains.domain_genome import canonical_domain_genome, domain_plugin_names
 
 
 @dataclass(slots=True)
@@ -190,6 +191,27 @@ def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "stat
         state.active_quest = dict(state.quest_portfolio[0])
     state.lineages = replay_lineage_counts(str(data_dir))
     state.lineage_graph = lineage_graph(str(data_dir))
+    if not state.domain_genomes:
+        for domain_name in domain_plugin_names():
+            state.domain_genomes[domain_name] = canonical_domain_genome(domain_name).to_dict()
+    elif "code_domain" not in state.domain_genomes:
+        state.domain_genomes["code_domain"] = canonical_domain_genome("code_domain").to_dict()
+    if not state.domain_counts:
+        state.domain_counts["code_domain"] = 0
+    if state.active_quest is None:
+        default_domain = next(iter(state.domain_counts), "code_domain")
+        state.active_quest = {
+            "quest_id": "bootstrap:code_domain",
+            "title": "Work quest",
+            "description": "Exploit the best current strategy in the canonical domain.",
+            "source": "bootstrap",
+            "state": "selected",
+            "priority": 0.5,
+            "source_payload": {"quest_type": "work_quest", "domain": default_domain},
+            "metadata": {"quest_type": "work_quest", "domain": default_domain},
+        }
+    if not state.quest_portfolio:
+        state.quest_portfolio = [dict(state.active_quest)]
     return state
 
 

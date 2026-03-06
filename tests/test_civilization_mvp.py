@@ -13,6 +13,7 @@ from core.replay import replay_state
 from core.supervisor import Supervisor
 from evolution.pressure_engine import compute_pressures
 from evolution.quest_ecology import generate_quest_portfolio
+from unittest.mock import Mock
 
 
 class CivilizationMvpTests(unittest.TestCase):
@@ -77,6 +78,23 @@ class CivilizationMvpTests(unittest.TestCase):
             report = supervisor.run_cycle(state)
             self.assertIn(report["supervisor_mode"], {"safe_mode", "quota_downshift", "anti_collapse_guard", "normal"})
             self.assertGreaterEqual(report["population_size"], 1)
+
+    def test_replay_bootstraps_domain_and_quest_when_empty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp) / "data"
+            state = replay_state(data_dir, state_dir=Path(tmp) / "state", archive_dir=Path(tmp) / "archive")
+            self.assertIn("code_domain", state.domain_counts)
+            self.assertTrue(state.quest_portfolio)
+
+    def test_retry_once_falls_back_to_repair_artifact_after_second_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = KernelAdapter(data_dir=Path(tmp) / "data", artifact_dir=Path(tmp) / "artifact_store", state_dir=Path(tmp) / "state", archive_dir=Path(tmp) / "archive")
+            supervisor = Supervisor(adapter)
+            failing = Mock(side_effect=RuntimeError("boom"))
+            result = supervisor.retry_once(failing, tick=1)
+            self.assertEqual(failing.call_count, 2)
+            self.assertTrue(result["artifact_ids"])
+            self.assertEqual(result["population_size"], 1)
 
 
 if __name__ == "__main__":

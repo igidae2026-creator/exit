@@ -146,6 +146,7 @@ class KernelAdapter:
             strategy = base_strategy if safe_mode else genome.mutate(base_strategy, drift=drift)
             metrics = self._candidate_metrics(strategy, domain=domain, tick=tick, worker_index=worker_index, safe_mode=safe_mode)
             quest = quest_list[worker_index % len(quest_list)]
+            lineage_id = str(parent_ids[worker_index % len(parent_ids)]) if parent_ids else f"{domain}:{tick}:{worker_index}"
             strategy_artifact = create_artifact(
                 "strategy",
                 {"strategy": strategy, "policy": dict(policy), "quota": dict(quota), "domain": domain, "quest": quest},
@@ -157,7 +158,7 @@ class KernelAdapter:
                 tick=tick,
                 artifact_dir=self.artifact_dir,
                 data_dir=self.data_dir,
-                metadata={"lineage_id": str(parent_ids[0]) if parent_ids else f"{domain}:{tick}:{worker_index}"},
+                metadata={"lineage_id": lineage_id},
             )
             evaluation_artifact = create_artifact(
                 "evaluation",
@@ -170,6 +171,7 @@ class KernelAdapter:
                 tick=tick,
                 artifact_dir=self.artifact_dir,
                 data_dir=self.data_dir,
+                metadata={"lineage_id": lineage_id},
             )
             discovery_artifact = create_artifact(
                 "discovery",
@@ -182,6 +184,7 @@ class KernelAdapter:
                 tick=tick,
                 artifact_dir=self.artifact_dir,
                 data_dir=self.data_dir,
+                metadata={"lineage_id": lineage_id},
             )
             rows.append(
                 {
