@@ -2,13 +2,12 @@ from __future__ import annotations
 
 import json
 import os
-import random
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Mapping
 
 QUEST_PATH = "state/quest.json"
-QUEST_TYPES = ("work", "exploration", "meta")
+QUEST_TYPES = ("work", "exploration", "meta", "reframing", "transfer")
 
 
 def now() -> str:
@@ -48,7 +47,7 @@ def build_quest(
 ) -> dict[str, Any]:
     if quest_type not in QUEST_TYPES:
         raise ValueError(f"unsupported quest type: {quest_type}")
-
+    pressure_snapshot = dict(pressures or {})
     return {
         "id": str(uuid.uuid4()),
         "quest_type": quest_type,
@@ -57,15 +56,17 @@ def build_quest(
         "created_at": now(),
         "domain_hint": domain_hint,
         "target": {
-            "min_score": round(random.uniform(0.50, 0.75), 3),
-            "min_novelty": round(random.uniform(0.35, 0.75), 3),
-            "min_diversity": round(random.uniform(0.35, 0.75), 3),
+            "min_score": 0.55 if quest_type == "work" else 0.48,
+            "min_novelty": 0.52 if quest_type in {"exploration", "reframing", "transfer"} else 0.30,
+            "min_diversity": 0.50 if quest_type in {"exploration", "reframing", "transfer"} else 0.30,
+            "min_usefulness": 0.42,
+            "min_persistence": 0.36,
         },
-        "ttl_ticks": ttl_ticks if ttl_ticks is not None else random.randint(3, 8),
+        "ttl_ticks": ttl_ticks if ttl_ticks is not None else (4 if quest_type == "work" else 3),
         "tick_start": tick,
         "wins": 0,
         "fails": 0,
-        "pressure_snapshot": dict(pressures or {}),
+        "pressure_snapshot": pressure_snapshot,
     }
 
 
@@ -73,22 +74,22 @@ def default_quest(domain_hint: str | None = None, quest_type: str = "work") -> d
     return build_quest(quest_type, domain_hint=domain_hint)
 
 
-def choose_quest_type(
-    pressure_vector: Mapping[str, float] | None,
-    *,
-    plateau_streak: int = 0,
-) -> str:
+def choose_quest_type(pressure_vector: Mapping[str, float] | None, *, plateau_streak: int = 0) -> str:
     pressure_vector = dict(pressure_vector or {})
     repair_pressure = float(pressure_vector.get("repair_pressure", 0.0))
     novelty_pressure = float(pressure_vector.get("novelty_pressure", 0.0))
     diversity_pressure = float(pressure_vector.get("diversity_pressure", 0.0))
     domain_shift_pressure = float(pressure_vector.get("domain_shift_pressure", 0.0))
+    reframing_pressure = float(pressure_vector.get("reframing_pressure", 0.0))
+    transfer_pressure = float(pressure_vector.get("transfer_pressure", 0.0))
 
+    if reframing_pressure >= 0.7:
+        return "reframing"
+    if transfer_pressure >= 0.6:
+        return "transfer"
     if repair_pressure >= 0.75:
         return "meta"
-    if plateau_streak >= 2:
-        return "meta" if repair_pressure >= 0.55 else "exploration"
-    if max(novelty_pressure, diversity_pressure, domain_shift_pressure) >= 0.55:
+    if plateau_streak >= 2 or max(novelty_pressure, diversity_pressure, domain_shift_pressure) >= 0.55:
         return "exploration"
     return "work"
 
@@ -102,52 +103,31 @@ def ensure_quest(
     path: str | None = None,
 ) -> tuple[dict[str, Any], bool]:
     quest = load_quest(path)
+    quest_type = choose_quest_type(pressure_vector, plateau_streak=plateau_streak)
     if quest is None:
-        quest = build_quest(
-            choose_quest_type(pressure_vector, plateau_streak=plateau_streak),
-            domain_hint=domain_hint,
-            pressures=pressure_vector,
-            tick=tick,
-        )
+        quest = build_quest(quest_type, domain_hint=domain_hint, pressures=pressure_vector, tick=tick)
         save_quest(quest, path)
         return quest, True
-
     age = tick - int(quest.get("tick_start", 0))
     ttl = int(quest.get("ttl_ticks", 4))
-    if age >= ttl:
-        quest = build_quest(
-            choose_quest_type(pressure_vector, plateau_streak=plateau_streak),
-            domain_hint=domain_hint,
-            pressures=pressure_vector,
-            tick=tick,
-        )
+    should_rotate = age >= ttl or quest.get("quest_type") != quest_type
+    if should_rotate:
+        quest = build_quest(quest_type, domain_hint=domain_hint, pressures=pressure_vector, tick=tick)
         save_quest(quest, path)
         return quest, True
-
     return quest, False
 
 
-def update_quest(
-    quest: Mapping[str, Any],
-    tick: int,
-    best_score: float,
-    last_metrics: Mapping[str, float] | None = None,
-    path: str | None = None,
-) -> dict[str, Any]:
+def update_quest(quest: Mapping[str, Any], tick: int, best_score: float, last_metrics: Mapping[str, float] | None = None, path: str | None = None) -> dict[str, Any]:
     updated = dict(quest)
     target = dict(updated.get("target", {}))
-    min_score = float(target.get("min_score", 0.65))
-
-    if best_score >= min_score:
+    if best_score >= float(target.get("min_score", 0.65)):
         updated["wins"] = int(updated.get("wins", 0)) + 1
-        target["min_score"] = round(min(0.95, min_score + 0.02), 3)
     else:
         updated["fails"] = int(updated.get("fails", 0)) + 1
-
     if last_metrics:
-        target["min_novelty"] = round(max(target.get("min_novelty", 0.35), float(last_metrics.get("novelty", 0.0))), 3)
-        target["min_diversity"] = round(max(target.get("min_diversity", 0.35), float(last_metrics.get("diversity", 0.0))), 3)
-
+        for key, target_key in (("novelty", "min_novelty"), ("diversity", "min_diversity"), ("usefulness", "min_usefulness"), ("persistence", "min_persistence")):
+            target[target_key] = round(max(float(target.get(target_key, 0.0)), float(last_metrics.get(key, 0.0))), 6)
     updated["target"] = target
     updated["updated_at"] = now()
     updated["tick_last_seen"] = tick

@@ -7,8 +7,6 @@ import uuid
 
 @dataclass(frozen=True)
 class StrategyGenome:
-    """Represents a strategy configuration used by METAOS exploration."""
-
     id: str
     domain: str
     eval_axes: dict[str, float] = field(default_factory=dict)
@@ -30,7 +28,7 @@ class StrategyGenome:
         return cls(
             id=id or uuid.uuid4().hex,
             domain=domain,
-            eval_axes=dict(eval_axes or {}),
+            eval_axes={key: float(value) for key, value in dict(eval_axes or {}).items()},
             mutation_ops=list(mutation_ops or ["perturb", "swap", "recombine"]),
             budget=float(budget),
             parent=parent,
@@ -39,14 +37,7 @@ class StrategyGenome:
     def with_updates(self, **kwargs: Any) -> "StrategyGenome":
         data = self.to_dict()
         data.update(kwargs)
-        return StrategyGenome(
-            id=data["id"],
-            domain=data["domain"],
-            eval_axes=dict(data["eval_axes"]),
-            mutation_ops=list(data["mutation_ops"]),
-            budget=float(data["budget"]),
-            parent=data["parent"],
-        )
+        return StrategyGenome.create(**data)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -78,8 +69,8 @@ class DomainGenome:
         return cls(
             adapter=adapter,
             constraints=dict(constraints or {}),
-            evaluation_recipe={k: float(v) for k, v in dict(evaluation_recipe or {}).items()},
-            mutation_priors={k: float(v) for k, v in dict(mutation_priors or {}).items()},
+            evaluation_recipe={key: float(value) for key, value in dict(evaluation_recipe or {}).items()},
+            mutation_priors={key: float(value) for key, value in dict(mutation_priors or {}).items()},
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -93,24 +84,10 @@ class DomainGenome:
 
 def canonical_domain_genome() -> DomainGenome:
     return DomainGenome.create(
-        adapter="canonical_domain",
-        constraints={
-            "canonical_only": True,
-            "max_lineage_share": 0.68,
-            "minimum_lineages": 2,
-        },
-        evaluation_recipe={
-            "quality": 0.30,
-            "novelty": 0.22,
-            "diversity": 0.23,
-            "efficiency": 0.15,
-            "cost": 0.10,
-        },
-        mutation_priors={
-            "perturb": 0.45,
-            "swap": 0.25,
-            "recombine": 0.30,
-        },
+        adapter="code_domain",
+        constraints={"canonical_only": False, "max_lineage_share": 0.68, "minimum_lineages": 2},
+        evaluation_recipe={"quality": 0.22, "novelty": 0.14, "diversity": 0.12, "efficiency": 0.18, "usefulness": 0.16, "persistence": 0.08, "recombination": 0.10, "cost": -0.08},
+        mutation_priors={"perturb": 0.45, "swap": 0.25, "recombine": 0.30},
     )
 
 

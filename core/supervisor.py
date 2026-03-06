@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import Any, Callable
 from pathlib import Path
+from typing import Any, Callable
 
-from core.artifact import create_artifact
+from core.artifact import ArtifactStore, create_artifact
 from core.constitution_guard import validate_constitution
 from core.event_log import append_jsonl
 from core.kernel_adapter import KernelAdapter
-from core.log import log_event
-from evolution.evolve import archive_pressure_hook, mutation, policy_evolution_hook, selection, signal
+from core.log import AppendOnlyLogger, log_event
+from core.policy import PolicyRuntime
+from core.replay import archive_pressure
+from evolution.evolve import archive_pressure_hook, policy_evolution_hook, selection, signal
 from evolution.pressure_engine import compute_pressures
-from evolution.quest_ecology import choose_quest_kind, quest_payload
-from evolution.quest_generator import generate_quest
+from evolution.quest_ecology import generate_quest_portfolio
 from evolution.quota_allocator import allocate_quota
+from runtime.quest_manager import QuestManager, reframing_triggers
 
 
 class Supervisor:
@@ -20,13 +22,20 @@ class Supervisor:
         self.adapter = adapter
         self.total_budget = total_budget
         self.mode = "normal"
+        self.logger = AppendOnlyLogger(log_dir=self.adapter.data_dir)
+        self.artifact_store = ArtifactStore(store_dir=self.adapter.artifact_dir, logger=self.logger, log_dir=self.adapter.data_dir)
+        self.policy_runtime = PolicyRuntime(self.artifact_store, self.logger)
+        self.quest_manager = QuestManager(max_selected=3)
 
     def validate(self) -> dict[str, Any]:
-        validate_constitution()
-        self.adapter.archive_dir.mkdir(parents=True, exist_ok=True)
         summary = self.adapter.validate()
-        log_event("supervisor_validate", summary, data_dir=str(self.adapter.data_dir))
-        return summary
+        replay_summary = self.adapter.checkpoint_restore()
+        log_event("supervisor_validate", {"summary": summary, "checkpoint": replay_summary}, data_dir=self.adapter.data_dir)
+        return {
+            **summary,
+            "replayable": True,
+            "policy_names": sorted(self.policy_runtime.current_policy_ids()),
+        }
 
     def _archive_append(self, name: str, payload: dict[str, Any]) -> None:
         append_jsonl(self.adapter.archive_dir / f"{name}.jsonl", payload)
@@ -35,21 +44,17 @@ class Supervisor:
         try:
             return func()
         except Exception as exc:
-            log_event("supervisor_retry_once", {"tick": tick, "error": str(exc)}, data_dir=str(self.adapter.data_dir))
+            self.logger.log_event("supervisor_action", {"hook": "retry_once", "tick": tick, "error": str(exc)})
             return func()
 
     def checkpoint_restore(self) -> dict[str, Any]:
         restored = self.adapter.checkpoint_restore()
-        log_event(
-            "supervisor_checkpoint_restore",
-            {"tick": restored.get("tick", 0), "best_score": restored.get("best_score", 0.0)},
-            data_dir=str(self.adapter.data_dir),
-        )
+        self.logger.log_event("supervisor_action", {"hook": "checkpoint_restore", "tick": int(restored.get("tick", 0) or 0), "best_score": float(restored.get("best_score", 0.0) or 0.0)})
         return restored
 
     def safe_mode(self, *, tick: int, reason: str, parent_ids: list[str]) -> dict[str, Any]:
         self.mode = "safe_mode"
-        log_event("safe_mode_entered", {"tick": tick, "reason": reason}, data_dir=str(self.adapter.data_dir))
+        self.logger.log_event("supervisor_action", {"hook": "safe_mode", "tick": tick, "reason": reason, "mode": "safe_mode"})
         repair_artifact = create_artifact(
             "repair",
             {"reason": reason, "mode": "safe_mode"},
@@ -58,118 +63,158 @@ class Supervisor:
             source="supervisor",
             tick=tick,
             artifact_dir=self.adapter.artifact_dir,
-            data_dir=str(self.adapter.data_dir),
+            data_dir=self.adapter.data_dir,
         )
         return {
-            "quota": {"exploit": 20.0, "explore": 5.0, "recovery": 60.0, "mutation": 5.0},
+            "quota": {"worker_budget": 1.0, "mutation_budget": 12.0, "repair_budget": 42.0, "exploration_budget": 18.0, "replay_budget": 28.0},
             "repair_artifact_id": repair_artifact.artifact_id,
         }
 
     def quota_downshift(self, quota: dict[str, float], *, tick: int) -> dict[str, float]:
         downshifted = {key: round(value * 0.5, 6) for key, value in quota.items()}
         self.mode = "quota_downshift"
-        log_event("quota_downshift", {"tick": tick, "before": quota, "after": downshifted}, data_dir=str(self.adapter.data_dir))
+        self.logger.log_event("supervisor_action", {"hook": "quota_downshift", "tick": tick, "mode": self.mode, "before": quota, "after": downshifted})
         return downshifted
 
+    def _sync_quests(self, portfolio: list[dict[str, Any]], tick: int) -> list[dict[str, Any]]:
+        active: list[dict[str, Any]] = []
+        existing_active = self.quest_manager.list("selected")
+        if existing_active:
+            active.extend([quest.to_dict() for quest in existing_active])
+        for item in portfolio:
+            quest_type = str(item.get("quest_type") or "work_quest")
+            quest = self.quest_manager.propose(
+                title=str(item.get("title") or quest_type),
+                description=str(item.get("description") or quest_type),
+                source="pressure",
+                priority=0.9 if quest_type == "reframing_quest" else 0.6,
+                source_payload=item,
+                metadata={"quest_type": quest_type, "tick": tick, "domain": item.get("domain")},
+            )
+            self.logger.log_event("quest_proposed", {"quest_id": quest.quest_id, "quest": quest.to_dict()})
+            active.append(quest.to_dict())
+        selected: list[dict[str, Any]] = []
+        while len(self.quest_manager.list("selected")) < self.quest_manager.max_selected:
+            next_quest = self.quest_manager.select_next()
+            if not next_quest:
+                break
+            self.logger.log_event("quest_selected", {"quest_id": next_quest.quest_id, "quest": next_quest.to_dict()})
+            selected.append(next_quest.to_dict())
+        return selected or active[: self.quest_manager.max_selected]
+
     def run_cycle(self, replay_state: object) -> dict[str, Any]:
+        validate_constitution()
         tick = int(getattr(replay_state, "tick", 0) or 0) + 1
         self.mode = "normal"
-        self.validate()
         checkpoint = self.checkpoint_restore()
 
         signal_payload = signal(replay_state)
         pressures = compute_pressures(replay_state)
-        quest = generate_quest(pressures, replay_state, domain_hint=self.adapter.domain_name, tick=tick)
-        quest_kind = choose_quest_kind(replay_state, pressures, data_dir=str(self.adapter.data_dir))
-        quest.update(quest_payload(quest_kind, pressures))
-        parent_ids = selection(replay_state)["parent_ids"]
-
-        quest_artifact = create_artifact(
-            "quest",
-            quest,
-            parent_ids=parent_ids,
-            domain=self.adapter.domain_name,
-            quest_id=str(quest.get("id") or ""),
-            source="supervisor",
-            tick=tick,
-            artifact_dir=self.adapter.artifact_dir,
-            data_dir=str(self.adapter.data_dir),
-        )
-        log_event("quest_selected", {"tick": tick, "quest": quest}, data_dir=str(self.adapter.data_dir))
-        self._archive_append("quests", {"tick": tick, **quest})
-
-        policy = policy_evolution_hook(replay_state, pressures)
-        policy_artifact = create_artifact(
-            "policy",
-            policy,
-            parent_ids=[quest_artifact.artifact_id, *parent_ids],
-            domain=self.adapter.domain_name,
-            quest_id=str(quest.get("id") or ""),
-            source="supervisor",
-            tick=tick,
-            artifact_dir=self.adapter.artifact_dir,
-            data_dir=str(self.adapter.data_dir),
-        )
-        log_event("policy_evolved", {"tick": tick, "policy": policy}, data_dir=str(self.adapter.data_dir))
-        self._archive_append("policies", {"tick": tick, **policy})
-        self._archive_append("domain_genomes", {"tick": tick, "adapter": self.adapter.domain_genome.adapter, "constraints": self.adapter.domain_genome.constraints, "evaluation_recipe": self.adapter.domain_genome.evaluation_recipe, "mutation_priors": self.adapter.domain_genome.mutation_priors})
-
-        collapse_state = {
-            "collapsed": pressures["repair_pressure"] >= 0.75,
-            "drop": pressures["diversity_pressure"],
-        }
-        quota = allocate_quota(pressures, base_budget=self.total_budget)
-        if pressures["repair_pressure"] >= 0.80:
-            quota = self.quota_downshift(quota, tick=tick)
-        log_event("quota_allocated", {"tick": tick, "quota": quota}, data_dir=str(self.adapter.data_dir))
-        self._archive_append("quota_decisions", {"tick": tick, **quota})
-
-        archive = archive_pressure_hook(replay_state)
-        log_event("archive_pressure", {"tick": tick, **archive}, data_dir=str(self.adapter.data_dir))
+        archive_vector = archive_pressure(replay_state)
+        pressures.update({key: value for key, value in archive_vector.items() if key not in pressures})
+        self.logger.log_event("pressure_snapshot", pressures)
         self._archive_append("pressure_snapshots", {"tick": tick, **pressures})
-        mutation_payload = mutation(policy, pressures)
-        log_event("mutation_selected", {"tick": tick, **mutation_payload}, data_dir=str(self.adapter.data_dir))
 
-        execution_parent_ids = [quest_artifact.artifact_id, policy_artifact.artifact_id, *parent_ids]
+        portfolio = generate_quest_portfolio(replay_state, pressures, max_quests=3)
+        reasons = reframing_triggers(
+            novelty_history=[row.get("novelty", 0.0) for row in getattr(replay_state, "metric_history", [])],
+            diversity_history=[row.get("diversity", 0.0) for row in getattr(replay_state, "metric_history", [])],
+            score_history=[row.get("score", 0.0) for row in getattr(replay_state, "metric_history", [])],
+            repair_failures=len([row for row in getattr(replay_state, "repairs", []) if row.get("event_type") == "repair_failed"]),
+            lineage_share=float(getattr(replay_state, "lineage_concentration", lambda: 0.0)() if hasattr(replay_state, "lineage_concentration") else 0.0),
+            repeated_low_diversity_cycles=int(getattr(replay_state, "plateau_streak", 0) or 0),
+        )
+        if reasons:
+            portfolio.insert(0, {"quest_type": "reframing_quest", "title": "Reframe exploration", "description": ", ".join(reasons), "domain": self.adapter.domain_name})
+        active_quests = self._sync_quests(portfolio[:3], tick)
+        self.logger.log_event("quest_portfolio", {"tick": tick, "quests": active_quests})
+        for quest in active_quests:
+            self._archive_append("quests", {"tick": tick, **quest})
 
-        def _attempt() -> dict[str, Any]:
+        selection_policy = policy_evolution_hook(replay_state, pressures)
+        mutation_policy = {
+            **self.policy_runtime.get_policy("mutation_policy"),
+            "exploration_bias": round(0.30 + (0.50 * float(pressures.get("novelty_pressure", 0.0))), 6),
+            "repair_bias": round(0.20 + (0.50 * float(pressures.get("repair_pressure", 0.0))), 6),
+        }
+        quest_policy = {
+            **self.policy_runtime.get_policy("quest_policy"),
+            "metric_threshold": round(0.50 - (0.10 * float(pressures.get("reframing_pressure", 0.0))), 6),
+        }
+        evaluation_policy = {
+            **self.policy_runtime.get_policy("evaluation_policy"),
+            "minimum_score": round(0.40 + (0.10 * float(pressures.get("usefulness_pressure", 0.0))), 6),
+        }
+        repair_policy = {
+            **self.policy_runtime.get_policy("repair_policy"),
+            "safe_mode_after": 2 if float(pressures.get("repair_pressure", 0.0)) >= 0.7 else 3,
+        }
+        quota_policy = {
+            **self.policy_runtime.get_policy("quota_policy"),
+            "base_worker_budget": 2 + int(round(float(pressures.get("transfer_pressure", 0.0)) * 2)),
+        }
+        policy_bundle = {
+            "selection_policy": selection_policy,
+            "mutation_policy": mutation_policy,
+            "quest_policy": quest_policy,
+            "evaluation_policy": evaluation_policy,
+            "repair_policy": repair_policy,
+            "quota_policy": quota_policy,
+        }
+        policy_record_ids = {name: self.policy_runtime.register_policy(name, definition, activate=True) for name, definition in policy_bundle.items()}
+        policy = {**selection_policy, **mutation_policy, **quest_policy, **evaluation_policy, **repair_policy, **quota_policy}
+        quota = allocate_quota(pressures, base_budget=self.total_budget)
+        self.logger.log_event("quota_decision", quota)
+        self._archive_append("quota_decisions", {"tick": tick, **quota})
+        self._archive_append("policies", {"tick": tick, "artifacts": policy_record_ids, **policy_bundle})
+        self._archive_append("domain_genomes", {"tick": tick, **self.adapter.domain_genome.to_dict()})
+
+        selected = selection(replay_state)
+        parent_ids = list(selected.get("parent_ids", []))
+        transfer_strategy = None
+        artifacts = getattr(replay_state, "artifacts", {}) or {}
+        if parent_ids:
+            transfer_strategy = ((artifacts.get(parent_ids[0]) or {}).get("payload") or {}).get("strategy")
+
+        safe_bundle = None
+        if float(pressures.get("repair_pressure", 0.0)) >= 0.8:
+            safe_bundle = self.safe_mode(tick=tick, reason="repair_pressure", parent_ids=parent_ids)
+            quota = self.quota_downshift(dict(safe_bundle["quota"]), tick=tick)
+        elif float(pressures.get("reframing_pressure", 0.0)) >= 0.7:
+            self.logger.log_event("supervisor_action", {"hook": "reframing_quest_injection", "tick": tick, "mode": self.mode})
+
+        def _run() -> dict[str, Any]:
             return self.adapter.execute_cycle(
                 tick=tick,
-                quest=quest,
+                quests=active_quests,
                 policy=policy,
                 quota=quota,
-                parent_ids=execution_parent_ids,
-                safe_mode=False,
+                parent_ids=parent_ids,
+                safe_mode=self.mode == "safe_mode",
+                transfer_strategy=transfer_strategy,
             )
 
-        try:
-            report = self.retry_once(_attempt, tick=tick)
-        except Exception as exc:
-            self.checkpoint_restore()
-            safe = self.safe_mode(tick=tick, reason=str(exc), parent_ids=execution_parent_ids)
-            self._archive_append("repairs", {"tick": tick, "reason": str(exc), "mode": "safe_mode"})
-            report = self.adapter.execute_cycle(
-                tick=tick,
-                quest={**quest, "quest_type": "meta"},
-                policy={**policy, "safe_mode_bias": True},
-                quota=safe["quota"],
-                parent_ids=[safe["repair_artifact_id"], *execution_parent_ids],
-                safe_mode=True,
-            )
+        result = self.retry_once(_run, tick=tick)
+        best_metrics = dict(result.get("metrics", {}))
+        supervisor_mode = self.mode
+        if float(getattr(replay_state, "lineage_concentration", lambda: 0.0)() if hasattr(replay_state, "lineage_concentration") else 0.0) >= 0.68:
+            supervisor_mode = "anti_collapse_guard"
+            self.logger.log_event("supervisor_action", {"hook": "anti_collapse_guard", "tick": tick, "mode": supervisor_mode})
 
-        report["supervisor_mode"] = self.mode
-        report["checkpoint_best_score"] = checkpoint.get("best_score", 0.0)
-        self._archive_append("artifacts", {"tick": tick, "artifact_ids": report.get("artifact_ids", []), "best_score": report.get("best_score", 0.0)})
-        log_event(
-            "cycle_completed",
-            {
-                "tick": tick,
-                "signal": signal_payload,
-                "best_score": report.get("best_score", 0.0),
-                "artifact_ids": report.get("artifact_ids", []),
-                "quest_type": quest.get("quest_type"),
-                "supervisor_mode": self.mode,
-            },
-            data_dir=str(self.adapter.data_dir),
-        )
+        report = {
+            "tick": tick,
+            "signal": signal_payload,
+            "pressures": pressures,
+            "quota": quota,
+            "policy": policy,
+            "active_quests": active_quests,
+            "best_score": float(result.get("best_score", 0.0) or 0.0),
+            "best_artifact_id": str(result.get("best_artifact_id") or checkpoint.get("best_artifact_id") or ""),
+            "metrics": best_metrics,
+            "artifact_ids": list(result.get("artifact_ids", [])),
+            "population_size": int(result.get("population_size", 0) or 0),
+            "supervisor_mode": supervisor_mode,
+            "archive": archive_pressure_hook(replay_state),
+        }
+        self.logger.log_event("tick_completed", report)
         return report
