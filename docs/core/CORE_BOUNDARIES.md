@@ -1,5 +1,9 @@
 # Core Boundaries
 
+GENESIS governs this boundary:
+- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
+- [Architecture Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
+
 This document defines what the METAOS core is allowed to do and what it must never absorb.
 
 ## 1. Core Responsibilities

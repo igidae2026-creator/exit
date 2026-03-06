@@ -22,7 +22,7 @@ def _escalate(state: Any) -> Any:
     if lineage <= 1:
         pressure["diversity_pressure"] = max(0.85, float(pressure.get("diversity_pressure", 0.0)))
     if bool(out.get("plateau")):
-        out["quest"] = {"type": "reframing", "reason": "plateau"}
+        out["quest"] = {"type": "exploration", "reason": "plateau"}
     repair = out.get("repair")
     if isinstance(repair, dict) and repair.get("failed"):
         out["quest"] = {"type": "repair", "escalation": "repair_failure"}

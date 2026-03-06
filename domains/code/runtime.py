@@ -3,17 +3,30 @@ from __future__ import annotations
 from typing import Any
 
 
-def input() -> dict[str, Any]:
-    return {"language": "python", "phase": "run"}
-
-
-def generate() -> dict[str, Any]:
+def genome() -> dict[str, Any]:
     return {
         "name": "code_domain",
         "constraints": {"stability": 0.6},
         "evaluation_recipe": {"score": 1.0},
         "mutation_priors": {"mutation_rate": 0.2},
     }
+
+
+def resources() -> dict[str, Any]:
+    return {
+        "runtime_slots": 4,
+        "memory_slots": 2,
+        "mutation_budget": 0.4,
+        "selection_budget": 0.6,
+    }
+
+
+def input() -> dict[str, Any]:
+    return {"language": "python", "phase": "run", "resources": resources(), "genome": genome()}
+
+
+def generate() -> dict[str, Any]:
+    return genome()
 
 
 def evaluate(artifact: dict[str, Any]) -> dict[str, Any]:
@@ -28,4 +41,11 @@ def metrics(artifact: dict[str, Any]) -> dict[str, float]:
 
 def loop() -> dict[str, Any]:
     artifact = generate()
-    return {"input": input(), "artifact": artifact, "evaluation": evaluate(artifact), "metrics": metrics(artifact)}
+    return {
+        "input": input(),
+        "artifact": artifact,
+        "evaluation": evaluate(artifact),
+        "metrics": metrics(artifact),
+        "resources": resources(),
+        "genome": genome(),
+    }

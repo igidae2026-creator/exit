@@ -10,6 +10,7 @@ from typing import Any, Iterable, Mapping
 from artifact.store import get_body, put_body
 from kernel.contracts import PRIMARY_ARTIFACT_CLASSES, artifact_envelope
 from kernel.spine import append_jsonl
+from validation.artifact_law import validate_artifact_law
 
 
 DEFAULT_REGISTRY = ".metaos_runtime/data/artifact_registry.jsonl"
@@ -74,6 +75,9 @@ def register_envelope(
         "constraints": envelope["constraints"],
         "body_ref": body_ref,
     }
+    validation = validate_artifact_law(row)
+    if not validation["ok"]:
+        raise ValueError(f"artifact law violation: {validation}")
     append_jsonl(_registry_path(), row)
     return artifact_id
 
