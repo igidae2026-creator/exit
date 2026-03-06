@@ -68,7 +68,7 @@ def _append_jsonl_atomic(path: Path, record: Mapping[str, Any]) -> None:
 class MetricsEngine:
     """Compute normalized METAOS metrics and append them to metrics.jsonl."""
 
-    output_path: Path | str = Path("metrics.jsonl")
+    output_path: Path | str = Path("data/metrics.jsonl")
 
     def evaluate(self, context: Mapping[str, Any]) -> dict[str, float]:
         quality = self._quality(context)

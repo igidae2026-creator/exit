@@ -1,30 +1,74 @@
+from __future__ import annotations
+
 import time
-from datetime import datetime, timezone
-import json
-import random
+from dataclasses import dataclass
+from typing import Any, Callable, Mapping, MutableMapping
 
 
-def write_metrics():
-    metrics = {
-        "quality": round(random.uniform(0.5, 1.0), 2),
-        "novelty": round(random.uniform(0.5, 1.0), 2),
-        "diversity": round(random.uniform(0.5, 1.0), 2),
-        "efficiency": round(random.uniform(0.5, 1.0), 2),
-        "cost": round(random.uniform(0.1, 0.9), 2),
-    }
+StageHandler = Callable[[MutableMapping[str, Any]], Mapping[str, Any] | None]
 
-    score = sum(metrics.values()) / len(metrics)
-
-    event = {
-        "timestamp": datetime.now(timezone.utc).isoformat(),
-        "event_type": "metrics",
-        "payload": {**metrics, "score": round(score, 2)},
-    }
-
-    with open("metrics.jsonl", "a") as f:
-        f.write(json.dumps(event) + "\n")
+DEFAULT_STAGE_ORDER = (
+    "signal",
+    "strategy",
+    "artifact",
+    "metrics",
+    "mutation",
+    "quest",
+    "decision",
+    "log",
+)
 
 
-while True:
-    write_metrics()
-    time.sleep(2)
+@dataclass(slots=True)
+class LoopConfig:
+    tick_seconds: float = 1.0
+    stage_order: tuple[str, ...] = DEFAULT_STAGE_ORDER
+
+
+class RuntimeLoop:
+    """Small deterministic runtime loop used by the existing orchestrator."""
+
+    def __init__(
+        self,
+        handlers: Mapping[str, StageHandler],
+        config: LoopConfig | None = None,
+    ) -> None:
+        self.handlers = dict(handlers)
+        self.config = config or LoopConfig()
+
+    def run_once(self, ctx: MutableMapping[str, Any] | None = None) -> MutableMapping[str, Any]:
+        state: MutableMapping[str, Any] = {
+            "tick_started_at": time.time(),
+            "tick_completed_at": None,
+            "stage_results": {},
+            "errors": [],
+        }
+        if ctx:
+            state.update(ctx)
+
+        stage_results = state["stage_results"]
+        errors = state["errors"]
+
+        for stage in self.config.stage_order:
+            handler = self.handlers.get(stage)
+            if handler is None:
+                continue
+            try:
+                result = handler(state)
+                stage_results[stage] = dict(result or {})
+            except Exception as exc:
+                error = {"stage": stage, "error": str(exc)}
+                errors.append(error)
+                stage_results[stage] = {"ok": False, "error": str(exc)}
+
+        state["tick_completed_at"] = time.time()
+        return state
+
+    def run_forever(self) -> None:
+        while True:
+            started = time.time()
+            self.run_once()
+            elapsed = time.time() - started
+            sleep_for = max(0.0, self.config.tick_seconds - elapsed)
+            if sleep_for > 0:
+                time.sleep(sleep_for)
