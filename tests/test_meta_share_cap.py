@@ -21,7 +21,7 @@ def test_meta_share_cap_forces_exploration_when_extreme() -> None:
 
 def test_meta_share_cap_blocks_meta_quest() -> None:
     quest = meta_quest(
-        {"novelty_pressure": 0.96, "lineage_pressure": 0.8, "repair_pressure": 0.1},
+        {"novelty_pressure": 0.96, "diversity_pressure": 0.9, "repair_pressure": 0.1},
         recent_state={"novelty_low_streak": 3, "lineage_high_streak": 3, "meta_share": 0.55},
     )
     assert quest is None

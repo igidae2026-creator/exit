@@ -9,7 +9,7 @@ REPAIR_TYPES = {
     "retry_once",
     "quota_downshift",
     "export_freeze",
-    "checkpoint_restore",
+    "replay_restore",
 }
 
 
@@ -17,15 +17,15 @@ def choose_repair(metrics: Mapping[str, float], pressure: Mapping[str, float]) -
     repair_pressure = float(pressure.get("repair_pressure", 0.0))
     fail_rate = float(metrics.get("fail_rate", 0.0))
     cost = float(metrics.get("cost", 0.0))
-    lineage_pressure = float(pressure.get("lineage_pressure", 0.0))
+    diversity_pressure = float(pressure.get("diversity_pressure", 0.0))
 
     if repair_pressure < 0.6 and fail_rate < 0.5:
         return None
     if fail_rate >= 0.8:
-        return "checkpoint_restore"
+        return "replay_restore"
     if cost >= 0.7:
         return "quota_downshift"
-    if lineage_pressure >= 0.6:
+    if diversity_pressure >= 0.85:
         return "export_freeze"
     return "retry_once"
 

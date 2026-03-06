@@ -59,7 +59,7 @@ def test_phase65_distribution() -> None:
         work_or_exploration = sum(
             1 for tick in ticks if str((tick.get("quest", {}) if isinstance(tick.get("quest"), dict) else {}).get("type", "")) in {"work", "exploration"}
         )
-        assert elapsed < 12.0
+        assert elapsed < 5.0
         assert summary["meta_count"] <= 72
         assert summary["reframing_count"] >= 12
         assert work_or_exploration >= 120

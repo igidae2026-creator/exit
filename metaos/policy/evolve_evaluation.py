@@ -49,7 +49,7 @@ def evolve_evaluation(
         elif key == "repair_burden":
             delta += 0.05 * float(pressure.get("repair_pressure", 0.0))
         elif key == "lineage_penalty":
-            delta += 0.05 * float(pressure.get("lineage_pressure", 0.0))
+            delta += 0.05 * max(0.0, float(pressure.get("diversity_pressure", 0.0)) - 0.5)
         elif key == "score":
             delta += 0.04 * float(market_state.get("selection_bias", 0.0))
         weights[key] = _clamp(value + delta)

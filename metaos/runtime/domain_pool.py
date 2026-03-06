@@ -21,7 +21,13 @@ _SEED_DOMAINS = {
 
 
 def _pool_path() -> Path:
-    path = Path(os.environ.get("METAOS_DOMAIN_POOL", DEFAULT_DOMAIN_POOL))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_DOMAIN_POOL"):
+        path = Path(os.environ["METAOS_DOMAIN_POOL"])
+    elif root:
+        path = Path(root) / "domain_pool.json"
+    else:
+        path = Path(DEFAULT_DOMAIN_POOL)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

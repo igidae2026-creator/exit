@@ -11,7 +11,13 @@ DEFAULT_STORE_ROOT = ".metaos_runtime/artifact_store"
 
 
 def _store_root() -> Path:
-    path = Path(os.environ.get("METAOS_ARTIFACT_STORE", DEFAULT_STORE_ROOT))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_ARTIFACT_STORE"):
+        path = Path(os.environ["METAOS_ARTIFACT_STORE"])
+    elif root:
+        path = Path(root) / "artifact_store"
+    else:
+        path = Path(DEFAULT_STORE_ROOT)
     path.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -40,4 +46,3 @@ def get_body(body_ref: str) -> dict[str, Any]:
     if not isinstance(payload, dict):
         return {"spec": {}, "blobs": {}}
     return {"spec": dict(payload.get("spec", {})), "blobs": dict(payload.get("blobs", {}))}
-

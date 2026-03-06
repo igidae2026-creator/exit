@@ -5,6 +5,7 @@ import json
 from typing import Sequence
 
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from validation.system_boundary import validate_system_boundary
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,6 +60,12 @@ def build_runtime(args: argparse.Namespace) -> Orchestrator:
 def cmd_validate(args: argparse.Namespace) -> int:
     runtime = build_runtime(args)
     summary = runtime.validate()
+    summary["boundary"] = validate_system_boundary(
+        {
+            "human": ["constitution", "goal", "acceptance"],
+            "system": ["exploration", "implementation", "validation", "evolution", "expansion"],
+        }
+    )
     print(json.dumps(summary, ensure_ascii=True))
     return 0
 

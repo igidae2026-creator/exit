@@ -62,7 +62,7 @@ def register_allocator_artifact(allocator: Mapping[str, Any], pressure: Mapping[
 
 
 def register_domain_artifact(data: Mapping[str, Any], *, parent: str | None = None, score: float = 0.0, novelty: float = 0.0, diversity: float = 0.0, cost: float = 0.0) -> str:
-    return _register_artifact(dict(data), parent=parent, atype="domain", score=score, novelty=novelty, diversity=diversity, cost=cost)
+    return _register_artifact(dict(data), parent=parent, atype="domain_genome", score=score, novelty=novelty, diversity=diversity, cost=cost)
 
 
 def register_civilization_selection_artifact(data: Mapping[str, Any], *, parent: str | None = None, score: float = 0.0) -> str:

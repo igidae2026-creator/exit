@@ -8,22 +8,19 @@ def civilization_governor(
     ecology: Mapping[str, float],
     market: Mapping[str, float],
 ) -> dict[str, Any]:
-    rows = list(history or [])[-24:]
+    rows = history[-24:] if history else ()
     ecology = dict(ecology or {})
     market = dict(market or {})
-    selections = [
-        str(
-            (
-                row.get("civilization_selection", {})
-                if isinstance(row.get("civilization_selection"), Mapping)
-                else {}
-            ).get("selected_artifact_type", "")
-        )
-        for row in rows
-    ]
-    selections = [item for item in selections if item]
-    total = len(selections) or 1
-    dominant_share = max((selections.count(item) / total for item in set(selections)), default=0.0)
+    counts: dict[str, int] = {}
+    total = 0
+    for row in rows:
+        selection = row.get("civilization_selection", {}) if isinstance(row.get("civilization_selection"), Mapping) else {}
+        selected = str(selection.get("selected_artifact_type", ""))
+        if not selected:
+            continue
+        counts[selected] = counts.get(selected, 0) + 1
+        total += 1
+    dominant_share = (max(counts.values()) / total) if total else 0.0
     population_pressure = round(max(0.0, dominant_share - 0.45), 4)
     artifact_overproduction = round(max(0.0, dominant_share - 0.60), 4)
     ecosystem_balance = round(
@@ -54,4 +51,3 @@ def civilization_governor(
         "selection_drift": selection_drift,
         "intervention": intervention,
     }
-

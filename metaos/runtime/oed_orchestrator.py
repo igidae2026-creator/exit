@@ -32,14 +32,17 @@ from metaos.runtime.artifact_population import artifact_population
 from metaos.runtime.civilization_governor import civilization_governor
 from metaos.runtime.civilization_selection import civilization_select
 from metaos.runtime.collapse_guard import detect_guard_state
+from metaos.runtime.civilization_stability import civilization_stability
 from metaos.runtime.domain_pool import ensure_seed_domains, get_domain, register_domain
 from metaos.runtime.meta_exploration import meta_exploration
 from metaos.runtime.domain_router import route
 from metaos.runtime.evaluation_ecology import evaluation_ecology
 from metaos.runtime.exploration_economy import exploration_economy
+from metaos.runtime.exploration_cycle import exploration_cycle
 from metaos.runtime.evolve_exploration_strategy import evolve_strategy
 from metaos.runtime.exploration_market_stability import stabilize_market
 from metaos.runtime.exploration_strategy_artifact import load_all as load_exploration_strategies
+from metaos.runtime.memory_pressure import memory_pressure
 from metaos.runtime.meta_cooldown import quest_cooldown
 from metaos.runtime.meta_quest_engine import meta_quest
 from metaos.runtime.recovery_allocator import recover_budgets
@@ -94,7 +97,7 @@ def _recent_state(guard_history: list[dict[str, Any]]) -> dict[str, int]:
     rolling = guard_history[-32:]
     plateau_streak = sum(1 for row in history if float(row.get("domain_shift_pressure", row.get("pressure", {}).get("domain_shift_pressure", 0.0))) >= 0.7)
     novelty_low_streak = sum(1 for row in history if float(row.get("novelty", 1.0)) <= 0.25)
-    lineage_high_streak = sum(1 for row in history if float(row.get("lineage_pressure", row.get("pressure", {}).get("lineage_pressure", 0.0))) >= 0.6)
+    lineage_high_streak = sum(1 for row in history if float(row.get("diversity_pressure", row.get("pressure", {}).get("diversity_pressure", 0.0))) >= 0.85)
     repair_cycle_streak = sum(1 for row in history if row.get("repair"))
     domains = [str(row.get("routing", {}).get("selected_domain", row.get("domain", "default"))) for row in history]
     routing_stagnation = len(history) if history and len(set(domains)) <= 1 else 0
@@ -194,7 +197,7 @@ def _rebalance_quest(
     q = dict(quest)
     qtype = str(q.get("type", "work"))
     novelty_persist = bool(recent_state.get("novelty_collapse_persist")) or float(pressure.get("novelty_pressure", 0.0)) >= 0.95
-    lineage_collapse = int(recent_state.get("lineage_high_streak", 0)) >= 3 or float(pressure.get("lineage_pressure", 0.0)) >= 0.75
+    lineage_collapse = int(recent_state.get("lineage_high_streak", 0)) >= 3 or float(pressure.get("diversity_pressure", 0.0)) >= 0.85
     meta_share = float(recent_state.get("meta_share", 0.0) or 0.0)
     reframing_share = float(recent_state.get("reframing_share", 0.0) or 0.0)
     work_exploration_share = float(recent_state.get("work_exploration_share", 0.0) or 0.0)
@@ -315,15 +318,88 @@ def _candidate_summaries(
 
 def _apply_economy(
     budgets: Mapping[str, float | int],
-    economy: Mapping[str, float],
+    economy: Mapping[str, Any],
 ) -> dict[str, float | int]:
     out = dict(budgets)
     total_budget = max(float(out.get("workers", out.get("effective_workers", 0))) * 10.0, 40.0)
-    out["mutation_budget"] = round(min(80.0, max(8.0, total_budget * float(economy.get("exploration_budget", 0.3)))), 4)
-    out["domain_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("recombination_budget", 0.18)))), 4)
-    out["policy_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("policy_budget", 0.16)))), 4)
-    out["evaluation_budget"] = round(min(60.0, max(4.0, total_budget * float(economy.get("evaluation_budget", 0.16)))), 4)
+    attention_budget = float(economy.get("attention_budget", 0.3))
+    mutation_budget = float(economy.get("mutation_budget", 0.25))
+    selection_weights = dict(economy.get("selection_weights", {})) if isinstance(economy.get("selection_weights"), Mapping) else {}
+    runtime_slots = dict(economy.get("runtime_slot_allocation", {})) if isinstance(economy.get("runtime_slot_allocation"), Mapping) else {}
+    out["mutation_budget"] = round(min(80.0, max(8.0, total_budget * mutation_budget)), 4)
+    out["domain_budget"] = round(min(60.0, max(4.0, total_budget * float(selection_weights.get("domain_genome", 0.16)))), 4)
+    out["policy_budget"] = round(min(60.0, max(4.0, total_budget * float(selection_weights.get("policy", 0.16)))), 4)
+    out["evaluation_budget"] = round(min(60.0, max(4.0, total_budget * float(selection_weights.get("evaluation", 0.16)))), 4)
+    out["exploration_budget"] = max(2, int(round(2 + (6 * attention_budget))))
+    out["runtime_slots"] = max(1, int(runtime_slots.get("runtime_slots", out.get("workers", 4))))
+    out["exploration_slots"] = max(1, int(runtime_slots.get("exploration_slots", 1)))
     return out
+
+
+def _exploration_depth(history: list[Mapping[str, Any]]) -> int:
+    streak = 0
+    for row in reversed(history):
+        quest = row.get("quest", {}) if isinstance(row.get("quest"), Mapping) else {}
+        if str(quest.get("type", "")) != "exploration":
+            break
+        streak += 1
+    return streak
+
+
+def _validate_step_state(payload: Mapping[str, Any]) -> None:
+    required = ("quest", "policy", "pressure", "stabilized_pressure", "routing", "workers", "resource_allocation", "exploration_economy_state")
+    missing = [key for key in required if key not in payload]
+    if missing:
+        raise ValueError(f"invalid runtime state missing: {', '.join(missing)}")
+    workers = int(payload.get("workers", 0) or 0)
+    if workers <= 0:
+        raise ValueError("invalid runtime state workers <= 0")
+
+
+def _civilization_snapshot(
+    history: list[Mapping[str, Any]],
+    population: Mapping[str, Any],
+) -> dict[str, Any]:
+    population_counts = dict(population.get("population_counts", {})) if isinstance(population.get("population_counts"), Mapping) else {}
+    lineages: dict[str, int] = {}
+    for row in history[-64:]:
+        routing = row.get("routing", {}) if isinstance(row.get("routing"), Mapping) else {}
+        lineage_id = str(routing.get("selected_domain") or row.get("domain") or "default")
+        lineages[lineage_id] = lineages.get(lineage_id, 0) + 1
+    domains = {name: 1 for name in ensure_seed_domains()}
+    policy_generations = sum(1 for row in history if isinstance(row.get("policy"), Mapping))
+    memory_volume = sum(1 for row in history if row.get("meta_exploration") or row.get("quest"))
+    return {
+        "artifact_counts": {
+            "artifact": sum(int(value) for value in population_counts.values()),
+            "strategy": int(population_counts.get("strategy", 0)),
+            "policy": int(population_counts.get("policy", 0)),
+            "quest": len(history),
+            "evaluation": int(population_counts.get("evaluation", 0)),
+            "allocator": 1,
+            "domain_genome": int(population_counts.get("domain", 0)),
+            "memory": memory_volume,
+        },
+        "lineage_counts": lineages,
+        "domain_counts": domains,
+        "policy_generations": policy_generations,
+        "memory_volume": memory_volume,
+    }
+
+
+def _memory_pressure_snapshot(history: list[Mapping[str, Any]]) -> dict[str, float]:
+    recent = history[-64:]
+    kinds = 0
+    for row in recent:
+        kinds += sum(1 for key in ("quest", "policy", "meta_exploration", "routing", "repair") if row.get(key))
+    memory_growth = min(1.0, len(recent) / 64.0)
+    knowledge_density = min(1.0, kinds / max(1, len(recent) * 5))
+    archive_pressure = min(1.0, (len(recent) + kinds) / 96.0)
+    return {
+        "memory_growth": round(memory_growth, 4),
+        "knowledge_density": round(knowledge_density, 4),
+        "archive_pressure": round(archive_pressure, 4),
+    }
 
 
 def _governed_selection(
@@ -416,6 +492,8 @@ def step(
         evaluation,
         meta.get("evaluation_mutation", {}) if isinstance(meta.get("evaluation_mutation"), Mapping) else {},
     )
+    civilization = _civilization_snapshot(history, population)
+    memory_state = _memory_pressure_snapshot(history)
     created_domain = None
     if isinstance(meta.get("domain_creation"), Mapping) and meta["domain_creation"]:
         created_domain = register_domain(str(meta["domain_creation"].get("name", "meta_domain")), meta["domain_creation"])
@@ -425,22 +503,28 @@ def step(
         policy_stack["mutation"]["rate"] = min(float(policy_stack["mutation"]["rate"]), 0.18)
     quota = quota_frame(stabilized_pressure, workers, stabilized_market, tick=len(history) + 1, guard=guard, history=history)
     budgets = recover_budgets(dict(quota.budgets), guard, history=history)
-    economy = exploration_economy(
+    economy_state = exploration_economy(
         {
             "pressure": stabilized_pressure,
-            "market": stabilized_market,
             "ecology": ecology,
             "population": population,
-            "governance": governance,
+            "memory_pressure": memory_state,
         }
     )
+    resource_allocation = {
+        "attention_budget": economy_state["attention_budget"],
+        "mutation_budget": economy_state["mutation_budget"],
+        "selection_weights": dict(economy_state["selection_weights"]),
+        "runtime_slot_allocation": dict(economy_state["runtime_slot_allocation"]),
+        "memory_pressure": dict(economy_state["memory_pressure"]),
+    }
     civilization_selection = _governed_selection(
         civilization_selection,
         population,
         governance,
         tick=len(history) + 1,
     )
-    budgets = _apply_economy(budgets, economy)
+    budgets = _apply_economy(budgets, economy_state)
     active_meta_quest = meta_quest(stabilized_pressure, recent_state=recent_state)
     if guard["force_meta"] and active_meta_quest is None and not cooldown_state["meta_locked"] and cooldown_state["preferred_type"] != "exploration":
         active_meta_quest = {
@@ -471,6 +555,8 @@ def step(
         else:
             q = {"type": "reframing", "priority": "high", "reason": "collapse_guard", "cooldown": cooldown_state}
     q = _rebalance_quest(q, stabilized_pressure, recent_state, cooldown_state, guard)
+    if plateau_hit and q.get("type") not in {"repair", "meta"}:
+        q = {"type": "reframing", "priority": "high", "reason": "plateau", "cooldown": cooldown_state}
     if q.get("type") == "reframing":
         active_meta_quest = None
     new_policy = evolve(flat_policy_seed, stabilized_pressure)
@@ -500,7 +586,19 @@ def step(
     repair = emit_repair_artifact(metrics, stabilized_pressure, parent=parent)
     if guard["freeze_export"] and repair is None:
         repair = {"artifact_id": None, "type": "export_freeze"}
+    if repair and recent_state.get("repair_cycle_streak", 0) >= 2:
+        q = {"type": "repair", "priority": "high", "escalation": "repair_failure", "cooldown": cooldown_state}
     budgets = _soften_worker_budget(budgets, stabilized_pressure, guard, q, repair)
+    cycle_transition = exploration_cycle(history, int(budgets.get("exploration_budget", 2)), q)
+    budgets["exploration_depth"] = cycle_transition["depth"]
+    if cycle_transition["exhausted"]:
+        q = {
+            "type": "reframing",
+            "priority": "high",
+            "reason": "exploration_budget_exhausted",
+            "cooldown": cooldown_state,
+            "exploration_cycle": dict(cycle_transition),
+        }
     routing = route(
         stabilized_pressure,
         budgets,
@@ -584,9 +682,10 @@ def step(
     save("civilization_selection", civilization_selection)
     save("population", population)
     save("governance", governance)
-    save("economy", economy)
+    save("economy", economy_state)
     save("cooldown", cooldown_state)
     save("meta_exploration", meta)
+    save("exploration_cycle", cycle_transition)
     if repair:
         save("repair", repair)
         remember("repair_artifact", repair)
@@ -602,13 +701,23 @@ def step(
     remember("civilization_selection_artifact", {"artifact_id": civilization_selection_artifact_id, "selection": civilization_selection})
     remember("population_snapshot", population)
     remember("governance_snapshot", governance)
-    remember("economy_snapshot", economy)
+    remember("economy_snapshot", economy_state)
     remember("meta_exploration_artifact", meta)
+    remember("exploration_cycle", cycle_transition)
     remember("allocator_artifact", {"artifact_id": allocator_artifact_id, "budgets": budgets})
     remember("domain_genome_snapshot", {"artifact_id": domain_artifact_id, "genome": genome_state, "routing": routing})
     if crossbred_domain_artifact_id:
         remember("crossbred_domain_artifact", {"artifact_id": crossbred_domain_artifact_id, "genome": genome_state})
-    return {
+    stability = civilization_stability(ecology, civilization, memory_state)
+    save("resource_allocation", resource_allocation)
+    save("exploration_economy_state", economy_state)
+    save("civilization_state", civilization)
+    save("civilization_stability", stability)
+    remember("resource_allocation", resource_allocation)
+    remember("exploration_economy_state", economy_state)
+    remember("civilization_state", civilization)
+    remember("civilization_stability", stability)
+    result = {
         "artifact_id": artifact_id,
         "quest": q,
         "meta_quest": active_meta_quest,
@@ -628,7 +737,12 @@ def step(
         "civilization_selection": civilization_selection,
         "population": population,
         "governance": governance,
-        "economy": economy,
+        "economy": economy_state,
+        "exploration_economy_state": economy_state,
+        "resource_allocation": resource_allocation,
+        "civilization_state": civilization,
+        "civilization_stability": stability,
+        "exploration_cycle": cycle_transition,
         "meta_exploration": meta,
         "guard": guard,
         "cooldown": cooldown_state,
@@ -643,3 +757,5 @@ def step(
         "domain": domain,
         "genome": genome_state,
     }
+    _validate_step_state(result)
+    return result

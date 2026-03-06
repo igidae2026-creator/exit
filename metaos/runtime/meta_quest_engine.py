@@ -20,7 +20,7 @@ def meta_quest(
     cooldown_state = quest_cooldown(recent_state)
     reasons: list[str] = []
     novelty_low = _count(recent_state, "novelty_low_streak") >= 3 or float(pressure.get("novelty_pressure", 0.0)) >= 0.9
-    lineage_trigger = _count(recent_state, "lineage_high_streak") >= 3 or float(pressure.get("lineage_pressure", 0.0)) >= 0.75
+    lineage_trigger = _count(recent_state, "lineage_high_streak") >= 3 or float(pressure.get("diversity_pressure", 0.0)) >= 0.85
     routing_trigger = _count(recent_state, "routing_stagnation") >= 4 or float(pressure.get("domain_shift_pressure", 0.0)) >= 0.85
     reframing_failure = _count(recent_state, "failed_reframing_repeat") >= 2 or float(pressure.get("reframing_pressure", 0.0)) >= 0.8
 
@@ -29,7 +29,7 @@ def meta_quest(
     if novelty_low:
         reasons.append("novelty_sustained_low")
     if lineage_trigger:
-        reasons.append("lineage_concentration_sustained_high")
+        reasons.append("diversity_collapse_sustained")
     if _count(recent_state, "repair_cycle_streak") >= 3 or float(pressure.get("repair_pressure", 0.0)) >= 0.85:
         reasons.append("repeated_repair_cycles")
     if routing_trigger:

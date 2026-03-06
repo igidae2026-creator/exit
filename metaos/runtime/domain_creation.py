@@ -16,6 +16,7 @@ def _qualifies(strategy_of_strategy: Mapping[str, Any], ecology: Mapping[str, An
     diversity_health = float(ecology.get("diversity_health", 0.5))
     exploration_health = float(ecology.get("exploration_health", 0.5))
     domain_count = int(ecology.get("domain_count", 1) or 1)
+    knowledge_flow = float(ecology.get("knowledge_flow", 0.0))
     return (
         (
             (exploration + diversification + recombination) >= 0.52
@@ -26,6 +27,11 @@ def _qualifies(strategy_of_strategy: Mapping[str, Any], ecology: Mapping[str, An
             domain_count <= 2
             and (exploration + recombination) >= 0.25
             and (domain_shift + novelty) >= 0.5
+        )
+        or (
+            domain_count <= 2
+            and knowledge_flow >= 0.45
+            and (exploration + diversification + recombination) >= 0.75
         )
     )
 

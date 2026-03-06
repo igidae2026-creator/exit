@@ -7,7 +7,7 @@ def test_collapse_guard_flags_stagnation_and_repair_storm() -> None:
             "novelty": 0.1,
             "fail_rate": 0.4,
             "repair": {"type": "retry_once"},
-            "pressure": {"lineage_pressure": 0.8, "domain_shift_pressure": 0.7},
+            "pressure": {"diversity_pressure": 0.9, "domain_shift_pressure": 0.7},
             "budgets": {"effective_workers": 6, "mutation_budget": 40, "replay_budget": 40, "repair_budget": 40, "archive_budget": 40, "domain_budget": 40},
             "routing": {"selected_domain": "default"},
         }

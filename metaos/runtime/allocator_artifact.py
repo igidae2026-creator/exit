@@ -13,7 +13,13 @@ DEFAULT_ALLOCATOR_REGISTRY = ".metaos_runtime/data/allocator_registry.jsonl"
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_ALLOCATOR_REGISTRY", DEFAULT_ALLOCATOR_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_ALLOCATOR_REGISTRY"):
+        path = Path(os.environ["METAOS_ALLOCATOR_REGISTRY"])
+    elif root:
+        path = Path(root) / "allocator_registry.jsonl"
+    else:
+        path = Path(DEFAULT_ALLOCATOR_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -27,7 +33,7 @@ def register_allocator_artifact(
     parent: str | None = None,
 ) -> str:
     artifact_id = register_envelope(
-        aclass="strategy",
+        aclass="allocator",
         atype="allocator",
         spec={"allocator": dict(allocator)},
         refs={"parents": [parent] if parent else [], "inputs": [], "subjects": [], "context": {"quota": dict(budgets)}},

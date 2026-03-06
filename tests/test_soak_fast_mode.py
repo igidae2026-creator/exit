@@ -99,3 +99,29 @@ def test_soak_fast_mode_summary_matches_shape() -> None:
         }.issubset(summary)
         assert isinstance(summary["avg_workers"], float)
         assert summary["max_workers"] >= summary["min_workers"]
+
+
+def test_soak_fast_mode_uses_metaos_root_defaults() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        old = {key: os.environ.get(key) for key in _ENV_KEYS}
+        os.environ["METAOS_SOAK_FAST"] = "1"
+        os.environ["METAOS_ROOT"] = str(root)
+        for key in (
+            "METAOS_REGISTRY",
+            "METAOS_ARCHIVE",
+            "METAOS_METRICS",
+            "METAOS_CIVILIZATION_MEMORY",
+        ):
+            os.environ.pop(key, None)
+        try:
+            run_soak(ticks=12, seed=21, fail_open=True)
+            assert (root / "metrics.jsonl").exists()
+            assert (root / "archive.jsonl").exists()
+            assert (root / "archive" / "civilization_memory.jsonl").exists()
+        finally:
+            for key, value in old.items():
+                if value is None:
+                    os.environ.pop(key, None)
+                else:
+                    os.environ[key] = value

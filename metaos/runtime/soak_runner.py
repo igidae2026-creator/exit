@@ -11,7 +11,10 @@ from typing import Any, Iterator, Mapping, Sequence
 from unittest.mock import patch
 
 import metaos.policy.evaluation_artifact as evaluation_artifact
+import metaos.observer.metrics_history as metrics_history
+import metaos.observer.pressure_engine as pressure_engine
 import metaos.registry.artifact_registry as artifact_registry
+import metaos.registry.lineage_graph as lineage_graph
 import metaos.runtime.artifact_civilization as artifact_civilization
 import metaos.runtime.domain_pool as domain_pool
 import metaos.runtime.domain_router as domain_router
@@ -43,10 +46,27 @@ class SoakResult:
         return bool(self.ticks)
 
 
-def _metrics_path() -> Path:
-    path = Path(os.environ.get("METAOS_METRICS", ".metaos_runtime/data/metrics.jsonl"))
+def _runtime_path(env_name: str, root_relative: str, default_path: str) -> Path:
+    explicit = os.environ.get(env_name)
+    if explicit:
+        path = Path(explicit)
+    else:
+        root = os.environ.get("METAOS_ROOT")
+        path = Path(root) / root_relative if root else Path(default_path)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
+
+
+def _metrics_path() -> Path:
+    return _runtime_path("METAOS_METRICS", "metrics.jsonl", ".metaos_runtime/data/metrics.jsonl")
+
+
+def _archive_path() -> Path:
+    return _runtime_path("METAOS_ARCHIVE", "archive.jsonl", ".metaos_runtime/archive/archive.jsonl")
+
+
+def _civilization_memory_path() -> Path:
+    return _runtime_path("METAOS_CIVILIZATION_MEMORY", "archive/civilization_memory.jsonl", ".metaos_runtime/archive/civilization_memory.jsonl")
 
 
 def _metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[str, Any]) -> dict[str, Any]:
@@ -59,17 +79,70 @@ def _metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[str, An
         "stabilized_pressure": state.get("stabilized_pressure", state.get("pressure", {})),
         "market": state.get("market", {}),
         "stabilized_market": state.get("stabilized_market", state.get("market", {})),
+        "policy": state.get("policy", {}),
         "budgets": state.get("budgets", {}),
         "routing": state.get("routing", {}),
         "civilization_selection": state.get("civilization_selection", {}),
         "population": state.get("population", {}),
         "governance": state.get("governance", {}),
         "economy": state.get("economy", {}),
+        "exploration_economy_state": state.get("exploration_economy_state", {}),
+        "resource_allocation": state.get("resource_allocation", {}),
         "ecology": state.get("ecology", {}),
+        "civilization_state": state.get("civilization_state", {}),
+        "civilization_stability": state.get("civilization_stability", {}),
         "strategy_of_strategy": state.get("strategy_of_strategy", {}),
+        "exploration_cycle": state.get("exploration_cycle", {}),
         "meta_exploration": state.get("meta_exploration", {}),
         "guard": state.get("guard", {}),
         "repair": state.get("repair"),
+    }
+
+
+def _fast_metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "tick": tick,
+        "score": metrics.get("score", 0.0),
+        "novelty": metrics.get("novelty", 0.0),
+        "diversity": metrics.get("diversity", 0.0),
+        "cost": metrics.get("cost", 0.0),
+        "fail_rate": metrics.get("fail_rate", 0.0),
+        "workers": state.get("workers", 0),
+        "domain": state.get("domain", "default"),
+        "quest": state.get("quest", {}),
+        "pressure": state.get("pressure", {}),
+        "stabilized_pressure": state.get("stabilized_pressure", state.get("pressure", {})),
+        "policy": state.get("policy", {}),
+        "routing": state.get("routing", {}),
+        "civilization_selection": state.get("civilization_selection", {}),
+        "strategy_of_strategy": state.get("strategy_of_strategy", {}),
+        "resource_allocation": state.get("resource_allocation", {}),
+        "exploration_economy_state": state.get("exploration_economy_state", {}),
+        "civilization_state": state.get("civilization_state", {}),
+        "civilization_stability": state.get("civilization_stability", {}),
+        "exploration_cycle": state.get("exploration_cycle", {}),
+        "meta_exploration": state.get("meta_exploration", {}),
+        "guard": state.get("guard", {}),
+        "repair": state.get("repair"),
+    }
+
+
+def _fast_guard_row(metrics: Mapping[str, float], state: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "score": metrics.get("score", 0.0),
+        "novelty": metrics.get("novelty", 0.0),
+        "diversity": metrics.get("diversity", 0.0),
+        "cost": metrics.get("cost", 0.0),
+        "fail_rate": metrics.get("fail_rate", 0.0),
+        "domain": state.get("domain", "default"),
+        "quest": state.get("quest", {}),
+        "pressure": state.get("pressure", {}),
+        "routing": state.get("routing", {}),
+        "repair": state.get("repair"),
+        "guard": state.get("guard", {}),
+        "cooldown": state.get("cooldown", {}),
+        "meta_exploration": state.get("meta_exploration", {}),
+        "exploration_cycle": state.get("exploration_cycle", {}),
     }
 
 
@@ -87,16 +160,16 @@ class _BufferedJsonlWriter:
     def __init__(self, path: Path) -> None:
         self.path = path
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        self.buffer: list[str] = []
+        self.buffer: list[dict[str, Any]] = []
 
     def append(self, row: Mapping[str, Any]) -> None:
-        self.buffer.append(json.dumps(dict(row), ensure_ascii=True) + "\n")
+        self.buffer.append(dict(row))
 
     def flush(self) -> None:
         if not self.buffer:
             return
         with self.path.open("a", encoding="utf-8") as handle:
-            handle.writelines(self.buffer)
+            handle.writelines(json.dumps(row, ensure_ascii=True) + "\n" for row in self.buffer)
         self.buffer.clear()
 
 
@@ -104,18 +177,20 @@ class _FastSoakRuntime:
     def __init__(self, flush_every: int = 10) -> None:
         self.flush_every = max(1, int(flush_every))
         self.metrics_writer = _BufferedJsonlWriter(_metrics_path())
-        self.archive_writer = _BufferedJsonlWriter(Path(os.environ.get("METAOS_ARCHIVE", ".metaos_runtime/archive/archive.jsonl")))
-        self.memory_writer = _BufferedJsonlWriter(
-            Path(os.environ.get("METAOS_CIVILIZATION_MEMORY", ".metaos_runtime/archive/civilization_memory.jsonl"))
-        )
+        self.archive_writer = _BufferedJsonlWriter(_archive_path())
+        self.memory_writer = _BufferedJsonlWriter(_civilization_memory_path())
         self.metric_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
         self.guard_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
         self.cooldown_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
         self.routing_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
+        self.ecology_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
         self.evaluation_rows: list[dict[str, Any]] = []
         self.strategy_rows: list[dict[str, Any]] = []
         self.strategy_of_strategy_rows: list[dict[str, Any]] = []
         self.parent_counts: collections.Counter[str] = collections.Counter()
+        self.population_counts: collections.Counter[str] = collections.Counter()
+        self.latest_ecology: dict[str, Any] = {}
+        self.latest_civilization_selection: dict[str, Any] = {}
         self.total_edges = 0
         self.domain_pool: dict[str, dict[str, Any]] = domain_pool.ensure_seed_domains()
         self._patches: contextlib.ExitStack | None = None
@@ -139,6 +214,15 @@ class _FastSoakRuntime:
         stack.enter_context(patch.object(artifact_civilization, "_register_exploration_strategy", self.register_exploration_strategy))
         stack.enter_context(patch.object(artifact_civilization, "_register_strategy_of_strategy", self.register_strategy_of_strategy))
         stack.enter_context(patch.object(domain_router, "domain_names", self.domain_names))
+        stack.enter_context(patch.object(metrics_history, "tail", self.metrics_tail))
+        stack.enter_context(patch.object(metrics_history, "plateau", self.plateau))
+        stack.enter_context(patch.object(metrics_history, "novelty_drop", self.novelty_drop))
+        stack.enter_context(patch.object(metrics_history, "failure_spike", self.failure_spike))
+        stack.enter_context(patch.object(pressure_engine, "plateau", self.plateau))
+        stack.enter_context(patch.object(pressure_engine, "novelty_drop", self.novelty_drop))
+        stack.enter_context(patch.object(pressure_engine, "failure_spike", self.failure_spike))
+        stack.enter_context(patch.object(pressure_engine, "concentration", self.concentration))
+        stack.enter_context(patch.object(lineage_graph, "concentration", self.concentration))
         stack.enter_context(patch.object(oed_orchestrator, "save", self.save))
         stack.enter_context(patch.object(oed_orchestrator, "remember", self.remember))
         stack.enter_context(patch(__name__ + ".save", self.save))
@@ -155,11 +239,15 @@ class _FastSoakRuntime:
                 self._patches = None
 
     def _metric_values(self, window: int, key: str) -> list[float]:
-        rows = list(self.metric_history)[-window:]
+        rows = self.metrics_tail(window)
         return [float(row.get(key, 0.0)) for row in rows if isinstance(row, Mapping)]
 
     def metrics_tail(self, n: int = 200) -> list[dict[str, Any]]:
-        return list(self.metric_history)[-n:]
+        if n <= 0:
+            return []
+        if n >= len(self.metric_history):
+            return list(self.metric_history)
+        return list(collections.deque(self.metric_history, maxlen=n))
 
     def plateau(self, window: int = 50, eps: float = 0.02) -> bool:
         vals = self._metric_values(window, "score")
@@ -173,6 +261,12 @@ class _FastSoakRuntime:
             return False
         return (sum(vals) / len(vals)) < threshold
 
+    def failure_spike(self, window: int = 50, threshold: float = 0.2) -> bool:
+        vals = self._metric_values(window, "fail_rate")
+        if not vals:
+            return False
+        return (sum(vals) / len(vals)) > threshold
+
     def concentration(self) -> float:
         if self.total_edges <= 0:
             return 0.0
@@ -180,25 +274,27 @@ class _FastSoakRuntime:
         return top / self.total_edges if self.total_edges else 0.0
 
     def load_evaluations(self) -> list[dict[str, Any]]:
-        return list(self.evaluation_rows)
+        return self.evaluation_rows
 
     def load_exploration_strategies(self) -> list[dict[str, Any]]:
-        return list(self.strategy_rows)
+        return self.strategy_rows
 
     def load_strategy_of_strategy(self) -> list[dict[str, Any]]:
-        return list(self.strategy_of_strategy_rows)
+        return self.strategy_of_strategy_rows
 
     def ensure_seed_domains(self) -> dict[str, dict[str, Any]]:
-        return dict(self.domain_pool)
+        return self.domain_pool
 
     def domain_names(self) -> list[str]:
         return sorted(self.domain_pool)
 
     def get_domain(self, name: str) -> dict[str, Any] | None:
-        row = self.domain_pool.get(str(name))
-        return dict(row) if row else None
+        return self.domain_pool.get(str(name))
 
     def register_domain(self, name: str, genome: Mapping[str, Any] | None = None) -> dict[str, Any]:
+        if str(name) not in self.domain_pool and len(self.domain_pool) >= 8:
+            fallback = next(reversed(self.domain_pool.values()))
+            return dict(fallback)
         row = {"name": str(name), "genome": dict(genome) if isinstance(genome, Mapping) else genome}
         self.domain_pool[str(name)] = row
         return dict(row)
@@ -292,39 +388,72 @@ class _FastSoakRuntime:
         return artifact_id
 
     def save(self, kind: str, payload: Any) -> None:
+        if kind not in {
+            "pressure",
+            "stabilized_pressure",
+            "quest",
+            "policy",
+            "guard",
+            "repair",
+            "resource_allocation",
+            "exploration_economy_state",
+            "civilization_state",
+            "civilization_stability",
+            "exploration_cycle",
+            "meta_exploration",
+        }:
+            return
         self.archive_writer.append({"kind": kind, "payload": payload})
 
     def remember(self, kind: str, payload: Any) -> None:
+        if kind not in {
+            "pressure_snapshot",
+            "quest_artifact",
+            "policy_artifact",
+            "repair_artifact",
+            "resource_allocation",
+            "civilization_state",
+            "civilization_stability",
+            "meta_exploration_artifact",
+            "exploration_cycle",
+        }:
+            return
         self.memory_writer.append({"kind": kind, "payload": payload})
 
     def append_metrics_snapshot(self, tick: int, metrics: Mapping[str, float], state: Mapping[str, Any]) -> None:
-        row = _metrics_row(tick, metrics, state)
+        row = _fast_metrics_row(tick, metrics, state)
         self.metric_history.append(row)
         self.metrics_writer.append(row)
 
     def record_histories(self, metrics: Mapping[str, float], state: Mapping[str, Any]) -> None:
-        row = {**dict(metrics), **dict(state)}
-        self.guard_history.append(row)
-        self.cooldown_history.append(
-            {
-                "tick": state.get("tick"),
-                "quest": state.get("quest", {}),
-                "repair": state.get("repair"),
-                "guard": state.get("guard", {}),
-                "cooldown": state.get("cooldown", {}),
-            }
-        )
-        self.routing_history.append(
-            {
-                "tick": state.get("tick"),
-                "domain": state.get("domain"),
-                "routing": state.get("routing", {}),
-                "guard": state.get("guard", {}),
-            }
-        )
+        self.guard_history.append(_fast_guard_row(metrics, state))
+        cooldown = state.get("cooldown", {})
+        if isinstance(cooldown, Mapping):
+            self.cooldown_history.append(dict(cooldown))
+        routing = state.get("routing", {})
+        if isinstance(routing, Mapping):
+            self.routing_history.append(dict(routing))
+        ecology = state.get("ecology", {})
+        if isinstance(ecology, Mapping):
+            cached_ecology = dict(ecology)
+            self.ecology_history.append(cached_ecology)
+            self.latest_ecology = cached_ecology
+        civilization_selection = state.get("civilization_selection", {})
+        if isinstance(civilization_selection, Mapping):
+            self.latest_civilization_selection = dict(civilization_selection)
+        population = state.get("population", {})
+        if isinstance(population, Mapping):
+            population_counts = population.get("population_counts", {})
+            if isinstance(population_counts, Mapping):
+                self.population_counts.clear()
+                for artifact_type, count in population_counts.items():
+                    self.population_counts[str(artifact_type)] = int(count)
 
     def maybe_flush(self, tick: int, total_ticks: int) -> None:
-        if tick % self.flush_every == 0 or tick == total_ticks:
+        if tick == total_ticks:
+            self.flush()
+            return
+        if tick % self.flush_every == 0:
             self.flush()
 
     def flush(self) -> None:
@@ -351,6 +480,7 @@ class _SummaryTracker:
         self.governor_interventions = 0
         self.meta_exploration_count = 0
         self.new_domain_count = 0
+        self.budget_cycle_count = 0
         self._last_selected_domain: str | None = None
         self.selected_domain_counts: collections.Counter[str] = collections.Counter()
         self.selected_artifact_type_counts: collections.Counter[str] = collections.Counter()
@@ -407,6 +537,9 @@ class _SummaryTracker:
         governance = report.get("governance", {}) if isinstance(report.get("governance"), Mapping) else {}
         if bool(governance.get("intervention")):
             self.governor_interventions += 1
+        exploration_cycle = report.get("exploration_cycle", {}) if isinstance(report.get("exploration_cycle"), Mapping) else {}
+        if bool(exploration_cycle.get("exhausted")):
+            self.budget_cycle_count += 1
         guard = report.get("guard", {}) if isinstance(report.get("guard"), Mapping) else {}
         if bool(guard.get("freeze_export")):
             self.freeze_count += 1
@@ -432,10 +565,51 @@ class _SummaryTracker:
             "new_domain_count": self.new_domain_count,
             "created_domains": sorted(self.created_domains),
             "governor_interventions": self.governor_interventions,
+            "budget_cycle_count": self.budget_cycle_count,
             "meta_share": round(self.meta_count / count, 4),
             "exploration_share": round(self.exploration_count / count, 4),
             "freeze_count": self.freeze_count,
         }
+
+
+def _next_state(
+    tick: int,
+    result: Mapping[str, Any],
+    *,
+    workers: int,
+    worker_cap: int,
+    domain: str,
+) -> dict[str, Any]:
+    return {
+        "tick": tick,
+        "artifact_id": result.get("artifact_id"),
+        "policy": result.get("policy", {}),
+        "workers": min(worker_cap, int(result.get("workers", workers))),
+        "domain": result.get("domain", domain),
+        "quest": result.get("quest", {}),
+        "pressure": result.get("pressure", {}),
+        "stabilized_pressure": result.get("stabilized_pressure", result.get("pressure", {})),
+        "repair": result.get("repair"),
+        "genome": result.get("genome"),
+        "market": result.get("market", {}),
+        "stabilized_market": result.get("stabilized_market", result.get("market", {})),
+        "budgets": result.get("budgets", {}),
+        "routing": result.get("routing", {}),
+        "ecology": result.get("ecology", {}),
+        "strategy_of_strategy": result.get("strategy_of_strategy", {}),
+        "exploration_cycle": result.get("exploration_cycle", {}),
+        "meta_exploration": result.get("meta_exploration", {}),
+        "civilization_selection": result.get("civilization_selection", {}),
+        "population": result.get("population", {}),
+        "governance": result.get("governance", {}),
+        "economy": result.get("economy", {}),
+        "exploration_economy_state": result.get("exploration_economy_state", {}),
+        "resource_allocation": result.get("resource_allocation", {}),
+        "civilization_state": result.get("civilization_state", {}),
+        "civilization_stability": result.get("civilization_stability", {}),
+        "guard": result.get("guard", {}),
+        "cooldown": result.get("cooldown", {}),
+    }
 
 
 def _generated_metrics(ticks: int, seed: int | None) -> list[dict[str, float]]:
@@ -494,10 +668,13 @@ def run_soak(
     reports: list[dict[str, Any]] = []
     summary = _SummaryTracker()
     fast_runtime = _FastSoakRuntime() if _is_soak_fast_mode() else None
+    persist_soak_snapshots = fast_runtime is None
 
     with fast_runtime or contextlib.nullcontext():
         total_ticks = len(sequence)
-        guard_history: collections.deque[dict[str, Any]] = collections.deque(maxlen=64 if fast_runtime is not None else total_ticks or None)
+        guard_history: collections.deque[dict[str, Any]] | None = None
+        if fast_runtime is None:
+            guard_history = collections.deque(maxlen=total_ticks or None)
         for tick, metrics in enumerate(sequence, start=1):
             if fast_runtime is not None:
                 fast_runtime.append_metrics_snapshot(tick, metrics, state)
@@ -512,44 +689,26 @@ def run_soak(
                     domain=str(current_state.get("domain", domain)),
                     parent=current_state.get("artifact_id"),
                 )
-                next_state = {
-                    "tick": tick,
-                    "artifact_id": result.get("artifact_id"),
-                    "policy": result.get("policy", {}),
-                    "workers": min(worker_cap, int(result.get("workers", workers))),
-                    "domain": result.get("domain", domain),
-                    "quest": result.get("quest", {}),
-                    "pressure": result.get("pressure", {}),
-                    "stabilized_pressure": result.get("stabilized_pressure", result.get("pressure", {})),
-                    "repair": result.get("repair"),
-                    "genome": result.get("genome"),
-                    "market": result.get("market", {}),
-                    "stabilized_market": result.get("stabilized_market", result.get("market", {})),
-                    "budgets": result.get("budgets", {}),
-                    "routing": result.get("routing", {}),
-                    "ecology": result.get("ecology", {}),
-                    "strategy_of_strategy": result.get("strategy_of_strategy", {}),
-                    "meta_exploration": result.get("meta_exploration", {}),
-                    "civilization_selection": result.get("civilization_selection", {}),
-                    "population": result.get("population", {}),
-                    "governance": result.get("governance", {}),
-                    "economy": result.get("economy", {}),
-                    "guard": result.get("guard", {}),
-                    "cooldown": result.get("cooldown", {}),
-                }
-                save("soak_snapshot", next_state)
-                remember("soak_snapshot", next_state)
+                next_state = _next_state(tick, result, workers=workers, worker_cap=worker_cap, domain=domain)
+                if persist_soak_snapshots:
+                    save("soak_snapshot", next_state)
+                    remember("soak_snapshot", next_state)
                 return next_state
 
             if fail_open:
-                state = dict(guarded_step(_step, state) or state)
+                next_state = guarded_step(_step, state) or state
             else:
-                state = dict(_step(state))
-            guard_history.append({**dict(metrics), **state})
-            state["guard"] = detect_guard_state(guard_history)
+                next_state = _step(state)
+            state = next_state if isinstance(next_state, dict) else _next_state(tick, next_state, workers=workers, worker_cap=worker_cap, domain=domain)
             if fast_runtime is not None:
                 fast_runtime.record_histories(metrics, state)
+                state["guard"] = detect_guard_state(fast_runtime.guard_history)
+                fast_runtime.guard_history[-1]["guard"] = state["guard"]
                 fast_runtime.maybe_flush(tick, total_ticks)
-            reports.append(dict(state))
+            else:
+                assert guard_history is not None
+                guard_history.append({**dict(metrics), **state})
+                state["guard"] = detect_guard_state(guard_history)
+            reports.append(state if fast_runtime is not None else dict(state))
             summary.update(state)
     return SoakResult(reports, summary.summary())

@@ -9,13 +9,20 @@ from typing import Any, Iterable, Mapping
 
 from artifact.store import get_body, put_body
 from kernel.contracts import PRIMARY_ARTIFACT_CLASSES, artifact_envelope
+from kernel.spine import append_jsonl
 
 
 DEFAULT_REGISTRY = ".metaos_runtime/data/artifact_registry.jsonl"
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_REGISTRY", DEFAULT_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_REGISTRY"):
+        path = Path(os.environ["METAOS_REGISTRY"])
+    elif root:
+        path = Path(root) / "artifact_registry.jsonl"
+    else:
+        path = Path(DEFAULT_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 
@@ -53,8 +60,12 @@ def register_envelope(
     body_ref = put_body(envelope["spec"], envelope["blobs"])
     row = {
         "artifact_id": artifact_id,
+        "artifact_type": envelope["artifact_type"],
         "class": aclass,
         "type": atype,
+        "parent_ids": list(envelope["parent_ids"]),
+        "payload": dict(envelope["payload"]),
+        "score_vector": dict(envelope["score_vector"]),
         "schema_version": envelope["schema_version"],
         "created_at": envelope["created_at"],
         "immutable": envelope["immutable"],
@@ -63,8 +74,7 @@ def register_envelope(
         "constraints": envelope["constraints"],
         "body_ref": body_ref,
     }
-    with _registry_path().open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    append_jsonl(_registry_path(), row)
     return artifact_id
 
 
@@ -93,6 +103,10 @@ def load_envelope(artifact_id: str) -> dict[str, Any] | None:
             **row,
             "spec": body["spec"],
             "blobs": body["blobs"],
+            "artifact_type": row.get("artifact_type", row.get("type")),
+            "parent_ids": list(row.get("parent_ids", ((row.get("refs") or {}).get("parents", [])))),
+            "payload": dict(row.get("payload", body["spec"] if isinstance(body["spec"], Mapping) else {})),
+            "score_vector": dict(row.get("score_vector", {})),
         }
     return None
 
@@ -101,4 +115,3 @@ def iter_by_class(aclass: str) -> Iterable[dict[str, Any]]:
     for row in rows():
         if str(row.get("class")) == str(aclass):
             yield row
-

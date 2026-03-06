@@ -21,7 +21,13 @@ DEFAULT_STRATEGY_OF_STRATEGY = {
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_STRATEGY_OF_STRATEGY_REGISTRY", DEFAULT_STRATEGY_OF_STRATEGY_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_STRATEGY_OF_STRATEGY_REGISTRY"):
+        path = Path(os.environ["METAOS_STRATEGY_OF_STRATEGY_REGISTRY"])
+    elif root:
+        path = Path(root) / "strategy_of_strategy_artifacts.jsonl"
+    else:
+        path = Path(DEFAULT_STRATEGY_OF_STRATEGY_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

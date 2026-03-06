@@ -7,7 +7,12 @@ from pathlib import Path
 
 
 def _registry_path() -> Path:
-    return Path(os.environ.get("METAOS_REGISTRY", ".metaos_runtime/data/artifact_registry.jsonl"))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_REGISTRY"):
+        return Path(os.environ["METAOS_REGISTRY"])
+    if root:
+        return Path(root) / "artifact_registry.jsonl"
+    return Path(".metaos_runtime/data/artifact_registry.jsonl")
 
 
 def load() -> collections.defaultdict[str, list[str]]:

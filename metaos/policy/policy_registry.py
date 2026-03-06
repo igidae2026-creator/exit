@@ -13,7 +13,13 @@ DEFAULT_POLICY_REGISTRY = ".metaos_runtime/data/policy_registry.jsonl"
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_POLICY_REGISTRY", DEFAULT_POLICY_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_POLICY_REGISTRY"):
+        path = Path(os.environ["METAOS_POLICY_REGISTRY"])
+    elif root:
+        path = Path(root) / "policy_registry.jsonl"
+    else:
+        path = Path(DEFAULT_POLICY_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

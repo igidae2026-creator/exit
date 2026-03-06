@@ -13,7 +13,13 @@ DEFAULT_STRATEGY_REGISTRY = ".metaos_runtime/data/exploration_strategy_artifacts
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_EXPLORATION_STRATEGY_REGISTRY", DEFAULT_STRATEGY_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_EXPLORATION_STRATEGY_REGISTRY"):
+        path = Path(os.environ["METAOS_EXPLORATION_STRATEGY_REGISTRY"])
+    elif root:
+        path = Path(root) / "exploration_strategy_artifacts.jsonl"
+    else:
+        path = Path(DEFAULT_STRATEGY_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

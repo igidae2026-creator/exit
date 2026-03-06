@@ -12,13 +12,13 @@ def _health(value: float) -> float:
 
 
 def evaluation_ecology(history: Sequence[Mapping[str, Any]]) -> dict[str, float]:
-    rows = list(history or [])[-32:]
+    rows = history[-32:] if history else ()
     novelty = [float(row.get("novelty", 0.0)) for row in rows if isinstance(row, Mapping)]
     diversity = [float(row.get("diversity", 0.0)) for row in rows if isinstance(row, Mapping)]
     cost = [float(row.get("cost", 0.0)) for row in rows if isinstance(row, Mapping)]
     fail_rate = [float(row.get("fail_rate", 0.0)) for row in rows if isinstance(row, Mapping)]
     lineage = [
-        float((row.get("pressure", {}) if isinstance(row.get("pressure"), Mapping) else {}).get("lineage_pressure", 0.0))
+        max(0.0, float((row.get("pressure", {}) if isinstance(row.get("pressure"), Mapping) else {}).get("diversity_pressure", 0.0)) - 0.5)
         for row in rows
     ]
     repair = [1.0 if row.get("repair") else 0.0 for row in rows if isinstance(row, Mapping)]

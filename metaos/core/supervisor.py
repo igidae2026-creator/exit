@@ -1,39 +1,26 @@
 from __future__ import annotations
 
-import json
-import os
-from pathlib import Path
 from typing import Any, Callable
 
+from kernel.recovery import replay_restore
 from kernel.supervisor import guarded_step as _guarded_step
 
 
-def _checkpoint_path() -> Path:
-    path = Path(os.environ.get("METAOS_CHECKPOINT", ".metaos_runtime/state/checkpoint.json"))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    return path
-
-
-def save_checkpoint(state: Any) -> None:
-    with _checkpoint_path().open("w", encoding="utf-8") as handle:
-        json.dump(state, handle, ensure_ascii=True)
+def save_checkpoint(state: Any) -> Any:
+    return state
 
 
 def load_checkpoint(default: Any = None) -> Any:
-    path = _checkpoint_path()
-    if not path.exists():
-        return {} if default is None else default
-    try:
-        with path.open("r", encoding="utf-8") as handle:
-            return json.load(handle)
-    except Exception:
-        return {} if default is None else default
+    return replay_restore(default=default)
 
 
 def guarded_step(step_fn: Callable[[Any], Any], state: Any, on_fail: Callable[[Any], Any] | None = None) -> Any:
     out = _guarded_step(step_fn, state, on_fail=on_fail)
     if isinstance(out, dict) and out.get("mode") == "safe_mode":
         restored = load_checkpoint(default=state)
+        if isinstance(restored, dict):
+            merged = dict(restored)
+            merged.setdefault("supervisor_mode", "safe_mode")
+            return merged
         return restored
-    save_checkpoint(out or state)
     return out

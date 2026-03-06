@@ -13,7 +13,13 @@ DEFAULT_EVALUATION_REGISTRY = ".metaos_runtime/data/evaluation_artifacts.jsonl"
 
 
 def _registry_path() -> Path:
-    path = Path(os.environ.get("METAOS_EVALUATION_REGISTRY", DEFAULT_EVALUATION_REGISTRY))
+    root = os.environ.get("METAOS_ROOT")
+    if os.environ.get("METAOS_EVALUATION_REGISTRY"):
+        path = Path(os.environ["METAOS_EVALUATION_REGISTRY"])
+    elif root:
+        path = Path(root) / "evaluation_artifacts.jsonl"
+    else:
+        path = Path(DEFAULT_EVALUATION_REGISTRY)
     path.parent.mkdir(parents=True, exist_ok=True)
     return path
 

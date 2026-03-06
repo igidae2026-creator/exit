@@ -1,5 +1,6 @@
 import os
 import tempfile
+import time
 from pathlib import Path
 
 from metaos.runtime.soak_runner import run_soak
@@ -21,7 +22,11 @@ def test_phase7_soak_summary_includes_civilization_ecology_metrics() -> None:
         os.environ["METAOS_STRATEGY_OF_STRATEGY_REGISTRY"] = str(root / "strategy_of_strategy_registry.jsonl")
         os.environ["METAOS_DOMAIN_POOL"] = str(root / "domain_pool.json")
         try:
+            t0 = time.time()
             ticks, summary = run_soak(ticks=48, seed=21, fail_open=True)
+            elapsed = time.time() - t0
+            assert elapsed < 3.0
+            assert len(ticks) == 48
             assert "selected_domain_counts" in summary
             assert "selected_artifact_type_counts" in summary
             assert "meta_share" in summary

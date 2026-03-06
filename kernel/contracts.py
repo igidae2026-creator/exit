@@ -12,6 +12,7 @@ PRIMARY_ARTIFACT_CLASSES = {
     "evaluation",
     "repair",
     "domain",
+    "allocator",
 }
 
 POLICY_FAMILIES = (
@@ -49,21 +50,34 @@ def artifact_envelope(
 ) -> dict[str, Any]:
     if aclass not in PRIMARY_ARTIFACT_CLASSES:
         raise ValueError(f"unsupported artifact class: {aclass}")
+    normalized_spec = dict(spec or {})
+    normalized_refs = {
+        "parents": list((refs or {}).get("parents", [])),
+        "inputs": list((refs or {}).get("inputs", [])),
+        "subjects": list((refs or {}).get("subjects", [])),
+        "context": dict((refs or {}).get("context", {})),
+    }
+    score_vector = {
+        "score": float((provenance or {}).get("score", 0.0) or 0.0),
+        "novelty": float((provenance or {}).get("novelty", 0.0) or 0.0),
+        "diversity": float((provenance or {}).get("diversity", 0.0) or 0.0),
+        "efficiency": float((provenance or {}).get("efficiency", 0.0) or 0.0),
+        "cost": float((provenance or {}).get("cost", 0.0) or 0.0),
+    }
     return {
         "artifact_id": artifact_id,
         "class": aclass,
         "type": atype,
+        "artifact_type": atype,
+        "parent_ids": list(normalized_refs["parents"]),
+        "payload": normalized_spec,
+        "score_vector": score_vector,
         "schema_version": schema_version,
         "created_at": created_at,
         "immutable": bool(immutable),
-        "spec": dict(spec or {}),
+        "spec": normalized_spec,
         "blobs": dict(blobs or {}),
-        "refs": {
-            "parents": list((refs or {}).get("parents", [])),
-            "inputs": list((refs or {}).get("inputs", [])),
-            "subjects": list((refs or {}).get("subjects", [])),
-            "context": dict((refs or {}).get("context", {})),
-        },
+        "refs": normalized_refs,
         "provenance": dict(provenance or {}),
         "constraints": dict(constraints or {}),
     }
@@ -100,4 +114,3 @@ class QuestSlots:
     continuity_slot: Mapping[str, Any] = field(default_factory=dict)
     frontier_slot: Mapping[str, Any] = field(default_factory=dict)
     escape_slot: Mapping[str, Any] = field(default_factory=dict)
-

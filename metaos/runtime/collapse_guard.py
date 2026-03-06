@@ -19,7 +19,7 @@ def detect_guard_state(history: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     rows = list(history)[-20:]
     novelty = [_history_value(row, "novelty") for row in rows]
     fail_rate = [_history_value(row, "fail_rate") for row in rows]
-    lineage = [_history_value(row, "lineage_pressure", "pressure") for row in rows]
+    lineage = [_history_value(row, "diversity_pressure", "pressure") for row in rows]
     domain_shift = [_history_value(row, "domain_shift_pressure", "pressure") for row in rows]
     worker_budgets = [_history_value(row, "effective_workers", "budgets") for row in rows]
     total_budgets = []
@@ -36,7 +36,7 @@ def detect_guard_state(history: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         if row.get("repair"):
             repairs += 1
 
-    lineage_collapse = _avg(lineage) >= 0.75
+    lineage_collapse = _avg(lineage) >= 0.85
     novelty_collapse = rows and _avg(novelty) <= 0.16
     repair_storm = repairs >= max(3, len(rows) // 3) or _avg(fail_rate) >= 0.32
     budget_inflation = bool(rows) and _avg(total_budgets) > max(10.0, _avg(worker_budgets) * 28.0)
