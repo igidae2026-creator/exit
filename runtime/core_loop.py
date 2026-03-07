@@ -13,7 +13,9 @@ from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping
 
 from runtime.oed_orchestrator import step as oed_step
 from runtime.genesis_ceiling import CANONICAL_EXPLORATION_LOOP
-from signal.pressure import pressure_frame
+from metaos.observer.pressure_engine import pressure as raw_pressure
+from runtime.pressure_ecology import stabilize_pressure
+from runtime.pressure_market import market
 from strategy.quota import quota_frame
 from strategy.quest_portfolio import active_quest, quest_slots
 
@@ -99,7 +101,9 @@ def _noop_handler(_: MutableMapping[str, Any]) -> None:
 
 
 def oed_extension(metrics: Mapping[str, float], policy: MutableMapping[str, float], workers: int) -> tuple[dict[str, Any], dict[str, float], int]:
-    signal_frame = pressure_frame(metrics)
+    current_pressure = raw_pressure(metrics)
+    stabilized_pressure = stabilize_pressure(current_pressure)
+    signal_frame = {"pressure": current_pressure, "stabilized_pressure": stabilized_pressure, "market": market(stabilized_pressure)}
     p = signal_frame["stabilized_pressure"]
     q = active_quest(quest_slots(p))
     quota = quota_frame(p, workers, signal_frame["market"], tick=0)

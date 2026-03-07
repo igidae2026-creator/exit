@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "metaos"
 version = "0.4.0rc1"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = ["pyyaml"]
 readme = "README.md"
 
