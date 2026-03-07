@@ -12,6 +12,12 @@ Canonical control flow:
 Hierarchy:
 - `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
 
+Profiles:
+- `smoke`: fast validation and replay proof (`--profile smoke`)
+- `soak`: long-run stability checks (`--profile soak`)
+- `endurance`: large-budget/large-history stress (`--profile endurance`)
+- `civilization`: unbounded canonical runtime (`--profile civilization`, no `--max-ticks`)
+
 Operator actions:
 - start runtime: `bash ops/run-metaos.sh`
 - check health: `bash ops/healthcheck.sh`
@@ -22,16 +28,15 @@ Operator actions:
 - inspect economy status: `python -m app.cli economy-status`
 - inspect stability status: `python -m app.cli stability-status`
 - inspect safety status: `python -m app.cli safety-status`
+- run long-run validation: `python -m app.cli long-run-check --profile smoke`
 - run smoke validation: `python -m app.cli long-run-check --tier smoke`
 - run bounded validation: `python -m app.cli long-run-check --tier bounded`
 - run soak validation: `python -m app.cli long-run-check --tier soak`
 - rotate runtime safely: `bash ops/rotate-runtime.sh`
 - clean transient runtime state: `bash ops/cleanup-runtime.sh`
 
-Automatic actions:
-- exploration and reframing
-- artifact mutation and selection
-- domain discovery within bounded expansion policy
-- domain retirement and bounded resurrection
-- civilization memory accumulation
-- replay-compatible continuation
+Failure protocol:
+- plateau -> exploration pressure
+- collapse -> diversity repair
+- repair failure -> repair escalation
+- invalid state -> replay restore

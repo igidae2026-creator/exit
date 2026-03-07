@@ -7,6 +7,7 @@ from typing import Sequence
 
 from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, safety_projection, stability_projection, status_projection
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from runtime.profiles import RUNTIME_PROFILES
 from runtime.long_run_validation import LONG_RUN_HORIZONS, run_long_run_validation
 from runtime.long_run_validation import LONG_RUN_TIERS, validate_long_run
 from validation.system_boundary import validate_system_boundary
@@ -21,6 +22,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--domain", default="research_domain")
     parser.add_argument("--tick-seconds", type=float, default=None)
     parser.add_argument("--max-ticks", type=int, default=None)
+    parser.add_argument("--profile", choices=tuple(RUNTIME_PROFILES.keys()), default=None)
 
     subparsers = parser.add_subparsers(dest="command", required=False)
 
@@ -78,6 +80,7 @@ def build_parser() -> argparse.ArgumentParser:
     long_run_parser.add_argument("--tier", choices=sorted(LONG_RUN_TIERS), default="bounded")
     long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--seed", type=int, default=42)
+    long_run_parser.add_argument("--profile", choices=tuple(RUNTIME_PROFILES.keys()), default="smoke")
     long_run_parser.set_defaults(func=cmd_long_run_check)
 
     build_release_parser = subparsers.add_parser("build-release", help="Build release zip")
@@ -104,6 +107,8 @@ def build_runtime(args: argparse.Namespace) -> Orchestrator:
         config.tick_seconds = args.tick_seconds
     if args.max_ticks is not None:
         config.max_ticks = args.max_ticks
+    if args.profile:
+        config.runtime_profile = args.profile
     return Orchestrator(config)
 
 
@@ -196,6 +201,9 @@ def cmd_safety_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
+    from runtime.long_run_validation import validate_long_run
+
+    payload = validate_long_run(ticks=max(1, int(args.ticks)), seed=int(args.seed), fail_open=True, profile=str(args.profile))
     ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_HORIZONS.get(args.profile, 2_000))
     payload = run_long_run_validation(ticks=max(1, ticks), seed=int(args.seed), fail_open=True, profile=args.profile)
     payload["profile"] = args.profile

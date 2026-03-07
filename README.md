@@ -1,13 +1,13 @@
 # METAOS
 
-METAOS is a bounded autonomous exploration civilization engine. It is for replayable, pressure-driven solution evolution under GENESIS law, not for one-shot task execution.
+METAOS is an autonomous exploration civilization engine for replayable, pressure-driven solution evolution under GENESIS law.
 
 Primary references:
-- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
-- [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
-- [Architecture Layers](/home/meta_os/metaos/docs/architecture/LAYERS.md)
-- [Architecture Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
-- [Why METAOS](/home/meta_os/metaos/docs/architecture/WHY_METAOS.md)
+- [GENESIS](docs/core/GENESIS.md)
+- [METAOS Final Definition](docs/core/METAOS_FINAL_DEFINITION.md)
+- [Architecture Layers](docs/architecture/LAYERS.md)
+- [Architecture Boundaries](docs/architecture/BOUNDARIES.md)
+- [Why METAOS](docs/architecture/WHY_METAOS.md)
 
 ## What METAOS Is
 
@@ -35,48 +35,29 @@ Canonical ownership:
 - `metaos_b/`: multi-unit scheduling and resource selection
 - `metaos_c/`: civilization memory, topology, domain discovery
 
-Deprecated surfaces are compatibility-only:
+Compatibility-only surfaces:
 - `core/`
 - `kernel/`
 - `evolution/`
+- `loop/`
 - `metaos/kernel/`
 - `metaos/runtime/`
 - `metaos/domains/`
 
-## Why Use METAOS
+## Runtime Profiles
 
-- when solutions must evolve over long runs instead of being hand-scripted up front
-- when append-only truth and replayable effective state matter
-- when multiple lineages and bounded domain expansion matter
-- when operators need observable economy, lineage, domain lifecycle, stability, safety, and replay status
+Runtime scale is profile-driven; demo-size constants are not canonical truth.
 
-## When Not To Use METAOS
+- `smoke`: 1,000 ticks target, 8-32 workers, >=2 lineages, >=2 domains.
+- `soak`: 50,000 ticks target, 64-256 workers, >=8 lineages, >=4 domains.
+- `endurance`: 500,000 ticks target, 256-1,024 workers, >=16 lineages, >=8 domains.
+- `civilization`: unbounded target ticks, production guardrails/rotation/recovery playbook mode.
 
-- when a single-shot assistant or workflow engine is enough
-- when replay and artifact lineage do not matter
-- when you do not want automatic exploration, validation, and expansion
-
-## What An Operator Does
-
-- defines goal, essence, constraints, and acceptance
-- starts and validates the runtime
-- observes civilization, lineage, domain, economy, and replay status
-- observes long-horizon stability, domain retirement/resurrection pressure, and guardrail interventions
-- rotates and cleans runtime state safely
-
-## What Remains Automatic
-
-- exploration
-- implementation
-- validation
-- policy and evaluation evolution
-- bounded domain discovery
-- memory accumulation
-- replay-compatible continuation
+Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 
 ## Operational Surfaces
 
-- `python -m app.cli run`
+- `python -m app.cli run --profile smoke`
 - `python -m app.cli health`
 - `python -m app.cli replay-check`
 - `python -m app.cli civilization-status`
@@ -85,6 +66,9 @@ Deprecated surfaces are compatibility-only:
 - `python -m app.cli economy-status`
 - `python -m app.cli stability-status`
 - `python -m app.cli safety-status`
+- `python -m app.cli long-run-check --profile smoke`
+- `bash ops/run-metaos.sh`
+- `bash ops/validate-runtime.sh`
 - `python -m app.cli long-run-check --tier smoke`
 - `python -m app.cli long-run-check --tier bounded`
 - `python -m app.cli long-run-check --tier soak`
