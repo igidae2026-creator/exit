@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Mapping
 from typing import Any
 
 from genesis.replay import replay_state
@@ -16,12 +17,50 @@ def _pattern_counts(rows: list[dict[str, Any]], key: str) -> dict[str, int]:
     return dict(counts)
 
 
-def accumulated_knowledge() -> dict[str, Any]:
-    state = replay_state()
-    civilization = civilization_state()
-    archive_rows = list((state.get("archive_state", {}) if isinstance(state.get("archive_state"), dict) else {}).items())
+def _mapping(value: Any) -> dict[str, Any]:
+    return dict(value) if isinstance(value, Mapping) else {}
+
+
+def _list_of_dicts(value: Any) -> list[dict[str, Any]]:
+    return [dict(item) for item in value] if isinstance(value, list) else []
+
+
+def _replay_reference_counts(state: Any) -> dict[str, int]:
+    if isinstance(state, Mapping):
+        return {
+            "artifacts": int(state.get("artifacts", 0)),
+            "metrics": int(state.get("metrics", 0)),
+            "events": int(state.get("events", 0)),
+        }
+    artifacts = getattr(state, "artifacts", {}) or {}
+    metric_history = getattr(state, "metric_history", []) or []
+    tick_summaries = getattr(state, "tick_summaries", []) or []
+    return {
+        "artifacts": len(artifacts) if isinstance(artifacts, Mapping) else 0,
+        "metrics": len(metric_history) if isinstance(metric_history, list) else 0,
+        "events": len(tick_summaries) if isinstance(tick_summaries, list) else 0,
+    }
+
+
+def accumulated_knowledge(*, replay: Any | None = None, civilization: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    state = replay if replay is not None else replay_state()
+    civilization_payload = (
+        dict(civilization)
+        if civilization is not None
+        else ({} if replay is not None else civilization_state())
+    )
+    state_map = _mapping(state)
+    if state_map:
+        archive_rows = list(_mapping(state_map.get("archive_state", {})).items())
+        artifacts = [dict(value) for value in _mapping(state_map.get("artifacts", {})).values()]
+        lineage_graph = dict(_mapping(_mapping(state_map.get("lineage_state", {})).get("graph", {})))
+        metrics_history = _list_of_dicts(state_map.get("metric_history"))
+    else:
+        archive_rows = []
+        artifacts = [dict(value) for value in (_mapping(getattr(state, "artifacts", {}))).values()]
+        lineage_graph = dict(getattr(state, "lineage_graph", {}) or {})
+        metrics_history = [dict(item) for item in (getattr(state, "metric_history", []) or []) if isinstance(item, Mapping)]
     archive_kinds = [str(kind) for kind, _ in archive_rows]
-    artifacts = [dict(value) for value in (state.get("artifacts", {}) if isinstance(state.get("artifacts"), dict) else {}).values()]
     artifact_memory_graph: dict[str, list[str]] = defaultdict(list)
     lineage_ancestry_graph: dict[str, list[str]] = defaultdict(list)
     domain_knowledge: dict[str, dict[str, Any]] = defaultdict(lambda: {"artifacts": 0, "patterns": Counter(), "lineages": set()})
@@ -37,10 +76,9 @@ def accumulated_knowledge() -> dict[str, Any]:
         artifact_type = str(artifact.get("artifact_type", artifact.get("type", "")))
         if artifact_type:
             domain_knowledge[domain]["patterns"][artifact_type] += 1
-    metrics_history = list(state.get("metric_history", [])) if isinstance(state.get("metric_history"), list) else []
     return {
         "artifact_archives": archive_kinds,
-        "lineage_graph": dict((state.get("lineage_state", {}) if isinstance(state.get("lineage_state"), dict) else {}).get("graph", {})),
+        "lineage_graph": lineage_graph,
         "artifact_memory_graph": {key: list(dict.fromkeys(values)) for key, values in artifact_memory_graph.items()},
         "lineage_ancestry_graph": {key: list(dict.fromkeys(values)) for key, values in lineage_ancestry_graph.items()},
         "pattern_library": {
@@ -56,12 +94,8 @@ def accumulated_knowledge() -> dict[str, Any]:
             }
             for domain, value in domain_knowledge.items()
         },
-        "civilization_memory": civilization,
-        "references": {
-            "artifacts": int(state.get("artifacts", 0)),
-            "metrics": int(state.get("metrics", 0)),
-            "events": int(state.get("events", 0)),
-        },
+        "civilization_memory": civilization_payload,
+        "references": _replay_reference_counts(state),
     }
 
 

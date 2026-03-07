@@ -36,6 +36,22 @@ def _budget_frame(
     return {key: round(value / total, 4) for key, value in frame.items()}
 
 
+def _memory_state(
+    explicit: Mapping[str, float] | None,
+    civilization_state: Mapping[str, Any],
+) -> dict[str, float]:
+    if explicit is not None:
+        return dict(explicit)
+    civilization = dict(civilization_state or {})
+    if civilization:
+        return {
+            "memory_growth": float(civilization.get("memory_growth", 0.0) or 0.0),
+            "knowledge_density": float(civilization.get("knowledge_density", 0.0) or 0.0),
+            "archive_pressure": float(civilization.get("archive_pressure", 0.0) or 0.0),
+        }
+    return dict(memory_pressure())
+
+
 def allocate_resources(
     pressure: Mapping[str, float],
     ecology: Mapping[str, Any],
@@ -52,7 +68,7 @@ def allocate_resources(
     population_counts = dict(population_state.get("population_counts", {})) if isinstance(population_state.get("population_counts"), Mapping) else {}
     growth_rates = dict(population_state.get("growth_rates", {})) if isinstance(population_state.get("growth_rates"), Mapping) else {}
     extinction_risk = dict(population_state.get("extinction_risk", {})) if isinstance(population_state.get("extinction_risk"), Mapping) else {}
-    memory_state = dict(memory_state or memory_pressure())
+    memory_state = _memory_state(memory_state, civilization_frame)
     novelty = float(pressure_state.get("novelty_pressure", 0.0))
     diversity = float(pressure_state.get("diversity_pressure", 0.0))
     efficiency = float(pressure_state.get("efficiency_pressure", 0.0))

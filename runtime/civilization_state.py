@@ -251,7 +251,7 @@ def civilization_state(
     budgets = _as_mapping(runtime_state.get("budgets") or replay.get("budgets") or replay.get("last_metrics", {}).get("budgets", {}))
     economy_state = _latest_runtime_frame("exploration_economy_state", replay, runtime_state, allow_memory_lookup=allow_memory_lookup)
     domain_expansion_state = _latest_runtime_frame("domain_expansion_state", replay, runtime_state, allow_memory_lookup=allow_memory_lookup)
-    federation = federation_state()
+    federation = federation_state() if allow_memory_lookup else {}
     recent_window = list(history_rows[-32:] if history_rows else (memory_window(32) if allow_memory_lookup else []))
     created_domains = sorted(set(domain_population))
     active_domains = sorted(name for name, count in domain_population.items() if int(count) > 0)

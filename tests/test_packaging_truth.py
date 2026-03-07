@@ -7,6 +7,9 @@ def test_pyproject_matches_top_level_package_layout() -> None:
     text = Path("pyproject.toml").read_text(encoding="utf-8")
     assert 'package-dir = {"" = "src"}' not in text
     assert 'where = ["."]' in text
+    assert "requires = []" in text
+    assert 'build-backend = "build_backend"' in text
+    assert 'backend-path = ["."]' in text
     for package_name in packaged_roots():
         assert f'"{package_name}*"' in text or f'"{package_name}"' in text
 
@@ -25,3 +28,7 @@ def test_packaging_truth_matches_actual_tree() -> None:
     roots = {path.name for path in Path(".").iterdir() if path.is_dir()}
     for package_name in packaged_roots():
         assert package_name in roots
+
+
+def test_repository_local_build_backend_exists() -> None:
+    assert Path("build_backend.py").exists()

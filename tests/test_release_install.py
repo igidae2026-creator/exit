@@ -51,6 +51,40 @@ def test_built_wheel_installs_and_runs_public_cli() -> None:
         assert validate_release.returncode == 0, validate_release.stderr
 
 
+def test_no_build_isolation_wheel_build_bootstraps_without_ambient_setuptools() -> None:
+    repo = Path(".").resolve()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        venv_dir = root / "venv"
+        created = _run([sys.executable, "-m", "venv", str(venv_dir)], cwd=repo)
+        assert created.returncode == 0, created.stderr
+        python = venv_dir / "bin" / "python"
+        uninstall = _run([str(python), "-m", "pip", "uninstall", "-y", "setuptools"], cwd=repo, timeout=240)
+        assert uninstall.returncode == 0, uninstall.stderr
+        wheel_dir = root / "wheelhouse"
+        wheel_dir.mkdir()
+        built = _run([str(python), "-m", "pip", "wheel", ".", "--no-build-isolation", "--no-deps", "-w", str(wheel_dir)], cwd=repo, timeout=240)
+        assert built.returncode == 0, built.stderr
+        assert sorted(wheel_dir.glob("metaos-*.whl"))
+
+
+def test_editable_install_succeeds_without_network_fetched_build_backend() -> None:
+    repo = Path(".").resolve()
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        venv_dir = root / "venv"
+        created = _run([sys.executable, "-m", "venv", str(venv_dir)], cwd=repo)
+        assert created.returncode == 0, created.stderr
+        python = venv_dir / "bin" / "python"
+        installed = _run([str(python), "-m", "pip", "install", "--no-deps", "-e", "."], cwd=repo, timeout=240)
+        assert installed.returncode == 0, installed.stderr
+        env = os.environ.copy()
+        env["METAOS_ROOT"] = str(root / "runtime")
+        status = _run([str(python), "-m", "metaos.cli", "replay-check"], cwd=repo, env=env)
+        assert status.returncode == 0, status.stderr
+        json.loads(status.stdout)
+
+
 def test_release_zip_matches_manifest_and_contains_metadata() -> None:
     repo = Path(".").resolve()
     build = _run(["bash", "scripts/build_release_zip.sh"], cwd=repo, timeout=240)

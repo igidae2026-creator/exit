@@ -11,6 +11,12 @@ from genesis.event_log import ensure_spine, read_events, read_metrics, read_regi
 from domains.domain_genome import canonical_domain_genome, domain_plugin_names
 
 
+DEFAULT_RUNTIME_ROOT = Path(".metaos_runtime")
+DEFAULT_DATA_DIR = DEFAULT_RUNTIME_ROOT / "data"
+DEFAULT_STATE_DIR = DEFAULT_RUNTIME_ROOT / "state"
+DEFAULT_ARCHIVE_DIR = DEFAULT_RUNTIME_ROOT / "archive"
+
+
 @dataclass(slots=True)
 class ReplayState:
     data_dir: str = "data"
@@ -90,14 +96,45 @@ def _load_checkpoint(state_dir: str | Path = "state") -> dict[str, Any]:
     return row if isinstance(row, dict) else {}
 
 
-def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "state", archive_dir: str | Path = "archive") -> ReplayState:
-    ensure_spine(data_dir)
-    state = ReplayState(data_dir=str(data_dir), state_dir=str(state_dir), archive_dir=str(archive_dir))
-    state.checkpoint = _load_checkpoint(state_dir)
+def _resolved_runtime_paths(
+    data_dir: str | Path = DEFAULT_DATA_DIR,
+    *,
+    state_dir: str | Path = DEFAULT_STATE_DIR,
+    archive_dir: str | Path = DEFAULT_ARCHIVE_DIR,
+) -> tuple[Path, Path, Path]:
+    root = os.environ.get("METAOS_ROOT")
+    data_path = Path(data_dir)
+    state_path = Path(state_dir)
+    archive_path = Path(archive_dir)
+    if root:
+        root_path = Path(root)
+        if data_path == DEFAULT_DATA_DIR:
+            data_path = root_path
+        if state_path == DEFAULT_STATE_DIR:
+            state_path = root_path / "state"
+        if archive_path == DEFAULT_ARCHIVE_DIR:
+            archive_path = root_path / "archive"
+    return data_path, state_path, archive_path
+
+
+def replay_state(
+    data_dir: str | Path = DEFAULT_DATA_DIR,
+    *,
+    state_dir: str | Path = DEFAULT_STATE_DIR,
+    archive_dir: str | Path = DEFAULT_ARCHIVE_DIR,
+) -> ReplayState:
+    data_path, state_path, archive_path = _resolved_runtime_paths(
+        data_dir,
+        state_dir=state_dir,
+        archive_dir=archive_dir,
+    )
+    ensure_spine(data_path)
+    state = ReplayState(data_dir=str(data_path), state_dir=str(state_path), archive_dir=str(archive_path))
+    state.checkpoint = _load_checkpoint(state_path)
     state.tick = int(state.checkpoint.get("tick", 0) or 0)
     state.best_score = float(state.checkpoint.get("best_score", 0.0) or 0.0)
 
-    for row in read_registry(data_dir):
+    for row in read_registry(data_path):
         state.events_seen += 1
         artifact_id = str(row.get("artifact_id") or "")
         if not artifact_id:
@@ -109,7 +146,7 @@ def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "stat
         domain = str(payload.get("domain") or payload.get("metadata", {}).get("domain") or "unknown")
         state.domain_counts[domain] = state.domain_counts.get(domain, 0) + 1
 
-    for row in read_metrics(data_dir):
+    for row in read_metrics(data_path):
         state.events_seen += 1
         payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
         metric_row = {key: float(value) for key, value in payload.items() if isinstance(value, (int, float))}
@@ -130,7 +167,7 @@ def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "stat
             prior_best = max(prior_best or 0.0, current)
     state.plateau_streak = streak
 
-    for row in read_events(data_dir):
+    for row in read_events(data_path):
         state.events_seen += 1
         event_type = str(row.get("event_type") or "")
         payload = row.get("payload") if isinstance(row.get("payload"), dict) else {}
@@ -178,7 +215,7 @@ def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "stat
             portfolio = payload.get("quests") if isinstance(payload.get("quests"), list) else []
             state.quest_portfolio = [dict(item) for item in portfolio if isinstance(item, dict)]
 
-    archive_root = Path(archive_dir)
+    archive_root = archive_path
     for key, filename in ARCHIVE_FILES.items():
         state.archive[key] = list(_read_jsonl(archive_root / filename))
         if key == "domain_genomes":
@@ -190,8 +227,8 @@ def replay_state(data_dir: str | Path = "data", *, state_dir: str | Path = "stat
         state.quest_portfolio = [quest for quest in state.quests.values() if quest.get("state") != "retired"]
     if state.active_quest is None and state.quest_portfolio:
         state.active_quest = dict(state.quest_portfolio[0])
-    state.lineages = replay_lineage_counts(str(data_dir))
-    state.lineage_graph = lineage_graph(str(data_dir))
+    state.lineages = replay_lineage_counts(str(data_path))
+    state.lineage_graph = lineage_graph(str(data_path))
     if not state.domain_genomes:
         for domain_name in domain_plugin_names():
             state.domain_genomes[domain_name] = canonical_domain_genome(domain_name).to_dict()
@@ -247,11 +284,19 @@ def archive_pressure(state: ReplayState, *, window: int = 6) -> Dict[str, float]
     }
 
 
-def replay_ops_state(data_dir: str | Path = "data", *, state_dir: str | Path = "state", archive_dir: str | Path = "archive") -> Dict[str, Any]:
-    if str(data_dir) == "data" and os.environ.get("METAOS_ROOT"):
-        data_dir = Path(os.environ["METAOS_ROOT"])
-    state = replay_state(data_dir, state_dir=state_dir, archive_dir=archive_dir)
-    truth_paths = [Path(data_dir) / "events.jsonl", Path(data_dir) / "metrics.jsonl", Path(data_dir) / "artifact_registry.jsonl"]
+def replay_ops_state(
+    data_dir: str | Path = DEFAULT_DATA_DIR,
+    *,
+    state_dir: str | Path = DEFAULT_STATE_DIR,
+    archive_dir: str | Path = DEFAULT_ARCHIVE_DIR,
+) -> Dict[str, Any]:
+    data_path, state_path, archive_path = _resolved_runtime_paths(
+        data_dir,
+        state_dir=state_dir,
+        archive_dir=archive_dir,
+    )
+    state = replay_state(data_path, state_dir=state_path, archive_dir=archive_path)
+    truth_paths = [data_path / "events.jsonl", data_path / "metrics.jsonl", data_path / "artifact_registry.jsonl"]
     truth_bytes = sum(path.stat().st_size for path in truth_paths if path.exists())
     truth_rows = sum(len(_read_jsonl(path)) for path in truth_paths if path.exists())
     checkpoint_tick = int(state.checkpoint.get("tick", 0) or 0)

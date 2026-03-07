@@ -15,20 +15,26 @@ def choose_quest_kind(replay_state: Any, pressure_vector: dict[str, float], *, d
     return "work_quest"
 
 
-def quest_payload(kind: str, pressure_vector: dict[str, float], *, domain: str = "code_domain") -> dict[str, Any]:
+def quest_payload(
+    kind: str,
+    pressure_vector: dict[str, float],
+    *,
+    domain: str = "code_domain",
+    replay_state: Any | None = None,
+) -> dict[str, Any]:
     return {
         "quest_type": kind,
         "title": kind.replace("_", " ").title(),
         "description": "Generated from deprecated evolution quest shim.",
         "domain": domain,
         "pressure_snapshot": dict(pressure_vector),
-        "knowledge": accumulated_knowledge()["references"],
+        "knowledge": accumulated_knowledge(replay=replay_state)["references"],
     }
 
 
 def generate_quest_portfolio(replay_state: Any, pressure_vector: dict[str, float], *, max_quests: int = 3) -> list[dict[str, Any]]:
     primary = choose_quest_kind(replay_state, pressure_vector)
-    out = [quest_payload(primary, pressure_vector)]
+    out = [quest_payload(primary, pressure_vector, replay_state=replay_state)]
     if primary != "exploration_quest" and len(out) < max_quests:
-        out.append(quest_payload("exploration_quest", pressure_vector))
+        out.append(quest_payload("exploration_quest", pressure_vector, replay_state=replay_state))
     return out[:max_quests]
