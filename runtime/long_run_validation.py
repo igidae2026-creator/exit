@@ -6,6 +6,7 @@ from typing import Any
 from genesis.replay import replay_state
 from runtime.civilization_memory import civilization_state
 from runtime.civilization_state import civilization_state as build_civilization_state
+from runtime.observability import domain_summary, economy_summary, lineage_summary, safety_status, stability_status
 from runtime.observability import (
     domain_summary,
     economy_summary,
@@ -52,6 +53,36 @@ _MIN_FLOORS: dict[str, dict[str, float]] = {
     },
 }
 
+LONG_RUN_HORIZONS: dict[str, int] = {
+    "smoke": 2_000,
+    "stability": 20_000,
+    "endurance": 100_000,
+}
+
+PROFILE_FLOORS: dict[str, dict[str, float]] = {
+    "smoke": {
+        "surviving_lineages": 4,
+        "active_domains": 3,
+        "policy_generations": 25,
+        "evaluation_generations": 15,
+        "max_dominance_index": 0.35,
+    },
+    "stability": {
+        "surviving_lineages": 8,
+        "active_domains": 5,
+        "policy_generations": 200,
+        "evaluation_generations": 140,
+        "max_dominance_index": 0.35,
+    },
+    "endurance": {
+        "surviving_lineages": 8,
+        "active_domains": 5,
+        "policy_generations": 1_000,
+        "evaluation_generations": 700,
+        "max_dominance_index": 0.35,
+    },
+}
+
 
 def _observed_budget_cycles(soak_ticks: list[dict[str, Any]]) -> int:
     cycles = 0
@@ -72,6 +103,39 @@ def _observed_budget_cycles(soak_ticks: list[dict[str, Any]]) -> int:
     return cycles
 
 
+def _profile_acceptance(profile: str, payload: dict[str, Any]) -> dict[str, Any]:
+    floors = PROFILE_FLOORS.get(profile)
+    if not floors:
+        return {"profile": profile, "recognized": False, "accepted": False, "checks": {}}
+
+    surviving_lineages = int(payload.get("surviving_lineages", 0))
+    active_domains = int(payload.get("domain_count", 0))
+    policy_generations = int(payload.get("civilization_state", {}).get("policy_generations", 0))
+    evaluation_generations = int(payload.get("evaluation_generations", 0))
+    dominance_index = float(payload.get("dominance_index", 1.0))
+
+    checks = {
+        "replay_ok": bool(payload.get("replay_ok")),
+        "surviving_lineages": surviving_lineages >= int(floors["surviving_lineages"]),
+        "active_domains": active_domains >= int(floors["active_domains"]),
+        "policy_generations": policy_generations >= int(floors["policy_generations"]),
+        "evaluation_generations": evaluation_generations >= int(floors["evaluation_generations"]),
+        "dominance_index": dominance_index <= float(floors["max_dominance_index"]),
+    }
+    return {
+        "profile": profile,
+        "recognized": True,
+        "accepted": all(checks.values()),
+        "checks": checks,
+        "floors": floors,
+    }
+
+
+def run_long_run_validation(*, ticks: int = 120, seed: int = 42, fail_open: bool = True, profile: str = "") -> dict[str, Any]:
+    os.environ.setdefault("METAOS_SOAK_FAST", "1")
+    from runtime.soak_runner import run_soak
+
+    soak_ticks, summary = run_soak(ticks=ticks, seed=seed, fail_open=fail_open)
 def _resolve_tier(ticks: int, tier: str | None) -> tuple[str, int]:
     if tier:
         canonical = tier.lower().strip()
@@ -123,6 +187,7 @@ def run_long_run_validation(
     artifact_population = dict(civ_state.get("artifact_population", {}))
     policy_population = dict(civ_state.get("policy_population", {}))
     domain_population = dict(civ_state.get("domain_population", {}))
+    payload = {
     invariant_violations = int(len(civ_state.get("invariant_violations", [])))
     append_only_violations = int(len(civ_state.get("append_only_violations", [])))
     replay_mismatches = int(len(civ_state.get("replay_mismatches", [])))
@@ -180,6 +245,8 @@ def run_long_run_validation(
         "knowledge_density_increased": float(civ.get("knowledge_density", 0.0)) > 0.0,
         "domains_expanded": len(domain_population) > 1 or int(summary.get("new_domain_count", 0)) > 0,
     }
+    payload["profile_acceptance"] = _profile_acceptance(profile, payload) if profile else None
+    return payload
     out["healthy_smoke"] = (
         bool(out["replay_ok"])
         and out["append_only_violation_count"] == 0
@@ -198,4 +265,5 @@ def validate_long_run(
     return run_long_run_validation(ticks=ticks, seed=seed, fail_open=fail_open, tier=tier)
 
 
+__all__ = ["LONG_RUN_HORIZONS", "run_long_run_validation", "validate_long_run"]
 __all__ = ["LONG_RUN_TIERS", "run_long_run_validation", "validate_long_run"]

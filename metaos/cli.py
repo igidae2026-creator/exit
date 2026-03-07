@@ -7,6 +7,7 @@ from typing import Sequence
 
 from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, safety_projection, stability_projection, status_projection
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from runtime.long_run_validation import LONG_RUN_HORIZONS, run_long_run_validation
 from runtime.long_run_validation import LONG_RUN_TIERS, validate_long_run
 from validation.system_boundary import validate_system_boundary
 
@@ -17,7 +18,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--artifact-dir", default=None)
     parser.add_argument("--state-dir", default=None)
     parser.add_argument("--archive-dir", default=None)
-    parser.add_argument("--domain", default="code_domain")
+    parser.add_argument("--domain", default="research_domain")
     parser.add_argument("--tick-seconds", type=float, default=None)
     parser.add_argument("--max-ticks", type=int, default=None)
 
@@ -70,6 +71,9 @@ def build_parser() -> argparse.ArgumentParser:
     safety_parser = subparsers.add_parser("safety-status", help="Inspect runtime safety and guardrail state")
     safety_parser.set_defaults(func=cmd_safety_status)
 
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
+    long_run_parser.add_argument("--ticks", type=int, default=None)
+    long_run_parser.add_argument("--profile", choices=sorted(LONG_RUN_HORIZONS.keys()), default="smoke")
     long_run_parser = subparsers.add_parser("long-run-check", help="Run tiered long-run validation")
     long_run_parser.add_argument("--tier", choices=sorted(LONG_RUN_TIERS), default="bounded")
     long_run_parser.add_argument("--ticks", type=int, default=None)
@@ -192,6 +196,10 @@ def cmd_safety_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
+    ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_HORIZONS.get(args.profile, 2_000))
+    payload = run_long_run_validation(ticks=max(1, ticks), seed=int(args.seed), fail_open=True, profile=args.profile)
+    payload["profile"] = args.profile
+    payload["target_ticks"] = int(LONG_RUN_HORIZONS.get(args.profile, ticks))
     ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_TIERS[str(args.tier)]["ticks"])
     payload = validate_long_run(ticks=max(1, ticks), seed=int(args.seed), fail_open=True, tier=str(args.tier))
     print(json.dumps(payload, ensure_ascii=True))
