@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, replay_projection, runtime_projection, safety_projection, stability_projection, status_projection
+from observer.projections import civilization_projection, domain_projection, economy_projection, ecosystem_projection, federation_projection, lineage_projection, node_projection, replay_projection, runtime_projection, safety_projection, stability_projection, status_projection
 
 
 def read_status() -> dict[str, object]:
@@ -37,3 +37,15 @@ def read_stability_status() -> dict[str, object]:
 
 def read_safety_status() -> dict[str, object]:
     return safety_projection()
+
+
+def read_federation_status() -> dict[str, object]:
+    return federation_projection()
+
+
+def read_node_status() -> dict[str, object]:
+    return node_projection()
+
+
+def read_ecosystem_status() -> dict[str, object]:
+    return ecosystem_projection()

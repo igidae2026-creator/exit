@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+from ecosystem.ecosystem_state import ecosystem_state
+from federation.federation_state import federation_state
 from runtime.observability import (
     civilization_summary,
     domain_summary,
@@ -53,3 +55,20 @@ def stability_projection() -> dict[str, Any]:
 
 def safety_projection() -> dict[str, Any]:
     return safety_status()
+
+
+def federation_projection() -> dict[str, Any]:
+    return federation_state()
+
+
+def node_projection() -> dict[str, Any]:
+    state = federation_state()
+    return {
+        "node_count": len(list(state.get("federation_nodes", []))),
+        "artifact_exchange_rate": float(state.get("artifact_exchange_rate", 0.0)),
+        "domain_propagation_rate": float(state.get("domain_propagation_rate", 0.0)),
+    }
+
+
+def ecosystem_projection() -> dict[str, Any]:
+    return ecosystem_state()

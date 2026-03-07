@@ -4,6 +4,8 @@ import os
 from pathlib import Path
 from typing import Any
 
+from ecosystem.ecosystem_state import ecosystem_state
+from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_state import civilization_state
 from runtime.pressure_derivation import pressure_frame
@@ -50,6 +52,29 @@ def runtime_safety() -> dict[str, Any]:
         actions.append("force_domain_expansion_review")
     if float(pressure.get("repair_pressure", 0.0)) >= 0.75:
         actions.append("repair_escalation")
+    federation = federation_state()
+    federation_nodes = len(list(federation.get("federation_nodes", [])))
+    artifact_exchange_rate = float(federation.get("artifact_exchange_rate", 0.0) or 0.0)
+    domain_propagation_rate = float(federation.get("domain_propagation_rate", 0.0) or 0.0)
+    knowledge_events = int((federation.get("knowledge_propagation", {}) if isinstance(federation.get("knowledge_propagation"), dict) else {}).get("events", 0))
+    if federation_nodes > 8:
+        actions.append("federation_overload")
+    if artifact_exchange_rate > 0.75:
+        actions.append("artifact_flood")
+    if domain_propagation_rate > 0.5:
+        actions.append("domain_explosion")
+    if knowledge_events > 512:
+        actions.append("policy_cascade")
+    ecosystem = ecosystem_state()
+    node_population = len(list(ecosystem.get("active_nodes", [])))
+    cluster_count = len(dict(ecosystem.get("domain_clusters", {})))
+    artifact_market = dict(ecosystem.get("artifact_market", {}))
+    if node_population > 0 and cluster_count <= 1 and node_population > 3:
+        actions.append("ecosystem_fragmentation")
+    if sum(dict(artifact_market.get("artifact_supply", {})).values()) > 64:
+        actions.append("ecosystem_artifact_flood")
+    if cluster_count == 0 and node_population > 0:
+        actions.append("domain_collapse")
     guardrails = self_tuning_guardrails(
         civilization,
         {"economy_balance_score": float(civilization.get("economy_balance_score", 0.0))},
@@ -65,6 +90,10 @@ def runtime_safety() -> dict[str, Any]:
         "replay_ok": bool(replay),
         "surviving_lineages": surviving_lineages,
         "active_domains": active_domains,
+        "federation_nodes": federation_nodes,
+        "ecosystem_nodes": node_population,
+        "artifact_exchange_rate": artifact_exchange_rate,
+        "domain_propagation_rate": domain_propagation_rate,
         "pressure": pressure,
         "guardrail_state": dict(guardrails.get("guardrail_state", {})),
         "tuned_thresholds": dict(guardrails.get("tuned_thresholds", {})),

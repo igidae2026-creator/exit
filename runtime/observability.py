@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_state import civilization_status as state_civilization_status
 from runtime.civilization_memory import civilization_state
@@ -103,6 +104,7 @@ def runtime_summary() -> dict[str, Any]:
         "civilization": civilization_summary(),
         "lineages": lineage_summary(),
         "domains": domain_summary(),
+        "federation": federation_state(),
         "evaluations": {
             "active_evaluation_generations": int(civ.get("active_evaluation_generations", 0)),
             "dormant_evaluation_generations": int(civ.get("dormant_evaluation_generations", 0)),
@@ -160,12 +162,17 @@ def safety_status() -> dict[str, Any]:
     return runtime_safety()
 
 
+def federation_summary() -> dict[str, Any]:
+    return federation_state()
+
+
 __all__ = [
     "civilization_summary",
     "civilization_status",
     "domain_summary",
     "domain_status",
     "economy_summary",
+    "federation_summary",
     "economy_status",
     "lineage_summary",
     "lineage_status",

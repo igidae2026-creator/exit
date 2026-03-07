@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from artifact.registry import load_envelope, register_envelope
+from federation.federation_exchange import diffuse_policy
+from federation.federation_state import local_node_id
 from genesis.policy_runtime import bind as bind_bundle
 
 
@@ -22,7 +24,14 @@ def evolve_policy(
     artifact_id = register_envelope(
         aclass="policy",
         atype="runtime_policy",
-        spec={"policy": current_policy, "tick": int(tick), "generation_quality": turnover_quality},
+        spec={
+            "policy": current_policy,
+            "tick": int(tick),
+            "generation_quality": turnover_quality,
+            "policy_origin": local_node_id(),
+            "policy_adoption_rate": round(max(0.0, min(1.0, diversity + novelty)), 4),
+            "policy_diffusion_depth": 0 if parent is None else 1,
+        },
         refs={"parents": [parent] if parent else [], "inputs": [], "subjects": [], "context": {}},
         provenance={
             "score": efficiency,
@@ -32,12 +41,23 @@ def evolve_policy(
         },
         constraints={"tick_boundary_only": True},
     )
+    diffusion = diffuse_policy(
+        artifact_id,
+        current_policy,
+        policy_origin=local_node_id(),
+        adoption_rate=round(max(0.0, min(1.0, diversity + novelty)), 4),
+        diffusion_depth=0 if parent is None else 1,
+        adopted=bool(parent),
+    )
     return {
         "artifact_id": artifact_id,
         "policy": current_policy,
         "tick": int(tick),
         "policy_turnover_quality": turnover_quality,
         "policy_stagnation": stagnation,
+        "policy_origin": diffusion["policy_origin"],
+        "policy_adoption_rate": diffusion["policy_adoption_rate"],
+        "policy_diffusion_depth": diffusion["policy_diffusion_depth"],
     }
 
 

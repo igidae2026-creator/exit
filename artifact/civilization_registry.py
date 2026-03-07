@@ -30,6 +30,8 @@ def civilization_state() -> dict[str, Any]:
     policy_generations = 0
     evaluation_generations = 0
     memory_volume = 0
+    shared_artifacts = 0
+    external_artifacts = 0
 
     for row in rows():
         artifact_id = str(row.get("artifact_id") or "")
@@ -55,10 +57,19 @@ def civilization_state() -> dict[str, Any]:
         if artifact_class == "evaluation" or artifact_type.startswith("evaluation"):
             evaluation_generations += 1
             evaluation_counts[artifact_type] += 1
+        payload_visibility = str((row.get("payload", {}) if isinstance(row.get("payload"), dict) else {}).get("visibility", row.get("visibility", "local")))
+        if payload_visibility == "shared":
+            shared_artifacts += 1
+        if payload_visibility == "external":
+            external_artifacts += 1
 
     for row in load_archive():
         if str(row.get("kind")) in {"memory", "pressure_snapshot", "population_snapshot", "meta_exploration_artifact"}:
             memory_volume += 1
+        if str(row.get("visibility", "local")) == "shared":
+            shared_artifacts += 1
+        if str(row.get("origin_status", "local")) == "external":
+            external_artifacts += 1
     artifact_counts["memory"] += memory_volume
     total_artifacts = sum(artifact_counts.values()) or 1
     total_domains = sum(domain_counts.values()) or 1
@@ -78,6 +89,8 @@ def civilization_state() -> dict[str, Any]:
         "evaluation_counts": dict(evaluation_counts),
         "evaluation_generations": evaluation_generations,
         "memory_volume": memory_volume,
+        "shared_artifacts": shared_artifacts,
+        "external_artifacts": external_artifacts,
         "memory_growth": round(memory_growth, 4),
         "knowledge_density": round(knowledge_density, 4),
     }
@@ -92,6 +105,8 @@ def civilization_memory_snapshot() -> dict[str, Any]:
         "evaluation_generations": int(state.get("evaluation_generations", 0)),
         "lineage_counts": dict(state.get("lineage_counts", {})),
         "memory_volume": int(state.get("memory_volume", 0)),
+        "shared_artifacts": int(state.get("shared_artifacts", 0)),
+        "external_artifacts": int(state.get("external_artifacts", 0)),
         "memory_growth": float(state.get("memory_growth", 0.0)),
         "knowledge_density": float(state.get("knowledge_density", 0.0)),
     }

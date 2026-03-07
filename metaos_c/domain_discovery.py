@@ -3,6 +3,8 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from artifact.registry import register_envelope
+from federation.federation_exchange import propagate_domain
+from federation.federation_state import local_node_id
 from runtime.domain_lifecycle import domain_lifecycle_state
 from runtime.domain_expansion_policy import domain_expansion_policy
 from runtime.domain_pool import domain_names, domain_snapshot, register_domain
@@ -41,7 +43,16 @@ def discover_domains(
         return []
     if int(lifecycle.get("resurrectable_domain_count", 0)) > 0:
         domain_name = str(list(lifecycle.get("resurrectable_domains", []))[0])
-        register_domain(domain_name, {"name": domain_name})
+        register_domain(
+            domain_name,
+            {
+                "name": domain_name,
+                "domain_origin": local_node_id(),
+                "domain_propagation_depth": 1,
+                "domain_adoption_count": 1,
+            },
+        )
+        propagate_domain(domain_name, domain_origin=local_node_id(), propagation_depth=1, adoption_count=1, accepted=True)
         return [domain_name]
 
     seed = int(round(1000 * (novelty + domain_shift + knowledge_density)))
@@ -50,6 +61,9 @@ def discover_domains(
         return []
     genome = {
         "name": name,
+        "domain_origin": local_node_id(),
+        "domain_propagation_depth": 0,
+        "domain_adoption_count": 1,
         "constraints": {
             "novelty": round(0.4 + 0.4 * novelty, 4),
             "diversity": round(0.3 + 0.4 * diversity, 4),
@@ -65,6 +79,7 @@ def discover_domains(
         provenance={"novelty": novelty, "diversity": diversity, "score": knowledge_density},
         refs={"parents": [], "inputs": [], "subjects": [name], "context": {"expansion_policy": policy}},
     )
+    propagate_domain(name, domain_origin=local_node_id(), propagation_depth=0, adoption_count=1, accepted=True)
     return [name]
 
 

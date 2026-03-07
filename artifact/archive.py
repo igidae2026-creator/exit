@@ -6,6 +6,8 @@ import time
 from pathlib import Path
 from typing import Any
 
+from federation.federation_exchange import export_artifact
+
 
 DEFAULT_ARCHIVE = ".metaos_runtime/archive/archive.jsonl"
 DEFAULT_RESURRECTION_INDEX = ".metaos_runtime/archive/resurrection_index.jsonl"
@@ -33,15 +35,29 @@ def _resurrection_path() -> Path:
     return path
 
 
-def save(kind: str, payload: Any) -> None:
+def save(kind: str, payload: Any, *, visibility: str = "local", origin_status: str = "local") -> None:
     with _archive_path().open("a", encoding="utf-8") as handle:
-        handle.write(json.dumps({"t": time.time(), "kind": kind, "payload": payload}, ensure_ascii=True) + "\n")
+        handle.write(
+            json.dumps(
+                {"t": time.time(), "kind": kind, "payload": payload, "visibility": visibility, "origin_status": origin_status},
+                ensure_ascii=True,
+            )
+            + "\n"
+        )
 
 
-def append_archive(kind: str, payload: Any) -> dict[str, Any]:
-    row = {"t": time.time(), "kind": str(kind), "payload": payload}
+def append_archive(kind: str, payload: Any, *, visibility: str = "local", origin_status: str = "local") -> dict[str, Any]:
+    row = {
+        "t": time.time(),
+        "kind": str(kind),
+        "payload": payload,
+        "visibility": str(visibility),
+        "origin_status": str(origin_status),
+    }
     with _archive_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    if visibility == "shared":
+        export_artifact(str(kind), payload if isinstance(payload, dict) else {"payload": payload}, visibility=visibility, origin_status=origin_status)
     return row
 
 

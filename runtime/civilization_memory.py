@@ -9,6 +9,7 @@ from collections import Counter
 from artifact.archive import append_archive, archive_window, latest_archive, load_archive
 from artifact.civilization_registry import civilization_memory_snapshot as artifact_civilization_memory_snapshot
 from artifact.civilization_registry import civilization_state as artifact_civilization_state
+from federation.federation_state import federation_state
 
 
 def _memory_path() -> Path:
@@ -167,6 +168,7 @@ def civilization_state() -> dict[str, Any]:
         _evaluation_generations_from_memory(memory_rows),
     )
     active_evaluation_distribution = _active_evaluation_distribution_from_memory(memory_rows)
+    federation = federation_state()
     knowledge_density = round(max(float(artifact_state.get("knowledge_density", 0.0)), min(1.0, density_base / 24.0)), 4)
     memory_growth = round(max(float(artifact_state.get("memory_growth", 0.0)), min(1.0, total_rows / 720.0)), 4)
     return {
@@ -179,6 +181,8 @@ def civilization_state() -> dict[str, Any]:
         "evaluation_generations": evaluation_generations,
         "active_evaluation_distribution": active_evaluation_distribution,
         "active_evaluation_generations": len(active_evaluation_distribution),
+        "knowledge_exchange_events": int((federation.get("knowledge_propagation", {}) if isinstance(federation.get("knowledge_propagation"), dict) else {}).get("knowledge_exchange_events", 0)),
+        "federation_memory_growth": round(min(1.0, float((federation.get("knowledge_propagation", {}) if isinstance(federation.get("knowledge_propagation"), dict) else {}).get("knowledge_exchange_events", 0)) / 128.0), 4),
         "lineage_counts": lineage_counts,
         "created_domains": sorted(domain_counts),
         "active_domains": active_domains,
@@ -228,6 +232,8 @@ def civilization_memory_snapshot() -> dict[str, Any]:
             "evaluation_generations": int(state.get("evaluation_generations", snapshot.get("evaluation_generations", 0))),
             "active_evaluation_distribution": dict(state.get("active_evaluation_distribution", {})),
             "active_evaluation_generations": int(state.get("active_evaluation_generations", 0)),
+            "knowledge_exchange_events": int(state.get("knowledge_exchange_events", 0)),
+            "federation_memory_growth": float(state.get("federation_memory_growth", 0.0)),
             "lineage_counts": dict(state.get("lineage_counts", snapshot.get("lineage_counts", {}))),
             "created_domains": list(state.get("created_domains", [])),
             "active_domains": list(state.get("active_domains", [])),
