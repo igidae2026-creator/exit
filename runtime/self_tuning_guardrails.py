@@ -26,6 +26,17 @@ def self_tuning_guardrails(
         + 0.45 * float(civilization_state.get("evaluation_dominance_index", 0.0))
         + 0.25 * max(0.0, 1.0 - min(1.0, float(civilization_state.get("active_evaluation_generations", 0.0)) / 2.0))
     )
+    federation_pressure = _clamp(
+        0.30 * float(civilization_state.get("artifact_exchange_rate", 0.0))
+        + 0.25 * float(civilization_state.get("domain_propagation_rate", 0.0))
+        + 0.20 * float(civilization_state.get("policy_diffusion_rate", 0.0))
+        + 0.25 * float(civilization_state.get("knowledge_flow_rate", 0.0))
+    )
+    hydration_pressure = _clamp(
+        0.45 * float(civilization_state.get("hydration_rate", 0.0))
+        + 0.35 * float(civilization_state.get("federation_monoculture_score", 0.0))
+        + 0.20 * min(1.0, float(civilization_state.get("mirror_lineage_count", 0.0)) / 16.0)
+    )
     actions: list[str] = []
     if diversity_pressure >= 0.55:
         actions.append("increase_diversity_pressure")
@@ -53,6 +64,31 @@ def self_tuning_guardrails(
                 "reduce_monopolistic_evaluation_dominance",
             ]
         )
+    federation_safety_actions: list[str] = []
+    if federation_pressure >= 0.45:
+        federation_safety_actions.extend(
+            [
+                "throttle_federation_exchange",
+                "limit_policy_cascade",
+                "dampen_knowledge_storm",
+            ]
+        )
+    if float(civilization_state.get("federation_monoculture_score", 0.0)) >= 0.7:
+        federation_safety_actions.extend(
+            [
+                "reduce_federation_adoption_rate",
+                "increase_local_diversification_bias",
+                "throttle_transport",
+            ]
+        )
+    if hydration_pressure >= 0.42:
+        federation_safety_actions.extend(
+            [
+                "limit_hydration_window",
+                "throttle_mirror_storm",
+                "reduce_foreign_origin_concentration",
+            ]
+        )
     tuned = {
         "diversity_pressure": diversity_pressure,
         "domain_expansion_rate": domain_expansion_rate,
@@ -61,11 +97,16 @@ def self_tuning_guardrails(
         "repair_escalation": repair_escalation,
         "diversity_allocation_budget": diversity_allocation_budget,
         "evaluation_diversity_budget": evaluation_diversity_budget,
+        "federation_pressure": federation_pressure,
+        "hydration_pressure": hydration_pressure,
     }
     return {
         "guardrail_state": {"bounded": True, "stable": float(stability_state.get("stability_score", 0.0)) >= 0.4},
         "tuned_thresholds": tuned,
         "guardrail_actions": actions[:8],
+        "federation_pressure": federation_pressure,
+        "federation_overload_score": federation_pressure,
+        "federation_safety_actions": federation_safety_actions[:8],
     }
 
 

@@ -1,3 +1,7 @@
-"""Validation package for GENESIS/METAOS invariant checks."""
+__all__ = ["validate_artifact_classes"]
 
-__all__ = []
+
+def validate_artifact_classes(payload):
+    from validation.artifacts import validate_artifact_classes as _validate_artifact_classes
+
+    return _validate_artifact_classes(payload)

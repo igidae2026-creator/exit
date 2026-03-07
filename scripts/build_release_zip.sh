@@ -11,37 +11,11 @@ import sys
 import zipfile
 from pathlib import Path
 
+from validation.ownership_manifest import release_paths
+
 zip_path = Path(sys.argv[1])
 root = Path(".").resolve()
-include_roots = [
-    "genesis",
-    "metaos_a",
-    "metaos_b",
-    "metaos_c",
-    "artifact",
-    "domains",
-    "validation",
-    "runtime",
-    "app",
-    "metaos",
-    "observer",
-    "signal",
-    "strategy",
-    "ecosystem",
-    "federation",
-    "evolution",
-    "core",
-    "kernel",
-    "loop",
-    "docs",
-    "tests",
-    "ops",
-    "scripts",
-    "README.md",
-    "RUNBOOK.md",
-    "pyproject.toml",
-    "setup.py",
-]
+include_roots = release_paths()
 exclude_parts = {"__pycache__", "snapshots", ".git", ".venv", "dist"}
 exclude_suffixes = {".bak", ".pyc"}
 with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as zf:

@@ -3,23 +3,18 @@
 METAOS is an autonomous exploration civilization engine for replayable, pressure-driven solution evolution under GENESIS law.
 
 Primary references:
-- [GENESIS](./docs/core/GENESIS.md)
-- [METAOS Final Definition](./docs/core/METAOS_FINAL_DEFINITION.md)
-- [Architecture Layers](./docs/architecture/LAYERS.md)
-- [Architecture Boundaries](./docs/architecture/BOUNDARIES.md)
-- [Why METAOS](./docs/architecture/WHY_METAOS.md)
 - [GENESIS](docs/core/GENESIS.md)
 - [METAOS Final Definition](docs/core/METAOS_FINAL_DEFINITION.md)
 - [Architecture Layers](docs/architecture/LAYERS.md)
 - [Architecture Boundaries](docs/architecture/BOUNDARIES.md)
 - [Why METAOS](docs/architecture/WHY_METAOS.md)
+- [Ownership Matrix](docs/architecture/OWNERSHIP_MATRIX.md)
 
 Boundary truth map:
 - `docs/architecture/BOUNDARY_TRUTH_MAP.md`
 
 Invariant traceability:
 - `docs/architecture/INVARIANT_TRACEABILITY.md`
-
 
 ## What METAOS Is
 
@@ -43,6 +38,9 @@ Canonical ownership:
 - `artifact/`: immutable artifact registry, archive, lineage
 - `domains/`: domain logic, genomes, recombination, mutation
 - `validation/`: invariant law and boundary enforcement
+- `federation/`: optional bounded cross-node exchange, adoption, transport, hydration
+- `ecosystem/`: optional ecosystem-scale discovery, clustering, market, knowledge network
+- `observer/`: read-only projection surfaces for operators and CLI
 - `metaos_a/`: one domain exploration unit
 - `metaos_b/`: multi-unit scheduling and resource selection
 - `metaos_c/`: civilization memory, topology, domain discovery
@@ -56,20 +54,28 @@ Compatibility-only surfaces:
 - `metaos/runtime/`
 - `metaos/domains/`
 
+Repo-only surfaces:
+- `metaos-build-prompts/`
+- `.github/`
+
+Machine-readable ownership truth:
+- `validation/ownership_manifest.json`
+
 ## Runtime Profiles
 
 Runtime scale is profile-driven; demo-size constants are not canonical truth.
 
-- `smoke`: 1,000 ticks target, 8-32 workers, >=2 lineages, >=2 domains.
-- `soak`: 50,000 ticks target, 64-256 workers, >=8 lineages, >=4 domains.
-- `endurance`: 500,000 ticks target, 256-1,024 workers, >=16 lineages, >=8 domains.
-- `civilization`: unbounded target ticks, production guardrails/rotation/recovery playbook mode.
+- `smoke`: 1,000 ticks target, 8-32 workers, >=2 lineages, >=2 domains
+- `soak`: 50,000 ticks target, 64-256 workers, >=8 lineages, >=4 domains
+- `endurance`: 500,000 ticks target, 256-1,024 workers, >=16 lineages, >=8 domains
+- `civilization`: unbounded target ticks, production guardrails/rotation/recovery playbook mode
 
 Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 
 ## Operational Surfaces
 
-- `python -m app.cli run --profile smoke`
+- installed console script: `metaos`
+- `python -m app.cli run`
 - `python -m app.cli health`
 - `python -m app.cli replay-check`
 - `python -m app.cli civilization-status`
@@ -78,14 +84,30 @@ Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 - `python -m app.cli economy-status`
 - `python -m app.cli stability-status`
 - `python -m app.cli safety-status`
-- `python -m app.cli long-run-check --profile smoke`
-- `bash ops/run-metaos.sh`
-- `bash ops/validate-runtime.sh`
 - `python -m app.cli long-run-check --tier smoke`
 - `python -m app.cli long-run-check --tier bounded`
 - `python -m app.cli long-run-check --tier soak`
 - `bash ops/run-metaos.sh`
 - `bash ops/validate-runtime.sh`
+
+Public installed CLI commands:
+- `metaos health`
+- `metaos replay-check`
+- `metaos civilization-status`
+- `metaos lineage-status`
+- `metaos domain-status`
+- `metaos pressure-status`
+- `metaos economy-status`
+- `metaos stability-status`
+- `metaos safety-status`
+- `metaos long-run-check`
+- `metaos build-release`
+- `metaos validate-release`
+
+Release truth:
+- wheel/install truth is defined by `pyproject.toml`
+- source release truth is defined by `validation/ownership_manifest.json`
+- `scripts/build_release_zip.sh` and `scripts/validate_release_tree.sh` consume the same manifest
 
 ## Long-Run Status
 
@@ -95,7 +117,6 @@ Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 - lineage health distinguishes active, dormant, zombie, and dominant lock-in cases
 - economy balance is tracked independently from raw throughput
 - artifact, lineage, economy, domain, stability, and safety status are observable through CLI and ops surfaces
-
 
 Long-run tiers:
 - smoke: minimum 256 ticks

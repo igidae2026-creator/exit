@@ -235,6 +235,8 @@ def replay_state() -> dict[str, Any]:
         "supervisor_mode": str((last_event.get("payload", {}) if isinstance(last_event.get("payload"), Mapping) else {}).get("mode") or (last_metric.get("supervisor_mode") if isinstance(last_metric, Mapping) else "") or "normal"),
     }
     artifact_type_counts: Counter[str] = Counter(str(envelope.get("artifact_type", envelope.get("type", ""))) for envelope in envelopes)
+    from federation.federation_replay import federation_replay_state
+
     return {
         "tick": int(last_metric.get("tick") or (last_event.get("payload", {}) if isinstance(last_event.get("payload"), Mapping) else {}).get("tick", 0) or 0),
         "events": len(events),
@@ -255,7 +257,13 @@ def replay_state() -> dict[str, Any]:
         "archive_state": archive_state,
         "signals": len(signals),
         "signal_state": _signal_state(signals),
+        "federation_replay": federation_replay_state(),
     }
 
 
-__all__ = ["CANONICAL_PRESSURE_KEYS", "replay_state"]
+def replay_state_hash() -> str:
+    payload = replay_state()
+    return json.dumps(payload, sort_keys=True, ensure_ascii=True, separators=(",", ":"))
+
+
+__all__ = ["CANONICAL_PRESSURE_KEYS", "replay_state", "replay_state_hash"]

@@ -6,9 +6,6 @@ import time
 from pathlib import Path
 from typing import Any
 
-from federation.federation_exchange import export_artifact
-
-
 DEFAULT_ARCHIVE = ".metaos_runtime/archive/archive.jsonl"
 DEFAULT_RESURRECTION_INDEX = ".metaos_runtime/archive/resurrection_index.jsonl"
 
@@ -35,11 +32,31 @@ def _resurrection_path() -> Path:
     return path
 
 
-def save(kind: str, payload: Any, *, visibility: str = "local", origin_status: str = "local") -> None:
+def save(
+    kind: str,
+    payload: Any,
+    *,
+    visibility: str = "local",
+    origin_status: str = "local",
+    artifact_origin: str = "local",
+    artifact_scope: str | None = None,
+    artifact_adoption_count: int = 0,
+    artifact_propagation_depth: int = 0,
+) -> None:
     with _archive_path().open("a", encoding="utf-8") as handle:
         handle.write(
             json.dumps(
-                {"t": time.time(), "kind": kind, "payload": payload, "visibility": visibility, "origin_status": origin_status},
+                {
+                    "t": time.time(),
+                    "kind": kind,
+                    "payload": payload,
+                    "visibility": visibility,
+                    "origin_status": origin_status,
+                    "artifact_origin": artifact_origin,
+                    "artifact_scope": artifact_scope or visibility,
+                    "artifact_adoption_count": int(artifact_adoption_count),
+                    "artifact_propagation_depth": int(artifact_propagation_depth),
+                },
                 ensure_ascii=True,
             )
             + "\n"
@@ -48,18 +65,57 @@ def save(kind: str, payload: Any, *, visibility: str = "local", origin_status: s
         remember_extinction(kind, payload)
 
 
-def append_archive(kind: str, payload: Any, *, visibility: str = "local", origin_status: str = "local") -> dict[str, Any]:
+def append_archive(
+    kind: str,
+    payload: Any,
+    *,
+    visibility: str = "local",
+    origin_status: str = "local",
+    artifact_origin: str = "local",
+    artifact_scope: str | None = None,
+    artifact_adoption_count: int = 0,
+    artifact_propagation_depth: int = 0,
+    origin_artifact_id: str | None = None,
+    origin_node: str | None = None,
+    mirror_parent_ids: list[str] | None = None,
+    hydration_depth: int = 0,
+    adoption_chain: list[str] | None = None,
+) -> dict[str, Any]:
     row = {
         "t": time.time(),
         "kind": str(kind),
         "payload": payload,
         "visibility": str(visibility),
         "origin_status": str(origin_status),
+        "artifact_origin": str(artifact_origin),
+        "artifact_scope": str(artifact_scope or visibility),
+        "artifact_adoption_count": int(artifact_adoption_count),
+        "artifact_propagation_depth": int(artifact_propagation_depth),
+        "origin_artifact_id": str(origin_artifact_id or ""),
+        "origin_node": str(origin_node or ""),
+        "mirror_parent_ids": list(mirror_parent_ids or []),
+        "hydration_depth": int(hydration_depth),
+        "adoption_chain": list(adoption_chain or []),
     }
     with _archive_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=True) + "\n")
     if visibility == "shared":
-        export_artifact(str(kind), payload if isinstance(payload, dict) else {"payload": payload}, visibility=visibility, origin_status=origin_status)
+        from federation.federation_exchange import export_artifact
+
+        export_artifact(
+            str(kind),
+            (
+                payload
+                if isinstance(payload, dict)
+                else {"payload": payload}
+            )
+            | {
+                "artifact_adoption_count": int(artifact_adoption_count),
+                "artifact_propagation_depth": int(artifact_propagation_depth),
+            },
+            visibility=visibility,
+            origin_status=origin_status,
+        )
     return row
 
 

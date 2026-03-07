@@ -28,6 +28,8 @@ def topology_state(nodes: list[str], topology_type: str, *, artifact_events: int
         "node_degree": node_degree,
         "artifact_flow_rate": round(float(artifact_events) / node_count, 4),
         "knowledge_flow_rate": round(float(knowledge_events) / node_count, 4),
+        "domain_flow_rate": round((float(artifact_events) * 0.35) / node_count, 4),
+        "policy_flow_rate": round((float(artifact_events) * 0.25) / node_count, 4),
     }
 
 

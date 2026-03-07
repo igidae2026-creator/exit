@@ -22,3 +22,9 @@ What METAOS provides:
 - bounded exploration economy instead of raw throughput maximization
 - self-tuning guardrails that stay inside GENESIS invariants
 - operator-light long-run observability and recovery
+
+Release-grade truth:
+- installed operation is through the packaged `metaos` console script and `python -m app.cli`
+- source release contents are governed by `validation/ownership_manifest.json`
+- deprecated packages remain import-compatible shims only and are not canonical owners
+- ecosystem, federation, observer, signal, strategy, and loop are real runtime-support packages, not limbo directories

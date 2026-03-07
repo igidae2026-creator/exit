@@ -4,7 +4,7 @@ from typing import Any, Mapping
 
 from artifact.registry import load_envelope, register_envelope
 from federation.federation_exchange import diffuse_policy
-from federation.federation_state import local_node_id
+from federation.federation_state import federation_state, local_node_id
 from genesis.policy_runtime import bind as bind_bundle
 
 
@@ -19,7 +19,9 @@ def evolve_policy(
     efficiency = float(pressure.get("efficiency_pressure", 0.0))
     novelty = float(pressure.get("novelty_pressure", 0.0))
     diversity = float(pressure.get("diversity_pressure", 0.0))
-    turnover_quality = round(max(0.0, min(1.0, (0.45 * novelty) + (0.35 * diversity) + (0.20 * (1.0 - efficiency)))), 4)
+    federation = federation_state()
+    external_policy_influence = min(0.15, 0.05 * float(federation.get("active_external_policies", 0)))
+    turnover_quality = round(max(0.0, min(1.0, (0.45 * novelty) + (0.35 * diversity) + (0.20 * (1.0 - efficiency)) + external_policy_influence)), 4)
     stagnation = round(max(0.0, min(1.0, 0.7 - turnover_quality)), 4)
     artifact_id = register_envelope(
         aclass="policy",
@@ -31,6 +33,7 @@ def evolve_policy(
             "policy_origin": local_node_id(),
             "policy_adoption_rate": round(max(0.0, min(1.0, diversity + novelty)), 4),
             "policy_diffusion_depth": 0 if parent is None else 1,
+            "policy_scope": "shared",
         },
         refs={"parents": [parent] if parent else [], "inputs": [], "subjects": [], "context": {}},
         provenance={
@@ -58,6 +61,7 @@ def evolve_policy(
         "policy_origin": diffusion["policy_origin"],
         "policy_adoption_rate": diffusion["policy_adoption_rate"],
         "policy_diffusion_depth": diffusion["policy_diffusion_depth"],
+        "policy_scope": diffusion["policy_scope"],
     }
 
 

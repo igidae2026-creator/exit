@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Mapping, Sequence
 
+from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_memory import civilization_state as memory_civilization_state
 from runtime.civilization_memory import latest_memory, memory_window, metrics_window
@@ -248,6 +249,7 @@ def civilization_state(
     budgets = _as_mapping(runtime_state.get("budgets") or replay.get("budgets") or replay.get("last_metrics", {}).get("budgets", {}))
     economy_state = _latest_runtime_frame("exploration_economy_state", replay, runtime_state, allow_memory_lookup=allow_memory_lookup)
     domain_expansion_state = _latest_runtime_frame("domain_expansion_state", replay, runtime_state, allow_memory_lookup=allow_memory_lookup)
+    federation = federation_state()
     recent_window = list(history_rows[-32:] if history_rows else (memory_window(32) if allow_memory_lookup else []))
     created_domains = sorted(set(domain_population))
     active_domains = sorted(name for name, count in domain_population.items() if int(count) > 0)
@@ -420,6 +422,46 @@ def civilization_state(
         "rebalancing_actions": list(economy_state.get("rebalancing_actions", [])),
         "diversity_allocation_budget": int(economy_state.get("diversity_allocation_budget", 0)),
         "evaluation_diversity_budget": int(economy_state.get("evaluation_diversity_budget", 0)),
+        "federation_nodes": list(federation.get("federation_nodes", [])),
+        "shared_artifact_count": int(federation.get("shared_artifact_count", 0)),
+        "shared_domain_count": int(federation.get("shared_domain_count", 0)),
+        "policy_diffusion_count": int(federation.get("policy_diffusion_count", 0)),
+        "knowledge_exchange_count": int((federation.get("knowledge_propagation", {}) if isinstance(federation.get("knowledge_propagation"), dict) else {}).get("knowledge_exchange_events", 0)),
+        "federation_topology": dict(federation.get("federation_topology", {})),
+        "artifact_exchange_rate": float(federation.get("artifact_exchange_rate", 0.0)),
+        "domain_propagation_rate": float(federation.get("domain_propagation_rate", 0.0)),
+        "policy_diffusion_rate": float(federation.get("policy_diffusion_rate", 0.0)),
+        "knowledge_flow_rate": float(federation.get("knowledge_flow_rate", 0.0)),
+        "knowledge_import_count": int(federation.get("knowledge_import_count", 0)),
+        "knowledge_export_count": int(federation.get("knowledge_export_count", 0)),
+        "observed_external_artifacts": int(federation.get("observed_external_artifacts", 0)),
+        "imported_external_artifacts": int(federation.get("imported_external_artifacts", 0)),
+        "adopted_external_artifacts": int(federation.get("adopted_external_artifacts", 0)),
+        "active_external_artifacts": int(federation.get("active_external_artifacts", 0)),
+        "mirrored_external_artifacts": int(federation.get("mirrored_external_artifacts", 0)),
+        "active_mirrored_artifacts": int(federation.get("active_mirrored_artifacts", 0)),
+        "hydration_rate": float(federation.get("hydration_rate", 0.0)),
+        "hydration_depth_distribution": dict(federation.get("hydration_depth_distribution", {})),
+        "foreign_origin_distribution": dict(federation.get("foreign_origin_distribution", {})),
+        "mirror_lineage_count": int(federation.get("mirror_lineage_count", 0)),
+        "imported_domains": int(federation.get("imported_domains", 0)),
+        "adopted_domains": int(federation.get("adopted_domains", 0)),
+        "active_imported_domains": int(federation.get("active_imported_domains", 0)),
+        "observed_external_policies": int(federation.get("observed_external_policies", 0)),
+        "adopted_external_policies": int(federation.get("adopted_external_policies", 0)),
+        "active_external_policies": int(federation.get("active_external_policies", 0)),
+        "imported_evaluation_generations": int(federation.get("imported_evaluation_generations", 0)),
+        "adopted_evaluation_generations": int(federation.get("adopted_evaluation_generations", 0)),
+        "active_external_evaluation_generations": int(federation.get("active_external_evaluation_generations", 0)),
+        "federation_adoption_rate": float(federation.get("federation_adoption_rate", 0.0)),
+        "federation_activation_rate": float(federation.get("federation_activation_rate", 0.0)),
+        "federation_influence_score": float(federation.get("federation_influence_score", 0.0)),
+        "send_queue_depth": int(federation.get("send_queue_depth", 0)),
+        "receive_queue_depth": int(federation.get("receive_queue_depth", 0)),
+        "adoption_queue_depth": int(federation.get("adoption_queue_depth", 0)),
+        "transport_delivery_rate": float(federation.get("transport_delivery_rate", 0.0)),
+        "adoption_completion_rate": float(federation.get("adoption_completion_rate", 0.0)),
+        "federation_monoculture_score": float(federation.get("federation_monoculture_score", 0.0)),
         "long_horizon_stability": long_horizon,
         "stability_score": float(long_horizon.get("stability_score", 0.0)),
         "drift_score": float(long_horizon.get("drift_score", 0.0)),

@@ -119,3 +119,62 @@ def iter_by_class(aclass: str) -> Iterable[dict[str, Any]]:
     for row in rows():
         if str(row.get("class")) == str(aclass):
             yield row
+
+
+def register_mirrored_artifact(
+    *,
+    source_artifact_id: str,
+    source_node: str,
+    aclass: str,
+    atype: str,
+    payload: Mapping[str, Any] | None = None,
+    adoption_chain: list[str] | None = None,
+    hydration_depth: int = 1,
+) -> str:
+    resolved_class = str(aclass if aclass in PRIMARY_ARTIFACT_CLASSES else "output")
+    mirrored_payload = dict(payload or {})
+    mirrored_payload.update(
+        {
+            "external_status": mirrored_payload.get("external_status", "mirrored"),
+            "origin_node": str(source_node),
+            "origin_artifact_id": str(source_artifact_id),
+            "hydration_depth": int(hydration_depth),
+            "adoption_chain": list(adoption_chain or [str(source_node)]),
+        }
+    )
+    artifact_id = str(uuid.uuid4())
+    created_at = time.time()
+    body_ref = put_body(mirrored_payload, {})
+    row = {
+        "artifact_id": artifact_id,
+        "artifact_type": str(atype),
+        "class": resolved_class,
+        "type": str(atype),
+        "parent_ids": [str(source_artifact_id)],
+        "payload": mirrored_payload,
+        "score_vector": {},
+        "schema_version": "1.0",
+        "created_at": created_at,
+        "immutable": True,
+        "refs": {"parents": [str(source_artifact_id)], "inputs": [], "subjects": [], "context": {}},
+        "provenance": {
+            "origin_node": str(source_node),
+            "origin_artifact_id": str(source_artifact_id),
+            "hydration_depth": int(hydration_depth),
+            "adoption_chain": list(adoption_chain or [str(source_node)]),
+        },
+        "constraints": {"mirrored": True},
+        "body_ref": body_ref,
+        "artifact_scope": "mirrored",
+        "artifact_origin": str(source_node),
+        "origin_node": str(source_node),
+        "origin_artifact_id": str(source_artifact_id),
+        "mirror_parent_ids": [str(source_artifact_id)],
+        "hydration_depth": int(hydration_depth),
+        "adoption_chain": list(adoption_chain or [str(source_node)]),
+    }
+    validation = validate_artifact_law(row)
+    if not validation["ok"]:
+        raise ValueError(f"artifact law violation: {validation}")
+    append_jsonl(_registry_path(), row)
+    return artifact_id

@@ -8,11 +8,22 @@ from runtime.observability import (
     civilization_summary,
     domain_summary,
     economy_summary,
+    external_artifact_status,
+    external_domain_status,
+    external_policy_status,
+    foreign_origin_status,
+    federation_adoption_status,
+    federation_summary,
+    hydration_guardrail_status,
+    hydration_status,
     lineage_summary,
+    mirrored_artifact_status,
+    node_summary,
     pressure_summary,
     replay_summary,
     safety_status,
     stability_status,
+    transport_status,
     runtime_summary,
 )
 
@@ -58,17 +69,48 @@ def safety_projection() -> dict[str, Any]:
 
 
 def federation_projection() -> dict[str, Any]:
-    return federation_state()
+    return federation_summary()
 
 
 def node_projection() -> dict[str, Any]:
-    state = federation_state()
-    return {
-        "node_count": len(list(state.get("federation_nodes", []))),
-        "artifact_exchange_rate": float(state.get("artifact_exchange_rate", 0.0)),
-        "domain_propagation_rate": float(state.get("domain_propagation_rate", 0.0)),
-    }
+    return node_summary()
 
 
 def ecosystem_projection() -> dict[str, Any]:
     return ecosystem_state()
+
+
+def federation_adoption_projection() -> dict[str, Any]:
+    return federation_adoption_status()
+
+
+def external_artifact_projection() -> dict[str, Any]:
+    return external_artifact_status()
+
+
+def external_policy_projection() -> dict[str, Any]:
+    return external_policy_status()
+
+
+def external_domain_projection() -> dict[str, Any]:
+    return external_domain_status()
+
+
+def transport_projection() -> dict[str, Any]:
+    return transport_status()
+
+
+def hydration_projection() -> dict[str, Any]:
+    return hydration_status()
+
+
+def mirrored_artifact_projection() -> dict[str, Any]:
+    return mirrored_artifact_status()
+
+
+def foreign_origin_projection() -> dict[str, Any]:
+    return foreign_origin_status()
+
+
+def hydration_guardrail_projection() -> dict[str, Any]:
+    return hydration_guardrail_status()

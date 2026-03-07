@@ -32,6 +32,12 @@ def civilization_state() -> dict[str, Any]:
     memory_volume = 0
     shared_artifacts = 0
     external_artifacts = 0
+    policy_diffusion_count = 0
+    mirrored_external_artifacts = 0
+    active_mirrored_artifacts = 0
+    hydration_depth_distribution: Counter[int] = Counter()
+    foreign_origin_distribution: Counter[str] = Counter()
+    mirror_lineage_count = 0
 
     for row in rows():
         artifact_id = str(row.get("artifact_id") or "")
@@ -54,6 +60,7 @@ def civilization_state() -> dict[str, Any]:
         if artifact_class == "policy" or artifact_type == "policy" or artifact_type.endswith("_policy") or artifact_type == "runtime_policy":
             policy_generations += 1
             policy_counts[artifact_type] += 1
+            policy_diffusion_count += int(bool((((row.get("payload") or {}).get("policy") or {}).get("policy_origin"))))
         if artifact_class == "evaluation" or artifact_type.startswith("evaluation"):
             evaluation_generations += 1
             evaluation_counts[artifact_type] += 1
@@ -62,6 +69,14 @@ def civilization_state() -> dict[str, Any]:
             shared_artifacts += 1
         if payload_visibility == "external":
             external_artifacts += 1
+        if str(row.get("artifact_scope", "")) == "mirrored":
+            mirrored_external_artifacts += 1
+            mirror_lineage_count += 1
+            hydration_depth_distribution[int(row.get("hydration_depth", 0) or 0)] += 1
+            if str(row.get("origin_node", "")):
+                foreign_origin_distribution[str(row.get("origin_node", ""))] += 1
+            if str(metadata.get("external_status") or payload.get("external_status") or "") == "activated":
+                active_mirrored_artifacts += 1
 
     for row in load_archive():
         if str(row.get("kind")) in {"memory", "pressure_snapshot", "population_snapshot", "meta_exploration_artifact"}:
@@ -77,6 +92,7 @@ def civilization_state() -> dict[str, Any]:
     archive_kinds = {str(row.get("kind", "")) for row in load_archive() if row.get("kind")}
     knowledge_density = min(1.0, (len(artifact_counts) + len(domain_counts) + len(archive_kinds)) / 24.0)
     memory_growth = min(1.0, memory_volume / 720.0)
+    total_hydration = sum(hydration_depth_distribution.values()) or 1
     return {
         "artifact_counts": dict(artifact_counts),
         "artifact_distribution": {key: round(value / total_artifacts, 4) for key, value in artifact_counts.items()},
@@ -91,6 +107,13 @@ def civilization_state() -> dict[str, Any]:
         "memory_volume": memory_volume,
         "shared_artifacts": shared_artifacts,
         "external_artifacts": external_artifacts,
+        "policy_diffusion_count": policy_diffusion_count,
+        "mirrored_external_artifacts": mirrored_external_artifacts,
+        "active_mirrored_artifacts": active_mirrored_artifacts,
+        "hydration_rate": round(mirrored_external_artifacts / max(1, total_artifacts), 4),
+        "hydration_depth_distribution": {str(key): round(value / total_hydration, 4) for key, value in sorted(hydration_depth_distribution.items())},
+        "foreign_origin_distribution": dict(foreign_origin_distribution),
+        "mirror_lineage_count": mirror_lineage_count,
         "memory_growth": round(memory_growth, 4),
         "knowledge_density": round(knowledge_density, 4),
     }
@@ -107,6 +130,13 @@ def civilization_memory_snapshot() -> dict[str, Any]:
         "memory_volume": int(state.get("memory_volume", 0)),
         "shared_artifacts": int(state.get("shared_artifacts", 0)),
         "external_artifacts": int(state.get("external_artifacts", 0)),
+        "policy_diffusion_count": int(state.get("policy_diffusion_count", 0)),
+        "mirrored_external_artifacts": int(state.get("mirrored_external_artifacts", 0)),
+        "active_mirrored_artifacts": int(state.get("active_mirrored_artifacts", 0)),
+        "hydration_rate": float(state.get("hydration_rate", 0.0)),
+        "hydration_depth_distribution": dict(state.get("hydration_depth_distribution", {})),
+        "foreign_origin_distribution": dict(state.get("foreign_origin_distribution", {})),
+        "mirror_lineage_count": int(state.get("mirror_lineage_count", 0)),
         "memory_growth": float(state.get("memory_growth", 0.0)),
         "knowledge_density": float(state.get("knowledge_density", 0.0)),
     }

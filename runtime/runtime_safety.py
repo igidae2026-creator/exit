@@ -67,6 +67,11 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
         actions.append("domain_explosion")
     if knowledge_events > max(512, profile_spec.worker_max):
         actions.append("policy_cascade")
+        actions.append("knowledge_storm")
+    if float(federation.get("hydration_rate", 0.0)) > 0.85:
+        actions.append("mirror_storm")
+    if float(federation.get("federation_monoculture_score", 0.0)) > 0.78:
+        actions.append("foreign_monoculture")
     ecosystem = ecosystem_state()
     node_population = len(list(ecosystem.get("active_nodes", [])))
     cluster_count = len(dict(ecosystem.get("domain_clusters", {})))
@@ -78,11 +83,21 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
     if cluster_count == 0 and node_population > 0:
         actions.append("domain_collapse")
     guardrails = self_tuning_guardrails(
-        civilization,
+        {
+            **civilization,
+            "artifact_exchange_rate": artifact_exchange_rate,
+            "domain_propagation_rate": domain_propagation_rate,
+            "policy_diffusion_rate": float(federation.get("policy_diffusion_rate", 0.0)),
+            "knowledge_flow_rate": float(federation.get("knowledge_flow_rate", 0.0)),
+            "hydration_rate": float(federation.get("hydration_rate", 0.0)),
+            "mirror_lineage_count": int(federation.get("mirror_lineage_count", 0)),
+            "federation_monoculture_score": float(federation.get("federation_monoculture_score", 0.0)),
+        },
         {"economy_balance_score": float(civilization.get("economy_balance_score", 0.0))},
         {"stability_score": float(civilization.get("stability_score", 0.0)), "drift_score": float(civilization.get("drift_score", 0.0)), "stagnation_score": float(civilization.get("stagnation_score", 0.0)), "overexpansion_score": float(civilization.get("overexpansion_score", 0.0)), "underexploration_score": float(civilization.get("underexploration_score", 0.0))},
     )
     actions.extend(str(name) for name in guardrails.get("guardrail_actions", []) if str(name) not in actions)
+    actions.extend(str(name) for name in guardrails.get("federation_safety_actions", []) if str(name) not in actions)
     return {
         "profile": profile_spec.name,
         "storage_pressure": storage_pressure,
@@ -95,8 +110,16 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
         "active_domains": active_domains,
         "federation_nodes": federation_nodes,
         "ecosystem_nodes": node_population,
+        "federation_pressure": float(guardrails.get("federation_pressure", 0.0)),
+        "federation_overload_score": float(guardrails.get("federation_overload_score", 0.0)),
+        "federation_safety_actions": list(guardrails.get("federation_safety_actions", [])),
         "artifact_exchange_rate": artifact_exchange_rate,
         "domain_propagation_rate": domain_propagation_rate,
+        "policy_diffusion_rate": float(federation.get("policy_diffusion_rate", 0.0)),
+        "knowledge_flow_rate": float(federation.get("knowledge_flow_rate", 0.0)),
+        "hydration_rate": float(federation.get("hydration_rate", 0.0)),
+        "mirror_lineage_count": int(federation.get("mirror_lineage_count", 0)),
+        "federation_monoculture_score": float(federation.get("federation_monoculture_score", 0.0)),
         "pressure": pressure,
         "guardrail_state": dict(guardrails.get("guardrail_state", {})),
         "tuned_thresholds": dict(guardrails.get("tuned_thresholds", {})),

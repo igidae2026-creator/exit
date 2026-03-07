@@ -49,6 +49,8 @@ def domain_expansion_policy(
     )
     branch_opportunity_score = round(max(0.0, evidence + (0.08 * len(inactive_domains)) - lifecycle_drag), 4)
     target_domains = max(3, min(12, domain_count + max(1, expansion_budget)))
+    incoming_scope = str(topology_state.get("domain_scope", "local"))
+    federation_adopt = allow and incoming_scope in {"local", "shared"} and evidence >= minimum_evidence_threshold
     return {
         "expansion_pressure": expansion_pressure,
         "evidence": evidence,
@@ -64,9 +66,12 @@ def domain_expansion_policy(
         "created_recently": int(created_recently),
         "bounded": True,
         "branch_opportunity_score": branch_opportunity_score,
+        "domain_scope": incoming_scope,
+        "federation_adopt": federation_adopt,
         "expansion_decisions": [
             {
                 "allowed": allow,
+                "federation_adopt": federation_adopt,
                 "evidence": evidence,
                 "domain_count": int(domain_count),
                 "domain_expansion_budget": int(expansion_budget),

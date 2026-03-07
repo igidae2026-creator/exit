@@ -36,10 +36,14 @@ def discover_domains(
     policy = domain_expansion_policy(
         pressure_state,
         dict(civilization_memory),
-        {"domain_count": len(existing) or len(domain_names()), "domain_expansion_budget": inferred_expansion_budget},
+        {
+            "domain_count": len(existing) or len(domain_names()),
+            "domain_expansion_budget": inferred_expansion_budget,
+            "domain_scope": "shared",
+        },
     )
     lifecycle = domain_lifecycle_state(dict(civilization_memory), pressure_state=pressure_state)
-    if not policy["allowed"]:
+    if not policy["allowed"] or not bool(policy.get("federation_adopt", True)):
         return []
     if int(lifecycle.get("resurrectable_domain_count", 0)) > 0:
         domain_name = str(list(lifecycle.get("resurrectable_domains", []))[0])

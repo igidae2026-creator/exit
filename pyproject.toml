@@ -7,6 +7,7 @@ name = "metaos"
 version = "0.4.0rc1"
 requires-python = ">=3.11"
 dependencies = ["pyyaml"]
+readme = "README.md"
 
 [project.optional-dependencies]
 dev = [
@@ -20,35 +21,29 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["."]
 include = [
-    "app*", "artifact*", "core*", "domains*", "ecosystem*", "evolution*", "federation*", "genesis*", "kernel*", "loop*", "metaos*", "metaos_a*", "metaos_b*", "metaos_c*", "observer*", "runtime*", "signal*", "strategy*", "validation*"
-    "app",
-    "artifact",
-    "core",
-    "domains",
-    "ecosystem",
-    "evolution",
-    "federation",
-    "genesis",
-    "kernel",
-    "metaos",
-    "metaos_a",
-    "metaos_b",
-    "metaos_c",
-    "observer",
-    "runtime",
-    "signal",
-    "strategy",
-    "validation",
-    "observer",
-    "signal",
-    "strategy",
-    "ecosystem",
-    "federation",
-    "evolution",
-    "core",
-    "kernel",
-    "loop",
+    "app*",
+    "artifact*",
+    "core*",
+    "domains*",
+    "ecosystem*",
+    "evolution*",
+    "federation*",
+    "genesis*",
+    "kernel*",
+    "loop*",
+    "metaos*",
+    "metaos_a*",
+    "metaos_b*",
+    "metaos_c*",
+    "observer*",
+    "runtime*",
+    "signal*",
+    "strategy*",
+    "validation*",
 ]
+
+[tool.setuptools.package-data]
+validation = ["ownership_manifest.json"]
 
 [project.scripts]
 metaos = "metaos.cli:main"
@@ -71,7 +66,6 @@ ignore = ["E501"]
 
 [tool.mypy]
 python_version = "3.11"
-files = ["app", "artifact", "core", "domains", "ecosystem", "evolution", "federation", "genesis", "kernel", "loop", "metaos", "metaos_a", "metaos_b", "metaos_c", "observer", "runtime", "signal", "strategy", "validation"]
 files = [
     "app",
     "artifact",
@@ -82,6 +76,7 @@ files = [
     "federation",
     "genesis",
     "kernel",
+    "loop",
     "metaos",
     "metaos_a",
     "metaos_b",
@@ -91,15 +86,6 @@ files = [
     "signal",
     "strategy",
     "validation",
-    "observer",
-    "signal",
-    "strategy",
-    "ecosystem",
-    "federation",
-    "evolution",
-    "core",
-    "kernel",
-    "loop",
 ]
 exclude = "^(docs|tests)/"
 ignore_missing_imports = true
@@ -114,5 +100,4 @@ testpaths = ["tests"]
 
 [tool.coverage.run]
 source = ["app", "artifact", "core", "domains", "ecosystem", "evolution", "federation", "genesis", "kernel", "loop", "metaos", "metaos_a", "metaos_b", "metaos_c", "observer", "runtime", "signal", "strategy", "validation"]
-source = ["app", "artifact", "core", "domains", "ecosystem", "evolution", "federation", "genesis", "kernel", "metaos", "metaos_a", "metaos_b", "metaos_c", "observer", "runtime", "signal", "strategy", "validation"]
 omit = ["tests/*"]

@@ -102,6 +102,9 @@ def evolve_evaluations(
     )
     active_generations = min(max(2, len(regime_counter)), max(2, target_active))
     evaluation_branch_rate = _clamp(0.45 * activation_pressure + 0.35 * diversity_deficit + 0.20 * stagnation)
+    imported_external = int(market_state.get("imported_evaluation_generations", 0) or 0)
+    adopted_external = int(market_state.get("adopted_evaluation_generations", 0) or 0)
+    active_external = int(market_state.get("active_external_evaluation_generations", 0) or 0)
     active_distribution = {
         key: round(value / max(1.0, float(sum(regime_counter.values()) or 1)), 4)
         for key, value in sorted(regime_counter.items())
@@ -126,6 +129,9 @@ def evolve_evaluations(
         "evaluation_retirement_rate": _clamp(max(0.0, 0.12 - (0.08 * activation_pressure))),
         "evaluation_reactivation_rate": _clamp(0.20 + (0.50 * activation_pressure)),
         "active_evaluation_distribution": active_distribution,
+        "imported_evaluation_generations": imported_external,
+        "adopted_evaluation_generations": adopted_external,
+        "active_external_evaluation_generations": active_external,
     }
 
 

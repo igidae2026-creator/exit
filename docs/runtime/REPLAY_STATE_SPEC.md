@@ -1,37 +1,76 @@
 # Replay State Specification
 
-## 1. Replay Philosophy
-Replay is the only legal reconstruction path for effective state. In-memory shortcuts are non-authoritative.
+This document defines how runtime state is reconstructed from append-only logs.
 
-## 2. Source of Truth
-- append-only event streams
-- append-only metrics
-- immutable artifact registries
-- archived lifecycle records
+## Purpose
 
-## 3. Replay Inputs
-Minimum input set:
-- event log entries
-- metrics log entries
-- artifact registry entries (policy/domain/evaluation/artifact)
-- archive entries for retirements/reactivations
+Replay reconstructs effective state from append-only truth without trusting cached mutable state.
 
-## 4. Replay Process
-1. Read append-only streams in commit order.
-2. Rebuild control state (tick, quest, pressure, recovery mode).
-3. Rebuild civilization summary (lineages/domains/economy/stability).
-4. Emit deterministic projection payloads.
+## Scope
 
-## 5. Derived State Rules
-- Derived state must be reproducible from logs only.
-- Missing log segments are hard failures.
-- Non-deterministic fields are forbidden in replay output.
+Canonical owners:
+- `genesis/replay.py`
+- `runtime/replay_state.py`
+- `genesis/spine.py`
 
-## 6. Determinism Rules
-- Same input logs + same replay code => same reconstructed state.
-- Replay check in CLI must fail hard on malformed inputs.
+## Invariants
 
-## 7. Replay Failure Handling
-- replay parse error => unhealthy status + recovery mode
-- invalid state checkpoint => restore from last valid append-only segment
-- repeated replay failure => rotate runtime files, preserve immutable registries, rerun replay-check
+- truth is append-only
+- derived state is disposable
+- replay on identical logs must produce identical terminal state and state hash
+- mirrored federation artifacts must remain distinguishable from local artifacts
+
+## Inputs
+
+- `events.jsonl`
+- `metrics.jsonl`
+- `artifact_registry.jsonl`
+- `archive/archive.jsonl`
+- `signals.jsonl`
+- `federation/events.jsonl` when federation is enabled
+
+## Outputs
+
+- tick, events, metrics, artifacts, signals
+- active policies and quest state
+- lineage state and civilization state
+- pressure, routing, economy, recovery, signal, and federation replay state
+
+## Event Flow
+
+- read append-only logs
+- reconstruct artifact envelopes
+- rebuild lineage and civilization counters
+- derive pressure, routing, economy, recovery, signals, federation state
+- emit replay state hashable terminal payload
+
+## Failure Modes
+
+- missing or corrupted derived state
+- truncated or malformed jsonl lines
+- replay-visible missing artifact references
+- invalid state requiring safe-mode restore
+
+## Recovery Behavior
+
+- ignore malformed lines, never mutate the source logs
+- rebuild effective state from remaining append-only truth
+- rely on supervisor restore path when runtime state becomes invalid
+
+## Ownership
+
+- canonical: `genesis/`
+- compatibility: `kernel/`, `metaos/kernel/`, `core/replay.py`
+
+## Test Mapping
+
+- `tests/test_replay_determinism.py`
+- `tests/test_federation_replay.py`
+- `tests/test_registry_rebuildability_arch.py`
+- `tests/test_release_install.py`
+
+## Operator Examples
+
+- `metaos replay-check`
+- `python -m app.cli replay`
+- `bash ops/validate-runtime.sh`

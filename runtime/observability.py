@@ -99,12 +99,13 @@ def replay_summary() -> dict[str, Any]:
 
 def runtime_summary() -> dict[str, Any]:
     civ = civilization_state()
+    federation = federation_state()
     return {
         "replay": replay_summary(),
         "civilization": civilization_summary(),
         "lineages": lineage_summary(),
         "domains": domain_summary(),
-        "federation": federation_state(),
+        "federation": federation,
         "evaluations": {
             "active_evaluation_generations": int(civ.get("active_evaluation_generations", 0)),
             "dormant_evaluation_generations": int(civ.get("dormant_evaluation_generations", 0)),
@@ -166,6 +167,106 @@ def federation_summary() -> dict[str, Any]:
     return federation_state()
 
 
+def node_summary() -> dict[str, Any]:
+    federation = federation_state()
+    topology = dict(federation.get("federation_topology", {}))
+    return {
+        "node_count": len(list(federation.get("federation_nodes", []))),
+        "node_topology": topology,
+        "artifact_exchange_rate": float(federation.get("artifact_exchange_rate", 0.0)),
+        "domain_propagation_rate": float(federation.get("domain_propagation_rate", 0.0)),
+        "policy_diffusion_rate": float(federation.get("policy_diffusion_rate", 0.0)),
+        "knowledge_flow_rate": float(federation.get("knowledge_flow_rate", 0.0)),
+    }
+
+
+def federation_adoption_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "federation_adoption_rate": float(federation.get("federation_adoption_rate", 0.0)),
+        "federation_activation_rate": float(federation.get("federation_activation_rate", 0.0)),
+        "federation_influence_score": float(federation.get("federation_influence_score", 0.0)),
+    }
+
+
+def external_artifact_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "observed_external_artifacts": int(federation.get("observed_external_artifacts", 0)),
+        "imported_external_artifacts": int(federation.get("imported_external_artifacts", 0)),
+        "adopted_external_artifacts": int(federation.get("adopted_external_artifacts", 0)),
+        "active_external_artifacts": int(federation.get("active_external_artifacts", 0)),
+    }
+
+
+def external_policy_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "observed_external_policies": int(federation.get("observed_external_policies", 0)),
+        "adopted_external_policies": int(federation.get("adopted_external_policies", 0)),
+        "active_external_policies": int(federation.get("active_external_policies", 0)),
+        "policy_diffusion_rate": float(federation.get("policy_diffusion_rate", 0.0)),
+    }
+
+
+def external_domain_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "imported_domains": int(federation.get("imported_domains", 0)),
+        "adopted_domains": int(federation.get("adopted_domains", 0)),
+        "active_imported_domains": int(federation.get("active_imported_domains", 0)),
+        "domain_propagation_rate": float(federation.get("domain_propagation_rate", 0.0)),
+    }
+
+
+def transport_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "send_queue_depth": int(federation.get("send_queue_depth", 0)),
+        "receive_queue_depth": int(federation.get("receive_queue_depth", 0)),
+        "adoption_queue_depth": int(federation.get("adoption_queue_depth", 0)),
+        "transport_delivery_rate": float(federation.get("transport_delivery_rate", 0.0)),
+        "adoption_completion_rate": float(federation.get("adoption_completion_rate", 0.0)),
+    }
+
+
+def hydration_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "mirrored_external_artifacts": int(federation.get("mirrored_external_artifacts", 0)),
+        "active_mirrored_artifacts": int(federation.get("active_mirrored_artifacts", 0)),
+        "hydration_rate": float(federation.get("hydration_rate", 0.0)),
+        "hydration_depth_distribution": dict(federation.get("hydration_depth_distribution", {})),
+        "mirror_lineage_count": int(federation.get("mirror_lineage_count", 0)),
+    }
+
+
+def mirrored_artifact_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "mirrored_external_artifacts": int(federation.get("mirrored_external_artifacts", 0)),
+        "active_mirrored_artifacts": int(federation.get("active_mirrored_artifacts", 0)),
+        "foreign_origin_distribution": dict(federation.get("foreign_origin_distribution", {})),
+    }
+
+
+def foreign_origin_status() -> dict[str, Any]:
+    federation = federation_state()
+    return {
+        "foreign_origin_distribution": dict(federation.get("foreign_origin_distribution", {})),
+        "federation_monoculture_score": float(federation.get("federation_monoculture_score", 0.0)),
+    }
+
+
+def hydration_guardrail_status() -> dict[str, Any]:
+    safety = runtime_safety()
+    return {
+        "hydration_rate": float(safety.get("hydration_rate", 0.0)),
+        "federation_monoculture_score": float(safety.get("federation_monoculture_score", 0.0)),
+        "federation_safety_actions": list(safety.get("federation_safety_actions", [])),
+    }
+
+
 __all__ = [
     "civilization_summary",
     "civilization_status",
@@ -173,6 +274,16 @@ __all__ = [
     "domain_status",
     "economy_summary",
     "federation_summary",
+    "federation_adoption_status",
+    "external_artifact_status",
+    "external_policy_status",
+    "external_domain_status",
+    "foreign_origin_status",
+    "node_summary",
+    "transport_status",
+    "hydration_status",
+    "mirrored_artifact_status",
+    "hydration_guardrail_status",
     "economy_status",
     "lineage_summary",
     "lineage_status",

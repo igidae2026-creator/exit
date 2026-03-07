@@ -1,0 +1,38 @@
+name: pr
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e .[dev]
+      - name: Fast PR gates
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          pytest -q \
+            tests/test_packaging_truth.py \
+            tests/test_ownership_manifest.py \
+            tests/test_docs_completeness.py \
+            tests/test_release_tree.py \
+            tests/test_release_install.py \
+            tests/test_replay_state_hash.py \
+            tests/test_genesis_acceptance.py \
+            tests/test_runtime_safety.py \
+            tests/test_federation_replay.py
+      - name: Product shape
+        run: |
+          bash scripts/clean_product_tree.sh
+          bash scripts/validate_product_shape.sh
+          bash scripts/validate_release_tree.sh

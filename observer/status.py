@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from observer.projections import civilization_projection, domain_projection, economy_projection, ecosystem_projection, federation_projection, lineage_projection, node_projection, replay_projection, runtime_projection, safety_projection, stability_projection, status_projection
+from observer.projections import civilization_projection, domain_projection, economy_projection, ecosystem_projection, external_artifact_projection, external_domain_projection, external_policy_projection, federation_adoption_projection, federation_projection, foreign_origin_projection, hydration_guardrail_projection, hydration_projection, lineage_projection, mirrored_artifact_projection, node_projection, replay_projection, runtime_projection, safety_projection, stability_projection, status_projection, transport_projection
 
 
 def read_status() -> dict[str, object]:
@@ -45,6 +45,47 @@ def read_federation_status() -> dict[str, object]:
 
 def read_node_status() -> dict[str, object]:
     return node_projection()
+
+
+def read_topology_status() -> dict[str, object]:
+    federation = federation_projection()
+    return dict(federation.get("federation_topology", federation.get("node_topology", {})))
+
+
+def read_federation_adoption_status() -> dict[str, object]:
+    return federation_adoption_projection()
+
+
+def read_external_artifact_status() -> dict[str, object]:
+    return external_artifact_projection()
+
+
+def read_external_policy_status() -> dict[str, object]:
+    return external_policy_projection()
+
+
+def read_external_domain_status() -> dict[str, object]:
+    return external_domain_projection()
+
+
+def read_transport_status() -> dict[str, object]:
+    return transport_projection()
+
+
+def read_hydration_status() -> dict[str, object]:
+    return hydration_projection()
+
+
+def read_mirrored_artifact_status() -> dict[str, object]:
+    return mirrored_artifact_projection()
+
+
+def read_foreign_origin_status() -> dict[str, object]:
+    return foreign_origin_projection()
+
+
+def read_hydration_guardrail_status() -> dict[str, object]:
+    return hydration_guardrail_projection()
 
 
 def read_ecosystem_status() -> dict[str, object]:

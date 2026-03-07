@@ -1,45 +1,80 @@
 # Runtime Failure Handling
 
-## 1. Runtime Failure Categories
-- invalid state transition
-- replay divergence / unreadable logs
-- invalid artifact envelope
-- invalid domain contract
-- loop break (no forward progress)
-- repair failure escalation
+This document defines failure handling procedures at the runtime layer.
 
-## 2. Soft Failure Handling
-Soft failures trigger bounded mitigation:
-1. reduce worker pressure / rebalance budgets
-2. inject exploration/reframing quest
-3. log guardrail action to append-only stream
+## Purpose
 
-## 3. Hard Failure Handling
-Hard failures require immediate containment:
-1. switch supervisor mode to safe mode
-2. restore replayable state from append-only truth
-3. apply repair quest with escalation tracking
-4. verify recovery within bounded ticks
+Runtime failure handling keeps the exploration loop alive without weakening replay, artifact, or domain law.
 
-## 4. Loop Break Recovery
-If quest loop stalls:
-- mark loop break in runtime safety surface
-- force reframing or domain diversification quest
-- prevent irreversible state writes until recovery criteria pass
+## Scope
 
-## 5. Invalid Domain Response
-- quarantine invalid domain generation
-- keep historical artifacts immutable for audit
-- continue execution with healthy domains
-- require domain contract validation before reactivation
+Canonical owners:
+- `runtime/runtime_safety.py`
+- `runtime/self_tuning_guardrails.py`
+- `runtime/repair_system.py`
+- `runtime/long_run_validation.py`
 
-## 6. Invalid Artifact Response
-- reject invalid envelope from canonical registries
-- preserve raw record for forensics
-- emit explicit failure event (no silent drop)
+## Invariants
 
-## 7. Escalation Rules
-Escalate when repeated repair attempts exceed bounded retries:
-- trigger repair escalation quest
-- increase repair and replay budget share
-- require replay-check success before returning to normal mode
+- the exploration loop must continue unless replay or truth law is broken
+- failures must emit structured actions and bounded diagnostics
+- recovery must never rewrite append-only truth
+
+## Inputs
+
+- safety metrics
+- pressure frame
+- federation and ecosystem pressure
+- replay state
+- long-run validation diagnostics
+
+## Outputs
+
+- `safety_actions`
+- guardrail actions and tuned thresholds
+- repair escalation directives
+- operator-visible failure diagnostics
+
+## Event Flow
+
+- detect pressure, collapse, replay, storage, federation, and hydration failures
+- derive bounded guardrail actions
+- escalate when repeated failures persist
+- expose structured diagnostics through CLI and ops surfaces
+
+## Failure Modes
+
+- plateau
+- exploration collapse
+- invalid state
+- missing artifact references
+- domain explosion
+- policy cascade
+- mirror storm
+- foreign monoculture
+
+## Recovery Behavior
+
+- replay restore for invalid state
+- repair escalation for repeated repair failure
+- diversity repair for lineage collapse
+- domain throttling for expansion overload
+- transport and hydration throttling for federation overload or mirror storms
+
+## Ownership
+
+- canonical: `runtime/`
+- observer and CLI surfaces are read-only
+
+## Test Mapping
+
+- `tests/test_runtime_safety.py`
+- `tests/test_federation_monoculture_guard.py`
+- `tests/test_guardrail_diversification.py`
+- `tests/test_long_run_civilization_health.py`
+
+## Operator Examples
+
+- `metaos safety-status`
+- `metaos long-run-check`
+- `bash ops/validate-runtime.sh`

@@ -36,6 +36,9 @@ def domain_lifecycle_state(
         if name:
             long_counts[name] += 1
     known = sorted(set(created_domains) | set(active_domains) | set(inactive_domains) | set(recent_counts) | set(long_counts))
+    imported_domains = int(civilization_state.get("imported_domains", 0) or 0)
+    adopted_domains = int(civilization_state.get("adopted_domains", 0) or 0)
+    active_imported_domains = int(civilization_state.get("active_imported_domains", 0) or 0)
     active = sorted(name for name in known if recent_counts.get(name, 0) > 0 or name in set(active_domains))
     inactive = sorted(name for name in known if name not in set(active) and (long_counts.get(name, 0) > 0 or name in set(inactive_domains)))
     retired = sorted(name for name in inactive if long_counts.get(name, 0) <= 1 and recent_counts.get(name, 0) == 0)
@@ -82,6 +85,11 @@ def domain_lifecycle_state(
         "lineage_domain_matrix": lineage_domain_matrix,
         "domain_lineage_coverage": round(domain_lineage_total / max(1.0, float(len(known) or 1)), 4),
         "dormant_domain_reactivation_count": len(resurrectable),
+        "imported_domains": imported_domains,
+        "adopted_domains": adopted_domains,
+        "active_imported_domains": active_imported_domains,
+        "domain_origin_node": str(civilization_state.get("domain_origin_node", "")),
+        "domain_adoption_history": list(civilization_state.get("domain_adoption_history", [])) if isinstance(civilization_state.get("domain_adoption_history"), list) else [],
         "lifecycle_actions": transitions,
         "bounded": True,
     }

@@ -6,6 +6,8 @@ from collections import Counter
 from pathlib import Path
 from typing import Any
 
+from federation.federation_topology import topology_state
+from federation.federation_transport import transport_state
 
 def _root() -> Path:
     root = os.environ.get("METAOS_ROOT")
@@ -59,6 +61,56 @@ def _rows() -> list[dict[str, Any]]:
 
 
 def federation_state() -> dict[str, Any]:
+    path = _path("events.jsonl")
+    if not federation_enabled() and not path.exists():
+        topology = topology_state([local_node_id()], "peer", artifact_events=0, knowledge_events=0)
+        return {
+            "federation_enabled": False,
+            "federation_nodes": [local_node_id()],
+            "shared_artifacts": [],
+            "shared_artifact_count": 0,
+            "shared_domains": [],
+            "shared_domain_count": 0,
+            "domain_propagation_rate": 0.0,
+            "policy_diffusion_count": 0,
+            "policy_diffusion_rate": 0.0,
+            "policy_diffusion": {},
+            "knowledge_propagation": {"events": 0, "knowledge_exchange_events": 0},
+            "knowledge_flow_rate": 0.0,
+            "artifact_exchange_rate": 0.0,
+            "node_topology": topology,
+            "federation_topology": topology,
+            "knowledge_import_count": 0,
+            "knowledge_export_count": 0,
+            "observed_external_artifacts": 0,
+            "imported_external_artifacts": 0,
+            "adopted_external_artifacts": 0,
+            "active_external_artifacts": 0,
+            "imported_domains": 0,
+            "adopted_domains": 0,
+            "active_imported_domains": 0,
+            "observed_external_policies": 0,
+            "adopted_external_policies": 0,
+            "active_external_policies": 0,
+            "imported_evaluation_generations": 0,
+            "adopted_evaluation_generations": 0,
+            "active_external_evaluation_generations": 0,
+            "mirrored_external_artifacts": 0,
+            "active_mirrored_artifacts": 0,
+            "hydration_rate": 0.0,
+            "hydration_depth_distribution": {},
+            "foreign_origin_distribution": {},
+            "mirror_lineage_count": 0,
+            "federation_adoption_rate": 0.0,
+            "federation_activation_rate": 0.0,
+            "federation_influence_score": 0.0,
+            "send_queue_depth": 0,
+            "receive_queue_depth": 0,
+            "adoption_queue_depth": 0,
+            "transport_delivery_rate": 0.0,
+            "adoption_completion_rate": 0.0,
+            "federation_monoculture_score": 0.0,
+        }
     rows = _rows()
     nodes = sorted(
         {
@@ -73,6 +125,10 @@ def federation_state() -> dict[str, Any]:
     policy_diffusion: Counter[str] = Counter()
     knowledge_propagation = 0
     artifact_flow = 0
+    domain_flow = 0
+    policy_flow = 0
+    adoption_counts: Counter[str] = Counter()
+    origin_counts: Counter[str] = Counter()
     for row in rows:
         kind = str(row.get("kind", ""))
         payload = row.get("payload", {}) if isinstance(row.get("payload"), dict) else {}
@@ -81,28 +137,118 @@ def federation_state() -> dict[str, Any]:
             if artifact_id:
                 shared_artifacts.append(artifact_id)
                 artifact_flow += 1
+                origin_counts[str(payload.get("artifact_origin", row.get("node_id", "")))] += 1
         if kind == "domain_propagation":
             domain = str(payload.get("domain", "")).strip()
             if domain:
                 shared_domains[domain] += 1
+                domain_flow += 1
+                origin_counts[str(payload.get("domain_origin", row.get("node_id", "")))] += 1
         if kind == "policy_diffusion":
             origin = str(payload.get("policy_origin", "")).strip() or "local"
             policy_diffusion[origin] += 1
+            policy_flow += 1
+            origin_counts[origin] += 1
         if kind == "knowledge_exchange":
             knowledge_propagation += 1
+        if kind.endswith("_adoption"):
+            base = kind.replace("_adoption", "")
+            status = str(payload.get("status", "observed"))
+            adoption_counts[f"{base}:{status}"] += 1
+    topology_name = str(os.environ.get("METAOS_FEDERATION_TOPOLOGY", "peer"))
+    topology = topology_state(nodes, topology_name, artifact_events=artifact_flow, knowledge_events=knowledge_propagation)
+    transport = transport_state(rows)
+    hydration_rows = [row.get("payload", {}) for row in rows if str(row.get("kind", "")) == "artifact_hydration" and isinstance(row.get("payload"), dict)]
+    dominant_origin_share = max(origin_counts.values(), default=0) / max(1.0, float(sum(origin_counts.values()) or 1))
+    federation_adoption_rate = round(
+        (
+            adoption_counts.get("artifact:adopted", 0)
+            + adoption_counts.get("domain:adopted", 0)
+            + adoption_counts.get("policy:adopted", 0)
+            + adoption_counts.get("evaluation:adopted", 0)
+        )
+        / max(1.0, float(len(rows) or 1)),
+        4,
+    )
+    federation_activation_rate = round(
+        (
+            adoption_counts.get("artifact:activated", 0)
+            + adoption_counts.get("domain:activated", 0)
+            + adoption_counts.get("policy:activated", 0)
+            + adoption_counts.get("evaluation:activated", 0)
+        )
+        / max(1.0, float(len(rows) or 1)),
+        4,
+    )
+    federation_influence_score = round(
+        max(
+            0.0,
+            min(
+                1.0,
+                (0.35 * federation_adoption_rate)
+                + (0.35 * federation_activation_rate)
+                + (0.15 * float(transport.get("transport_delivery_rate", 0.0)))
+                + (0.15 * float(transport.get("adoption_completion_rate", 0.0))),
+            ),
+        ),
+        4,
+    )
+    mirrored_external_artifacts = len({str(row.get("artifact_id", "")) for row in hydration_rows if row.get("artifact_id")})
+    active_mirrored_artifacts = len({str(row.get("artifact_id", "")) for row in hydration_rows if bool(row.get("hydrated"))})
+    hydration_depth_distribution: Counter[int] = Counter(int(row.get("hydration_depth", 0) or 0) for row in hydration_rows)
+    foreign_origin_distribution: Counter[str] = Counter(str(row.get("origin_node", "")) for row in hydration_rows if row.get("origin_node"))
+    mirror_lineage_count = len({tuple(row.get("mirror_parent_ids", [])) for row in hydration_rows if row.get("mirror_parent_ids")})
+    total_hydration = sum(hydration_depth_distribution.values()) or 1
+    hydration_rate = round(mirrored_external_artifacts / max(1.0, float(adoption_counts.get("artifact:adopted", 0) or 1)), 4)
     return {
         "federation_enabled": federation_enabled(),
         "federation_nodes": nodes,
         "shared_artifacts": shared_artifacts[-128:],
         "shared_artifact_count": len(shared_artifacts),
         "shared_domains": sorted(shared_domains),
+        "shared_domain_count": len(shared_domains),
         "domain_propagation_rate": round(sum(shared_domains.values()) / max(1.0, float(len(rows) or 1)), 4),
+        "policy_diffusion_count": sum(policy_diffusion.values()),
+        "policy_diffusion_rate": round(policy_flow / max(1.0, float(len(rows) or 1)), 4),
         "policy_diffusion": dict(policy_diffusion),
         "knowledge_propagation": {
             "events": knowledge_propagation,
             "knowledge_exchange_events": knowledge_propagation,
         },
+        "knowledge_flow_rate": round(knowledge_propagation / max(1.0, float(len(rows) or 1)), 4),
         "artifact_exchange_rate": round(artifact_flow / max(1.0, float(len(rows) or 1)), 4),
+        "node_topology": topology,
+        "federation_topology": topology,
+        "knowledge_import_count": knowledge_propagation,
+        "knowledge_export_count": knowledge_propagation,
+        "observed_external_artifacts": adoption_counts.get("artifact:observed", 0),
+        "imported_external_artifacts": adoption_counts.get("artifact:imported", 0),
+        "adopted_external_artifacts": adoption_counts.get("artifact:adopted", 0),
+        "active_external_artifacts": adoption_counts.get("artifact:activated", 0),
+        "imported_domains": adoption_counts.get("domain:imported", 0),
+        "adopted_domains": adoption_counts.get("domain:adopted", 0),
+        "active_imported_domains": adoption_counts.get("domain:activated", 0),
+        "observed_external_policies": adoption_counts.get("policy:observed", 0),
+        "adopted_external_policies": adoption_counts.get("policy:adopted", 0),
+        "active_external_policies": adoption_counts.get("policy:activated", 0),
+        "imported_evaluation_generations": adoption_counts.get("evaluation:imported", 0),
+        "adopted_evaluation_generations": adoption_counts.get("evaluation:adopted", 0),
+        "active_external_evaluation_generations": adoption_counts.get("evaluation:activated", 0),
+        "mirrored_external_artifacts": mirrored_external_artifacts,
+        "active_mirrored_artifacts": active_mirrored_artifacts,
+        "hydration_rate": hydration_rate,
+        "hydration_depth_distribution": {str(key): round(value / total_hydration, 4) for key, value in sorted(hydration_depth_distribution.items())},
+        "foreign_origin_distribution": dict(foreign_origin_distribution),
+        "mirror_lineage_count": mirror_lineage_count,
+        "federation_adoption_rate": federation_adoption_rate,
+        "federation_activation_rate": federation_activation_rate,
+        "federation_influence_score": federation_influence_score,
+        "send_queue_depth": int(transport.get("send_queue_depth", 0)),
+        "receive_queue_depth": int(transport.get("receive_queue_depth", 0)),
+        "adoption_queue_depth": int(transport.get("adoption_queue_depth", 0)),
+        "transport_delivery_rate": float(transport.get("transport_delivery_rate", 0.0)),
+        "adoption_completion_rate": float(transport.get("adoption_completion_rate", 0.0)),
+        "federation_monoculture_score": round(dominant_origin_share, 4),
     }
 
 
