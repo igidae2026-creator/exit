@@ -37,7 +37,6 @@ def pressure_frame(civilization_state: Mapping[str, Any], recent_truth: Sequence
     lineage_population = dict(civilization_state.get("lineage_population", {})) if isinstance(civilization_state.get("lineage_population"), Mapping) else {}
     domain_population = dict(civilization_state.get("domain_population", {})) if isinstance(civilization_state.get("domain_population"), Mapping) else {}
     policy_population = dict(civilization_state.get("policy_population", {})) if isinstance(civilization_state.get("policy_population"), Mapping) else {}
-    evaluation_population = dict(civilization_state.get("evaluation_population", {})) if isinstance(civilization_state.get("evaluation_population"), Mapping) else {}
     knowledge_density = float(civilization_state.get("knowledge_density", 0.0))
     memory_growth = float(civilization_state.get("memory_growth", 0.0))
     exploration_budget = max(1.0, float(civilization_state.get("exploration_budget", 1) or 1))
@@ -45,7 +44,6 @@ def pressure_frame(civilization_state: Mapping[str, Any], recent_truth: Sequence
     domain_total = sum(max(0.0, float(value)) for value in domain_population.values())
     lineage_total = sum(max(0.0, float(value)) for value in lineage_population.values())
     policy_generations = float(policy_population.get("generations", civilization_state.get("policy_generations", 0)) or 0.0)
-    evaluation_generations = float(evaluation_population.get("generations", civilization_state.get("evaluation_generations", 0)) or 0.0)
     recent_repair = _recent_signal(recent_truth, "repair_pressure")
     recent_novelty = _recent_signal(recent_truth, "novelty")
     recent_fail = _recent_signal(recent_truth, "fail_rate")

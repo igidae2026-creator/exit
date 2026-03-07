@@ -8,14 +8,18 @@ from pathlib import Path
 from typing import Any
 
 from runtime.kernel_adapter import DEFAULT_RUNTIME_ROOT, KernelAdapter
+from runtime.profiles import runtime_profile
 from runtime.replay_state import replay_state
 from runtime.supervisor import Supervisor
+from runtime.profiles import active_profile
 
 
 @dataclass(slots=True)
 class OrchestratorConfig:
     tick_seconds: float = 0.05
     max_ticks: int | None = None
+    profile: str = "run"
+    runtime_profile: str = "smoke"
     data_dir: Path = DEFAULT_RUNTIME_ROOT / "data"
     artifact_store_dir: Path = DEFAULT_RUNTIME_ROOT / "artifact_store"
     state_dir: Path = DEFAULT_RUNTIME_ROOT / "state"
@@ -25,7 +29,11 @@ class OrchestratorConfig:
     @classmethod
     def from_env(cls) -> "OrchestratorConfig":
         runtime_root = Path(os.getenv("METAOS_RUNTIME_ROOT", str(DEFAULT_RUNTIME_ROOT)))
+        profile = active_profile(os.getenv("METAOS_PROFILE"))
         return cls(
+            tick_seconds=_env_float("METAOS_TICK_SECONDS", profile.tick_seconds),
+            max_ticks=_env_int_or_none("METAOS_MAX_TICKS", profile.default_ticks),
+            profile=profile.name,
             tick_seconds=_env_float("METAOS_TICK_SECONDS", 0.05),
             max_ticks=_env_optional_int("METAOS_MAX_TICKS"),
             data_dir=Path(os.getenv("METAOS_DATA_DIR", str(runtime_root / "data"))),
@@ -33,6 +41,7 @@ class OrchestratorConfig:
             state_dir=Path(os.getenv("METAOS_STATE_DIR", str(runtime_root / "state"))),
             archive_dir=Path(os.getenv("METAOS_ARCHIVE_DIR", str(runtime_root / "archive"))),
             canonical_domain=os.getenv("METAOS_CANONICAL_DOMAIN", "code_domain"),
+            runtime_profile=(os.getenv("METAOS_RUNTIME_PROFILE", "smoke") or "smoke").strip().lower(),
         )
 
 
@@ -55,9 +64,29 @@ class Orchestrator:
             limit = 1
         remaining = limit
         while remaining is None or remaining > 0:
+        if limit is None:
+            while True:
+                state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
+                report = self.supervisor.run_cycle(state)
+                reports.append(report)
+                print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
+                if self.config.tick_seconds > 0:
+                    time.sleep(self.config.tick_seconds)
+            return reports
+        if limit <= 0:
+        profile = runtime_profile(self.config.runtime_profile)
+        if limit is None:
+            limit = profile.target_ticks
+        if limit is not None and limit <= 0:
+            limit = 1
+        tick_count = 0
+        while True:
+            if limit is not None and tick_count >= limit:
+                break
             state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
             report = self.supervisor.run_cycle(state)
             reports.append(report)
+            tick_count += 1
             print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
             if self.config.tick_seconds > 0:
                 time.sleep(self.config.tick_seconds)
@@ -94,14 +123,14 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
-def _env_int(name: str, default: int) -> int:
+def _env_optional_int(name: str) -> int | None:
     raw = os.getenv(name)
     if raw is None:
-        return default
+        return None
     try:
         return int(raw)
     except ValueError:
-        return default
+        return None
 
 
 def _env_optional_int(name: str) -> int | None:
@@ -124,3 +153,13 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+
+
+def _env_int_or_none(name: str, default: int | None) -> int | None:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default

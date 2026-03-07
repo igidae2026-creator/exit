@@ -13,6 +13,8 @@ def test_long_run_multi_lineage_reports_diversified_runtime() -> None:
         try:
             out = validate_long_run(profile="smoke", ticks=1024, seed=42)
             assert out["active_lineage_count"] > 1
+            out = validate_long_run(ticks=4096, seed=42, tier="bounded")
+            assert out["active_lineage_count"] >= 4
             assert out["dominance_index"] < 1.0
             assert out["evaluation_generations"] > 0
             assert out["diversification_intervention_count"] > 0

@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from collections import Counter
 
-from artifact.archive import append_archive, archive_window, latest_archive, load_archive
+from artifact.archive import append_archive, latest_archive, load_archive, remember_extinction
 from artifact.civilization_registry import civilization_memory_snapshot as artifact_civilization_memory_snapshot
 from artifact.civilization_registry import civilization_state as artifact_civilization_state
 from federation.federation_state import federation_state
@@ -204,6 +204,7 @@ def remember(kind: str, payload: Any) -> dict[str, Any]:
     with path.open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=True) + "\n")
     append_archive("memory", row)
+    remember_extinction(str(kind), payload)
     return row
 
 

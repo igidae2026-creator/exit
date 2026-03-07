@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
 from typing import Any, Callable
 
 from artifact.runtime_store import ArtifactStore, create_artifact

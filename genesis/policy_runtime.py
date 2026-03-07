@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Any
 
 from artifact.registry import load_envelope
 from genesis.contracts import BindingFrame, POLICY_FAMILIES

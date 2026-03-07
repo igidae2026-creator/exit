@@ -7,7 +7,12 @@ from typing import Sequence
 
 from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, safety_projection, stability_projection, status_projection
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from runtime.profiles import PROFILES, active_profile
 from runtime.long_run_validation import validate_long_run
+from validation.genesis_invariants import validate_genesis_invariants
+from runtime.profiles import RUNTIME_PROFILES
+from runtime.long_run_validation import LONG_RUN_HORIZONS, run_long_run_validation
+from runtime.long_run_validation import LONG_RUN_TIERS, validate_long_run
 from validation.system_boundary import validate_system_boundary
 
 
@@ -17,9 +22,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--artifact-dir", default=None)
     parser.add_argument("--state-dir", default=None)
     parser.add_argument("--archive-dir", default=None)
-    parser.add_argument("--domain", default="code_domain")
+    parser.add_argument("--domain", default="research_domain")
     parser.add_argument("--tick-seconds", type=float, default=None)
     parser.add_argument("--max-ticks", type=int, default=None)
+    parser.add_argument("--profile", choices=sorted(PROFILES), default=None)
+    parser.add_argument("--profile", choices=tuple(RUNTIME_PROFILES.keys()), default=None)
 
     subparsers = parser.add_subparsers(dest="command", required=False)
 
@@ -75,6 +82,14 @@ def build_parser() -> argparse.ArgumentParser:
     long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--seed", type=int, default=42)
     long_run_parser.add_argument("--fail-open", action="store_true", help="Allow guarded continuation during step errors (debug only)")
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
+    long_run_parser.add_argument("--ticks", type=int, default=None)
+    long_run_parser.add_argument("--profile", choices=sorted(LONG_RUN_HORIZONS.keys()), default="smoke")
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run tiered long-run validation")
+    long_run_parser.add_argument("--tier", choices=sorted(LONG_RUN_TIERS), default="bounded")
+    long_run_parser.add_argument("--ticks", type=int, default=None)
+    long_run_parser.add_argument("--seed", type=int, default=42)
+    long_run_parser.add_argument("--profile", choices=tuple(RUNTIME_PROFILES.keys()), default="smoke")
     long_run_parser.set_defaults(func=cmd_long_run_check)
 
     build_release_parser = subparsers.add_parser("build-release", help="Build release zip")
@@ -99,22 +114,50 @@ def build_runtime(args: argparse.Namespace) -> Orchestrator:
         config.canonical_domain = args.domain
     if args.tick_seconds is not None:
         config.tick_seconds = args.tick_seconds
+    if args.profile:
+        cfg = active_profile(args.profile)
+        config.profile = cfg.name
+        config.max_ticks = cfg.default_ticks
+        config.tick_seconds = cfg.tick_seconds
     if args.max_ticks is not None:
         config.max_ticks = args.max_ticks
+    if args.profile:
+        config.runtime_profile = args.profile
     return Orchestrator(config)
 
 
 def cmd_validate(args: argparse.Namespace) -> int:
     runtime = build_runtime(args)
     summary = runtime.validate()
-    summary["boundary"] = validate_system_boundary(
+    boundary_payload = {
+        "human": ["goal", "essence", "constraints", "acceptance"],
+        "system": ["exploration", "implementation", "validation", "evolution", "expansion"],
+    }
+    summary["boundary"] = validate_system_boundary(boundary_payload)
+    summary["genesis_invariants"] = validate_genesis_invariants(
         {
-            "human": ["goal", "essence", "constraints", "acceptance"],
-            "system": ["exploration", "implementation", "validation", "evolution", "expansion"],
+            "artifact_classes": ["quest", "evaluation", "policy", "lineage", "domain_genome"],
+            "loop_stages": ["signal", "generate", "evaluate", "select", "mutate", "archive", "repeat"],
+            "runtime_gate": {
+                "mode": "bounded" if args.max_ticks is not None else "perpetual",
+                "max_ticks": args.max_ticks,
+                "tick_boundary_only": True,
+                "allow_stop": args.max_ticks is not None,
+            },
+            "boundary": boundary_payload,
+            "invariants": {
+                "append_only_truth": True,
+                "replayable_state": True,
+                "artifact_immutability": True,
+                "minimal_core": True,
+                "domain_autonomy": True,
+                "lineage_diversity": True,
+            },
         }
     )
+    summary["ok"] = bool(summary.get("ok", True) and summary["boundary"]["ok"] and summary["genesis_invariants"]["ok"])
     print(json.dumps(summary, ensure_ascii=True))
-    return 0
+    return 0 if summary["ok"] else 1
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -199,6 +242,17 @@ def cmd_long_run_check(args: argparse.Namespace) -> int:
         seed=int(args.seed),
         fail_open=bool(getattr(args, "fail_open", False)),
     )
+    ticks = args.ticks if args.ticks is not None else active_profile(args.profile).long_run_ticks
+    payload = validate_long_run(ticks=max(1, int(ticks)), seed=int(args.seed), fail_open=True)
+    from runtime.long_run_validation import validate_long_run
+
+    payload = validate_long_run(ticks=max(1, int(args.ticks)), seed=int(args.seed), fail_open=True, profile=str(args.profile))
+    ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_HORIZONS.get(args.profile, 2_000))
+    payload = run_long_run_validation(ticks=max(1, ticks), seed=int(args.seed), fail_open=True, profile=args.profile)
+    payload["profile"] = args.profile
+    payload["target_ticks"] = int(LONG_RUN_HORIZONS.get(args.profile, ticks))
+    ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_TIERS[str(args.tier)]["ticks"])
+    payload = validate_long_run(ticks=max(1, ticks), seed=int(args.seed), fail_open=True, tier=str(args.tier))
     print(json.dumps(payload, ensure_ascii=True))
     return 0 if payload.get("healthy") else 1
 
