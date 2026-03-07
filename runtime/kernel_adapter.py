@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import random
 from pathlib import Path
-from typing import Any, Iterable, Mapping
+from typing import Any, Mapping
 
 from artifact.runtime_store import create_artifact
 from genesis.event_log import append_event, append_jsonl, ensure_spine

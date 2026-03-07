@@ -111,7 +111,7 @@ def build_pressure_frame(
     plateau_hit = plateau_fn()
     lineage_high = concentration_fn() > 0.45
     novelty_low_sustained = novelty_drop_fn()
-    preliminary_guard = detect_guard_state(history + [{"pressure": raw_pressure, "domain": domain, **dict(metrics)}])
+    detect_guard_state(history + [{"pressure": raw_pressure, "domain": domain, **dict(metrics)}])
     previous = (
         history[-1].get("stabilized_pressure")
         if history and isinstance(history[-1].get("stabilized_pressure"), Mapping)

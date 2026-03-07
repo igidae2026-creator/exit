@@ -7,6 +7,7 @@ from typing import Sequence
 
 from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, safety_projection, stability_projection, status_projection
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from runtime.profiles import PROFILES, active_profile
 from runtime.long_run_validation import validate_long_run
 from validation.system_boundary import validate_system_boundary
 
@@ -20,6 +21,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--domain", default="code_domain")
     parser.add_argument("--tick-seconds", type=float, default=None)
     parser.add_argument("--max-ticks", type=int, default=None)
+    parser.add_argument("--profile", choices=sorted(PROFILES), default=None)
 
     subparsers = parser.add_subparsers(dest="command", required=False)
 
@@ -71,7 +73,7 @@ def build_parser() -> argparse.ArgumentParser:
     safety_parser.set_defaults(func=cmd_safety_status)
 
     long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
-    long_run_parser.add_argument("--ticks", type=int, default=120)
+    long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--seed", type=int, default=42)
     long_run_parser.set_defaults(func=cmd_long_run_check)
 
@@ -97,6 +99,11 @@ def build_runtime(args: argparse.Namespace) -> Orchestrator:
         config.canonical_domain = args.domain
     if args.tick_seconds is not None:
         config.tick_seconds = args.tick_seconds
+    if args.profile:
+        cfg = active_profile(args.profile)
+        config.profile = cfg.name
+        config.max_ticks = cfg.default_ticks
+        config.tick_seconds = cfg.tick_seconds
     if args.max_ticks is not None:
         config.max_ticks = args.max_ticks
     return Orchestrator(config)
@@ -191,7 +198,8 @@ def cmd_safety_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
-    payload = validate_long_run(ticks=max(1, int(args.ticks)), seed=int(args.seed), fail_open=True)
+    ticks = args.ticks if args.ticks is not None else active_profile(args.profile).long_run_ticks
+    payload = validate_long_run(ticks=max(1, int(ticks)), seed=int(args.seed), fail_open=True)
     print(json.dumps(payload, ensure_ascii=True))
     return 0 if payload.get("healthy") else 1
 

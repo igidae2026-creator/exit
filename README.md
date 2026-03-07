@@ -3,11 +3,11 @@
 METAOS is a bounded autonomous exploration civilization engine. It is for replayable, pressure-driven solution evolution under GENESIS law, not for one-shot task execution.
 
 Primary references:
-- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
-- [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
-- [Architecture Layers](/home/meta_os/metaos/docs/architecture/LAYERS.md)
-- [Architecture Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
-- [Why METAOS](/home/meta_os/metaos/docs/architecture/WHY_METAOS.md)
+- [GENESIS](./docs/core/GENESIS.md)
+- [METAOS Final Definition](./docs/core/METAOS_FINAL_DEFINITION.md)
+- [Architecture Layers](./docs/architecture/LAYERS.md)
+- [Architecture Boundaries](./docs/architecture/BOUNDARIES.md)
+- [Why METAOS](./docs/architecture/WHY_METAOS.md)
 
 ## What METAOS Is
 

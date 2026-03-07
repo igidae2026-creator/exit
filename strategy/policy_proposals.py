@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Mapping
+from typing import Mapping
 
 from artifact.registry import register_envelope
 from genesis.contracts import POLICY_FAMILIES

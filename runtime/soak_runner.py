@@ -10,17 +10,13 @@ from pathlib import Path
 from typing import Any, Iterator, Mapping, Sequence
 from unittest.mock import patch
 
-import metaos.policy.evaluation_artifact as evaluation_artifact
 import metaos.observer.metrics_history as metrics_history
 import metaos.observer.pressure_engine as pressure_engine
-import metaos.registry.artifact_registry as artifact_registry
 import metaos.registry.lineage_graph as lineage_graph
 import runtime.artifact_civilization as artifact_civilization
 import runtime.domain_pool as domain_pool
 import runtime.domain_router as domain_router
-import runtime.exploration_strategy_artifact as exploration_strategy_artifact
 import runtime.oed_orchestrator as oed_orchestrator
-import runtime.strategy_of_strategy as strategy_of_strategy_registry
 from metaos.archive.archive import save
 from metaos.archive.civilization_memory import remember
 from metaos.core.supervisor import guarded_step

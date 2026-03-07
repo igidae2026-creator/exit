@@ -40,6 +40,7 @@ def _canonical_paths() -> dict[str, Path]:
         "metrics": _canonical_path("METAOS_METRICS", "metrics.jsonl", ".metaos_runtime/data/metrics.jsonl"),
         "registry": _canonical_path("METAOS_REGISTRY", "artifact_registry.jsonl", ".metaos_runtime/data/artifact_registry.jsonl"),
         "archive": _canonical_path("METAOS_ARCHIVE", "archive.jsonl", ".metaos_runtime/archive/archive.jsonl"),
+        "signals": _canonical_path("METAOS_SIGNALS", "signals.jsonl", ".metaos_runtime/data/signals.jsonl"),
     }
 
 
@@ -193,11 +194,29 @@ def _civilization_state(envelopes: Iterable[Mapping[str, Any]], archive_rows: It
     }
 
 
+def _signal_state(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
+    latest: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        sid = str(row.get("id") or "")
+        if sid:
+            latest[sid] = dict(row)
+    status_counts: dict[str, int] = {}
+    for row in latest.values():
+        status = str(row.get("status") or "new")
+        status_counts[status] = status_counts.get(status, 0) + 1
+    return {
+        "signals": len(latest),
+        "status_counts": status_counts,
+        "queued": [row for row in latest.values() if str(row.get("status")) in {"new", "queued"}],
+    }
+
+
 def replay_state() -> dict[str, Any]:
     paths = _canonical_paths()
     events = _read_jsonl(paths["event_log"])
     metrics = _read_jsonl(paths["metrics"])
     archive_rows = _read_jsonl(paths["archive"])
+    signals = _read_jsonl(paths["signals"])
     envelopes = _artifact_envelopes(_read_jsonl(paths["registry"]))
     archive_state = _archive_state()
     lineage_state = _lineage_state(envelopes) if envelopes else _lineage_state_from_metrics(metrics)
@@ -234,6 +253,8 @@ def replay_state() -> dict[str, Any]:
         "last_event": last_event,
         "last_metrics": last_metric,
         "archive_state": archive_state,
+        "signals": len(signals),
+        "signal_state": _signal_state(signals),
     }
 
 
