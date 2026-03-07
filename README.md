@@ -69,3 +69,23 @@ Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 - `python -m app.cli long-run-check --profile smoke`
 - `bash ops/run-metaos.sh`
 - `bash ops/validate-runtime.sh`
+- `python -m app.cli long-run-check --tier smoke`
+- `python -m app.cli long-run-check --tier bounded`
+- `python -m app.cli long-run-check --tier soak`
+- `bash ops/run-metaos.sh`
+- `bash ops/validate-runtime.sh`
+
+## Long-Run Status
+
+- civilization-state architecture is the live control model
+- replay is append-only and deterministic under GENESIS rules
+- created, active, inactive, retired, and resurrectable domains are tracked separately
+- lineage health distinguishes active, dormant, zombie, and dominant lock-in cases
+- economy balance is tracked independently from raw throughput
+- artifact, lineage, economy, domain, stability, and safety status are observable through CLI and ops surfaces
+
+
+Long-run tiers:
+- smoke: minimum 256 ticks
+- bounded: minimum 4096 ticks
+- soak: minimum 50000 ticks

@@ -16,9 +16,9 @@ def domain_expansion_policy(
     topology: Mapping[str, Any] | None = None,
     *,
     recent_decisions: Sequence[Mapping[str, Any]] | None = None,
-    max_new_domains_per_window: int = 1,
-    minimum_evidence_threshold: float = 0.62,
-    cooldown_between_domain_spawns: int = 12,
+    max_new_domains_per_window: int = 3,
+    minimum_evidence_threshold: float = 0.45,
+    cooldown_between_domain_spawns: int = 3,
 ) -> dict[str, Any]:
     pressure_state = dict(pressure or {})
     memory_state = dict(civilization_memory or {})
@@ -48,7 +48,7 @@ def domain_expansion_policy(
         and active_domain_count >= max(1, domain_count // 3)
     )
     branch_opportunity_score = round(max(0.0, evidence + (0.08 * len(inactive_domains)) - lifecycle_drag), 4)
-    target_domains = max(2, min(8, domain_count + expansion_budget))
+    target_domains = max(3, min(12, domain_count + max(1, expansion_budget)))
     return {
         "expansion_pressure": expansion_pressure,
         "evidence": evidence,

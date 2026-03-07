@@ -2,19 +2,27 @@ from setuptools import find_packages, setup
 
 setup(
     name="metaos",
-    version="0.0.0",
+    version="0.4.0rc1",
     packages=find_packages(
         where=".",
         include=[
             "app",
             "artifact",
+            "core",
             "domains",
+            "ecosystem",
+            "evolution",
+            "federation",
             "genesis",
+            "kernel",
             "metaos",
             "metaos_a",
             "metaos_b",
             "metaos_c",
+            "observer",
             "runtime",
+            "signal",
+            "strategy",
             "validation",
         ],
     ),
