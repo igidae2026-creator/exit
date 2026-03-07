@@ -11,7 +11,7 @@ def test_long_run_civilization_health_reports_hardening_metrics() -> None:
         os.environ["METAOS_ROOT"] = str(root)
         os.environ["METAOS_SOAK_FAST"] = "1"
         try:
-            out = validate_long_run(ticks=120, seed=42)
+            out = validate_long_run(ticks=256, seed=42, tier="smoke")
             assert "stability_score" in out
             assert "economy_balance_score" in out
             assert "guardrail_actions" in out

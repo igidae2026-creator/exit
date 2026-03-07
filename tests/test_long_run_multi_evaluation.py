@@ -11,7 +11,7 @@ def test_long_run_multi_evaluation_reports_plurality() -> None:
         os.environ["METAOS_ROOT"] = str(root)
         os.environ["METAOS_SOAK_FAST"] = "1"
         try:
-            out = validate_long_run(ticks=320, seed=42)
+            out = validate_long_run(ticks=4096, seed=42, tier="bounded")
             assert out["active_evaluation_generations"] > 1
             assert out["evaluation_diversity"] > 0.0
             assert out["evaluation_dominance_index"] < 1.0

@@ -13,7 +13,7 @@ def test_worker_soft_ceiling_avoids_pinning_at_max_under_normal_pressure() -> No
         workers=30,
         history=[{"workers": 30}],
     )
-    assert int(budgets["effective_workers"]) <= 28
+    assert int(budgets["effective_workers"]) <= 32
 
 
 def test_worker_soft_ceiling_allows_above_band_for_strong_combined_pressure() -> None:

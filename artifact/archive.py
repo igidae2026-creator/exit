@@ -44,6 +44,8 @@ def save(kind: str, payload: Any, *, visibility: str = "local", origin_status: s
             )
             + "\n"
         )
+    if str(kind) == "memory":
+        remember_extinction(kind, payload)
 
 
 def append_archive(kind: str, payload: Any, *, visibility: str = "local", origin_status: str = "local") -> dict[str, Any]:

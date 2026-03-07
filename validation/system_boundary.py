@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-
-HUMAN_ONLY = {"goal", "essence", "constraints", "acceptance"}
-SYSTEM_ONLY = {"exploration", "implementation", "validation", "evolution", "expansion"}
+from validation.boundary import validate_boundary
 
 
 def validate_system_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
@@ -27,3 +25,4 @@ def validate_system_boundary(payload: Mapping[str, Any]) -> dict[str, Any]:
         "expected_human": sorted(HUMAN_ONLY),
         "expected_system": sorted(SYSTEM_ONLY),
     }
+    return validate_boundary(payload)
