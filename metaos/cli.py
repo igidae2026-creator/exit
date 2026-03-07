@@ -77,6 +77,11 @@ def build_parser() -> argparse.ArgumentParser:
     safety_parser = subparsers.add_parser("safety-status", help="Inspect runtime safety and guardrail state")
     safety_parser.set_defaults(func=cmd_safety_status)
 
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run long-run validation with profile-driven acceptance")
+    long_run_parser.add_argument("--profile", choices=["smoke", "soak", "endurance"], default="smoke")
+    long_run_parser.add_argument("--ticks", type=int, default=None)
+    long_run_parser.add_argument("--seed", type=int, default=42)
+    long_run_parser.add_argument("--fail-open", action="store_true", help="Allow guarded continuation during step errors (debug only)")
     long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
     long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--profile", choices=sorted(LONG_RUN_HORIZONS.keys()), default="smoke")
@@ -231,6 +236,12 @@ def cmd_safety_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
+    payload = validate_long_run(
+        profile=str(getattr(args, "profile", "smoke")),
+        ticks=args.ticks,
+        seed=int(args.seed),
+        fail_open=bool(getattr(args, "fail_open", False)),
+    )
     ticks = args.ticks if args.ticks is not None else active_profile(args.profile).long_run_ticks
     payload = validate_long_run(ticks=max(1, int(ticks)), seed=int(args.seed), fail_open=True)
     from runtime.long_run_validation import validate_long_run

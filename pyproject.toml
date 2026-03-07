@@ -39,6 +39,15 @@ include = [
     "signal",
     "strategy",
     "validation",
+    "observer",
+    "signal",
+    "strategy",
+    "ecosystem",
+    "federation",
+    "evolution",
+    "core",
+    "kernel",
+    "loop",
 ]
 
 [project.scripts]
@@ -82,6 +91,15 @@ files = [
     "signal",
     "strategy",
     "validation",
+    "observer",
+    "signal",
+    "strategy",
+    "ecosystem",
+    "federation",
+    "evolution",
+    "core",
+    "kernel",
+    "loop",
 ]
 exclude = "^(docs|tests)/"
 ignore_missing_imports = true

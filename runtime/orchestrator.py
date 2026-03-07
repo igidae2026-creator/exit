@@ -60,6 +60,10 @@ class Orchestrator:
     def run(self, *, max_ticks: int | None = None) -> list[dict[str, Any]]:
         limit = self.config.max_ticks if max_ticks is None else max_ticks
         reports: list[dict[str, Any]] = []
+        if limit is not None and limit <= 0:
+            limit = 1
+        remaining = limit
+        while remaining is None or remaining > 0:
         if limit is None:
             while True:
                 state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
@@ -86,6 +90,8 @@ class Orchestrator:
             print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
             if self.config.tick_seconds > 0:
                 time.sleep(self.config.tick_seconds)
+            if remaining is not None:
+                remaining -= 1
         return reports
 
     def validate(self) -> dict[str, Any]:
@@ -125,6 +131,20 @@ def _env_optional_int(name: str) -> int | None:
         return int(raw)
     except ValueError:
         return None
+
+
+def _env_optional_int(name: str) -> int | None:
+    raw = os.getenv(name)
+    if raw is None:
+        return None
+    text = raw.strip().lower()
+    if text in {"", "none", "null", "unbounded", "infinite", "continuous"}:
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return None if value <= 0 else value
 
 
 def run() -> None:
