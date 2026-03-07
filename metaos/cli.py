@@ -9,6 +9,7 @@ from observer.projections import civilization_projection, domain_projection, eco
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
 from runtime.profiles import PROFILES, active_profile
 from runtime.long_run_validation import validate_long_run
+from validation.genesis_invariants import validate_genesis_invariants
 from runtime.profiles import RUNTIME_PROFILES
 from runtime.long_run_validation import LONG_RUN_HORIZONS, run_long_run_validation
 from runtime.long_run_validation import LONG_RUN_TIERS, validate_long_run
@@ -123,14 +124,35 @@ def build_runtime(args: argparse.Namespace) -> Orchestrator:
 def cmd_validate(args: argparse.Namespace) -> int:
     runtime = build_runtime(args)
     summary = runtime.validate()
-    summary["boundary"] = validate_system_boundary(
+    boundary_payload = {
+        "human": ["goal", "essence", "constraints", "acceptance"],
+        "system": ["exploration", "implementation", "validation", "evolution", "expansion"],
+    }
+    summary["boundary"] = validate_system_boundary(boundary_payload)
+    summary["genesis_invariants"] = validate_genesis_invariants(
         {
-            "human": ["goal", "essence", "constraints", "acceptance"],
-            "system": ["exploration", "implementation", "validation", "evolution", "expansion"],
+            "artifact_classes": ["quest", "evaluation", "policy", "lineage", "domain_genome"],
+            "loop_stages": ["signal", "generate", "evaluate", "select", "mutate", "archive", "repeat"],
+            "runtime_gate": {
+                "mode": "bounded" if args.max_ticks is not None else "perpetual",
+                "max_ticks": args.max_ticks,
+                "tick_boundary_only": True,
+                "allow_stop": args.max_ticks is not None,
+            },
+            "boundary": boundary_payload,
+            "invariants": {
+                "append_only_truth": True,
+                "replayable_state": True,
+                "artifact_immutability": True,
+                "minimal_core": True,
+                "domain_autonomy": True,
+                "lineage_diversity": True,
+            },
         }
     )
+    summary["ok"] = bool(summary.get("ok", True) and summary["boundary"]["ok"] and summary["genesis_invariants"]["ok"])
     print(json.dumps(summary, ensure_ascii=True))
-    return 0
+    return 0 if summary["ok"] else 1
 
 
 def cmd_run(args: argparse.Namespace) -> int:

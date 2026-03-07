@@ -14,6 +14,13 @@ Primary references:
 - [Architecture Boundaries](docs/architecture/BOUNDARIES.md)
 - [Why METAOS](docs/architecture/WHY_METAOS.md)
 
+Boundary truth map:
+- `docs/architecture/BOUNDARY_TRUTH_MAP.md`
+
+Invariant traceability:
+- `docs/architecture/INVARIANT_TRACEABILITY.md`
+
+
 ## What METAOS Is
 
 METAOS is organized around `civilization_state` as the primary control surface.
