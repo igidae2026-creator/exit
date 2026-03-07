@@ -10,6 +10,8 @@ from artifact.archive import append_archive, latest_archive, load_archive, remem
 from artifact.civilization_registry import civilization_memory_snapshot as artifact_civilization_memory_snapshot
 from artifact.civilization_registry import civilization_state as artifact_civilization_state
 from federation.federation_state import federation_state
+from runtime.ceiling_metrics import CEILING_METRICS, latest_ceiling_metrics
+from runtime.environment_pressure import ENVIRONMENT_SIGNAL_KEYS, latest_environment_signals
 
 
 def _memory_path() -> Path:
@@ -171,6 +173,9 @@ def civilization_state() -> dict[str, Any]:
     federation = federation_state()
     knowledge_density = round(max(float(artifact_state.get("knowledge_density", 0.0)), min(1.0, density_base / 24.0)), 4)
     memory_growth = round(max(float(artifact_state.get("memory_growth", 0.0)), min(1.0, total_rows / 720.0)), 4)
+    ceiling_metrics = latest_ceiling_metrics(metrics_rows)
+    environment_signals = latest_environment_signals(memory_rows)
+    environment_signal_count = sum(1 for row in memory_rows if str(row.get("kind", "")) == "environment_signal")
     return {
         "knowledge_density": knowledge_density,
         "memory_growth": memory_growth,
@@ -208,6 +213,11 @@ def civilization_state() -> dict[str, Any]:
         "federation_activation_rate": float(federation.get("federation_activation_rate", 0.0)),
         "federation_influence_score": float(federation.get("federation_influence_score", 0.0)),
         "lineage_counts": lineage_counts,
+        "ceiling_metrics": ceiling_metrics,
+        **{key: float(ceiling_metrics.get(key, 0.0)) for key in CEILING_METRICS},
+        "environment_signals": environment_signals,
+        **{key: float(environment_signals.get(key, 0.0)) for key in ENVIRONMENT_SIGNAL_KEYS},
+        "environment_signal_count": environment_signal_count,
         "created_domains": sorted(domain_counts),
         "active_domains": active_domains,
         "inactive_domains": inactive_domains,

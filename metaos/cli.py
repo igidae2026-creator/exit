@@ -130,8 +130,8 @@ def build_parser() -> argparse.ArgumentParser:
     hydration_guardrail_parser = subparsers.add_parser("hydration-guardrail-status", help="Inspect hydration guardrails")
     hydration_guardrail_parser.set_defaults(func=cmd_hydration_guardrail_status)
 
-    long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
-    long_run_parser.add_argument("--tier", choices=sorted(LONG_RUN_TIERS), default="bounded")
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run long-run validation")
+    long_run_parser.add_argument("--tier", choices=sorted(LONG_RUN_TIERS), default=None)
     long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--seed", type=int, default=42)
     long_run_parser.add_argument("--fail-open", action="store_true", help="Allow guarded continuation during step errors")
@@ -339,8 +339,16 @@ def cmd_hydration_guardrail_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
-    ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_TIERS[str(args.tier)]["ticks"])
-    payload = validate_long_run(ticks=max(1, ticks), seed=int(args.seed), fail_open=bool(args.fail_open), tier=str(args.tier))
+    if args.tier is not None:
+        ticks = int(args.ticks) if args.ticks is not None else int(LONG_RUN_TIERS[str(args.tier)]["ticks"])
+    else:
+        ticks = int(args.ticks) if args.ticks is not None else 256
+    payload = validate_long_run(
+        ticks=max(1, ticks),
+        seed=int(args.seed),
+        fail_open=bool(args.fail_open),
+        tier=str(args.tier) if args.tier is not None else None,
+    )
     print(json.dumps(payload, ensure_ascii=True))
     return 0 if payload.get("healthy") else 1
 

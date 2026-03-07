@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, Iterable, List
@@ -246,4 +247,25 @@ def archive_pressure(state: ReplayState, *, window: int = 6) -> Dict[str, float]
     }
 
 
-__all__ = ["ReplayState", "archive_pressure", "rebuild_runtime_state", "replay_state"]
+def replay_ops_state(data_dir: str | Path = "data", *, state_dir: str | Path = "state", archive_dir: str | Path = "archive") -> Dict[str, Any]:
+    if str(data_dir) == "data" and os.environ.get("METAOS_ROOT"):
+        data_dir = Path(os.environ["METAOS_ROOT"])
+    state = replay_state(data_dir, state_dir=state_dir, archive_dir=archive_dir)
+    truth_paths = [Path(data_dir) / "events.jsonl", Path(data_dir) / "metrics.jsonl", Path(data_dir) / "artifact_registry.jsonl"]
+    truth_bytes = sum(path.stat().st_size for path in truth_paths if path.exists())
+    truth_rows = sum(len(_read_jsonl(path)) for path in truth_paths if path.exists())
+    checkpoint_tick = int(state.checkpoint.get("tick", 0) or 0)
+    corruption_detected = any(path.exists() and path.stat().st_size > 0 and not list(_read_jsonl(path)) for path in truth_paths)
+    return {
+        "checkpoint_cadence_ok": state.tick - checkpoint_tick <= 64 if state.tick >= checkpoint_tick else False,
+        "archive_rotation_ready": truth_bytes >= 4096,
+        "event_log_compaction_candidate": truth_rows >= 128,
+        "replay_index_acceleration_ready": bool(state.lineage_graph) and bool(state.artifacts),
+        "corruption_detected": corruption_detected,
+        "automatic_replay_restore_ready": not corruption_detected and bool(state.artifacts or state.metric_history or state.tick_summaries),
+        "checkpoint_tick": checkpoint_tick,
+        "truth_row_count": truth_rows,
+    }
+
+
+__all__ = ["ReplayState", "archive_pressure", "rebuild_runtime_state", "replay_ops_state", "replay_state"]

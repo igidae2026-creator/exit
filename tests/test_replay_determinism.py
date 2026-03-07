@@ -5,6 +5,7 @@ from pathlib import Path
 from artifact.registry import register_envelope
 from kernel.replay import replay_state
 from kernel.spine import append_event, append_metrics
+from runtime.replay_state import replay_ops_state
 
 
 def test_replay_determinism_on_append_only_truth() -> None:
@@ -16,5 +17,6 @@ def test_replay_determinism_on_append_only_truth() -> None:
             append_metrics({"tick": 1, "score": 0.8, "quest": {"type": "exploration"}, "routing": {"selected_domain": "alpha"}})
             register_envelope(aclass="domain", atype="domain_genome", spec={"metadata": {"lineage_id": "alpha"}, "routing": {"selected_domain": "alpha"}})
             assert replay_state() == replay_state()
+            assert replay_ops_state()["automatic_replay_restore_ready"] is True
         finally:
             os.environ.pop("METAOS_ROOT", None)

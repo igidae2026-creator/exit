@@ -2,33 +2,47 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-_REQUIRED_LOOP = ["signal", "generate", "evaluate", "select", "mutate", "archive", "repeat"]
 from validation.boundary import validate_boundary
 
 
-def validate_constitution(payload: Mapping[str, Any]) -> dict[str, Any]:
-    artifact_classes = {str(item) for item in payload.get("artifact_classes", [])}
-    loop = [str(item) for item in payload.get("loop", _REQUIRED_LOOP)]
-    missing_loop = [stage for stage in _REQUIRED_LOOP if stage not in loop]
-    return {
-        "name": "constitution",
-        "ok": ("quota" not in artifact_classes) and not missing_loop,
-        "artifact_classes": sorted(artifact_classes),
-        "forbidden_artifact_classes": ["quota"],
-        "required_loop": list(_REQUIRED_LOOP),
-        "provided_loop": loop,
-        "missing_loop": missing_loop,
+REQUIRED_LOOP = ("signal", "generate", "evaluate", "select", "mutate", "archive", "repeat")
+REQUIRED_PRESSURE_AXES = ("novelty", "diversity", "efficiency", "repair", "domain_shift", "reframing")
+FORBIDDEN_ARTIFACT_CLASSES = {"quota"}
+
+
+def validate_constitution(payload: Mapping[str, Any] | None = None) -> dict[str, Any]:
+    data = dict(payload or {})
+    artifact_classes = {str(item) for item in data.get("artifact_classes", [])}
+    loop = [str(item) for item in data.get("loop", data.get("loop_stages", REQUIRED_LOOP))]
+    missing_loop = [stage for stage in REQUIRED_LOOP if stage not in loop]
+    pressures = {str(item) for item in data.get("pressure_axes", REQUIRED_PRESSURE_AXES)}
+    missing_pressures = [axis for axis in REQUIRED_PRESSURE_AXES if axis not in pressures]
+    forbidden_present = sorted(FORBIDDEN_ARTIFACT_CLASSES.intersection(artifact_classes))
     boundary = validate_boundary(
         {
-            "human": payload.get("human", ["goal", "essence", "constraints", "acceptance"]),
-            "system": payload.get("system", ["exploration", "implementation", "validation", "evolution", "expansion"]),
+            "human": data.get("human", ["goal", "essence", "constraints", "acceptance"]),
+            "system": data.get("system", ["exploration", "implementation", "validation", "evolution", "expansion"]),
         }
     )
-    required_pressures = {"novelty", "diversity", "efficiency", "repair", "domain_shift", "reframing"}
-    present_pressures = {str(item) for item in payload.get("pressure_axes", required_pressures)}
     return {
         "name": "constitution",
-        "ok": boundary["ok"] and "quota" not in artifact_classes and required_pressures.issubset(present_pressures),
+        "ok": boundary["ok"] and not missing_loop and not missing_pressures and not forbidden_present,
         "boundary": boundary,
-        "pressure_axes": sorted(present_pressures),
+        "artifact_classes": sorted(artifact_classes),
+        "forbidden_artifact_classes": sorted(FORBIDDEN_ARTIFACT_CLASSES),
+        "forbidden_present": forbidden_present,
+        "required_loop": list(REQUIRED_LOOP),
+        "provided_loop": loop,
+        "missing_loop": missing_loop,
+        "pressure_axes": sorted(pressures),
+        "required_pressure_axes": list(REQUIRED_PRESSURE_AXES),
+        "missing_pressure_axes": missing_pressures,
     }
+
+
+__all__ = [
+    "FORBIDDEN_ARTIFACT_CLASSES",
+    "REQUIRED_LOOP",
+    "REQUIRED_PRESSURE_AXES",
+    "validate_constitution",
+]

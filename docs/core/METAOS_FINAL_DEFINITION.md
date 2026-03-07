@@ -1,6 +1,6 @@
 # METAOS Final Definition
 
-METAOS is a bounded autonomous exploration civilization engine governed by GENESIS.
+METAOS is an autonomous exploration civilization engine governed by GENESIS, with bounded validation modes and an unbounded production mode.
 
 Primary control surface:
 - `civilization_state`

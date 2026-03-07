@@ -4,6 +4,7 @@ from typing import Any, Mapping, Sequence
 
 from runtime.domain_creation import domain_creation
 from runtime.exploration_topology import exploration_topology
+from runtime.knowledge_system import knowledge_guidance
 
 
 def _clamp(value: float, low: float = -0.12, high: float = 0.12) -> float:
@@ -70,6 +71,12 @@ def meta_exploration(
         "lineage_penalty": _clamp(0.04 * max(0.0, 0.2 - knowledge_flow)),
         "efficiency": _clamp(-0.03 * max(diversity_gap, exploration_gap)),
     }
+    guidance = knowledge_guidance(
+        domain=str(topology.get("active_domains", ["default"])[0] if topology.get("active_domains") else "default"),
+        pressure=dict(pressure),
+    )
+    strategy_mutation["recombination_emphasis"] = _clamp(strategy_mutation["recombination_emphasis"] + (0.05 * float(guidance.get("reuse_bias", 0.0))))
+    evaluation_mutation["novelty"] = _clamp(evaluation_mutation["novelty"] + (0.04 * float(guidance.get("reuse_bias", 0.0))))
 
     enriched_ecology = dict(ecology_state)
     enriched_ecology["knowledge_flow"] = round(knowledge_flow, 4)
@@ -80,6 +87,7 @@ def meta_exploration(
         "strategy_mutation": strategy_mutation,
         "evaluation_mutation": evaluation_mutation,
         "domain_creation": new_domain,
+        "knowledge_guidance": guidance,
         "topology_shift": {
             "mode": topology_mode,
             "domain_count": domain_count,

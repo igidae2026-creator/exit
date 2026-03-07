@@ -65,10 +65,13 @@ Machine-readable ownership truth:
 
 Runtime scale is profile-driven; demo-size constants are not canonical truth.
 
-- `smoke`: 1,000 ticks target, 8-32 workers, >=2 lineages, >=2 domains
-- `soak`: 50,000 ticks target, 64-256 workers, >=8 lineages, >=4 domains
-- `endurance`: 500,000 ticks target, 256-1,024 workers, >=16 lineages, >=8 domains
-- `civilization`: unbounded target ticks, production guardrails/rotation/recovery playbook mode
+- `smoke`: 256 tick minimum, 1,000 tick target, 8-32 workers, >=4 surviving lineages, >=3 domains
+- `bootstrap`: 1,000 tick bounded startup ecology proof
+- `aggressive`: 5,000 tick bounded local validation with stricter ecology floors
+- `soak`: 50,000 tick long-run stability check, 64-256 workers, >=8 surviving lineages, >=4 domains
+- `production`: unbounded canonical runtime until explicit operator stop or guardrail stop
+- `civilization`: compatibility alias for `production`
+- `endurance`: explicit very-long bounded stress profile
 
 Select with `METAOS_RUNTIME_PROFILE` or CLI `--profile`.
 
@@ -120,5 +123,7 @@ Release truth:
 
 Long-run tiers:
 - smoke: minimum 256 ticks
+- bootstrap: minimum 1000 ticks
 - bounded: minimum 4096 ticks
+- aggressive: minimum 5000 ticks
 - soak: minimum 50000 ticks

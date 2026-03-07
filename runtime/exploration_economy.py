@@ -59,6 +59,12 @@ def allocate_resources(
     repair = float(pressure_state.get("repair_pressure", 0.0))
     domain_shift = float(pressure_state.get("domain_shift_pressure", 0.0))
     reframing = float(pressure_state.get("reframing_pressure", 0.0))
+    competition = float(pressure_state.get("competition_pressure", 0.0))
+    adoption = float(pressure_state.get("market_adoption_pressure", 0.0))
+    platform = float(pressure_state.get("platform_policy_pressure", 0.0))
+    volatility = float(pressure_state.get("environment_volatility", 0.0))
+    breakout = float(pressure_state.get("breakout_acceleration_score", 0.0))
+    concentration_risk = float(pressure_state.get("portfolio_concentration_risk", 0.0))
     domain_population = dict(civilization_frame.get("domain_population", {})) if isinstance(civilization_frame.get("domain_population"), Mapping) else {}
     domain_count = max(1, len(domain_population))
     dominance_index = float(civilization_frame.get("dominance_index", 0.0) or 0.0)
@@ -67,8 +73,8 @@ def allocate_resources(
     exploration_gap = 1.0 - float(ecology_state.get("exploration_health", 0.5))
     diversity_gap = 1.0 - float(ecology_state.get("diversity_health", 0.5))
     evaluation_gap = 1.0 - float(ecology_state.get("evaluation_diversity", civilization_frame.get("evaluation_diversity", 0.5)) or 0.5)
-    attention_budget = _clamp(0.32 + 0.20 * novelty + 0.10 * reframing + 0.08 * exploration_gap)
-    mutation_budget = _clamp(0.26 + 0.15 * novelty + 0.12 * domain_shift + 0.08 * diversity_gap - 0.06 * repair)
+    attention_budget = _clamp(0.28 + 0.18 * novelty + 0.10 * reframing + 0.08 * exploration_gap + 0.08 * competition + 0.06 * breakout)
+    mutation_budget = _clamp(0.22 + 0.14 * novelty + 0.12 * domain_shift + 0.08 * diversity_gap - 0.06 * repair + 0.08 * volatility + 0.06 * platform)
     selection_weights = {
         "strategy": _clamp(0.18 + 0.10 * novelty),
         "policy": _clamp(0.16 + 0.10 * float(population_counts.get("policy", 0) == 0) + 0.05 * memory_state["knowledge_density"]),
@@ -86,12 +92,12 @@ def allocate_resources(
         "memory_slots": max(1, int(round(1 + (4 * memory_state["knowledge_density"])))),
         "repair_slots": max(1, int(round(1 + (4 * repair)))),
     }
-    exploration_budget = max(3, int(round(3 + 4 * attention_budget + 3 * mutation_budget + 2 * domain_shift)))
+    exploration_budget = max(3, int(round(3 + 4 * attention_budget + 3 * mutation_budget + 2 * domain_shift + 2 * competition + breakout)))
     selection_budget = _clamp(0.24 + 0.18 * efficiency + 0.14 * diversity + 0.10 * memory_state["knowledge_density"])
-    domain_expansion_budget = max(0, int(round((2.0 * domain_shift) + (1.5 * novelty) - (0.4 * max(0, domain_count - 2)))))
+    domain_expansion_budget = max(0, int(round((2.0 * domain_shift) + (1.5 * novelty) + adoption - (0.4 * max(0, domain_count - 2)) + concentration_risk)))
     policy_budget = max(1, int(round(2 + (4 * novelty) + (3 * diversity))))
     evaluation_budget = max(1, int(round(2 + (3 * efficiency) + (2 * repair) + (2 * evaluation_gap))))
-    repair_budget = max(1, int(round(1 + (4 * repair) + (2 * reframing))))
+    repair_budget = max(1, int(round(1 + (4 * repair) + (2 * reframing) + (2 * platform) + volatility)))
     diversity_allocation_budget = max(1, int(round(1 + (4 * max(0.0, dominance_index - 0.45)) + (3 * diversity_gap))))
     evaluation_diversity_budget = max(
         1,

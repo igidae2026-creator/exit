@@ -64,6 +64,7 @@ def domain_creation(
     flow_push = float(ecology_state.get("knowledge_flow", 0.0))
     return {
         "name": name,
+        "cluster": name.split("_")[0],
         "constraints": {
             "novelty": _clamp(0.45 + 0.35 * novelty_push),
             "cross_domain": _clamp(0.25 + 0.45 * flow_push),
@@ -83,4 +84,9 @@ def domain_creation(
             "strategy_of_strategy": strategy,
             "pressure": pressure_state,
         },
+        "resource_contract": {
+            "arbitration_weight": _clamp(0.30 + 0.50 * diversity_push),
+            "migration_bias": _clamp(0.20 + 0.40 * flow_push),
+        },
+        "niche": "frontier" if novelty_push >= 0.6 else "bridge",
     }

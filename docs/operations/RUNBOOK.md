@@ -11,27 +11,28 @@ This runbook is the operator procedure for a Genesis-faithful runtime.
    - `python -m app.cli lineage-status`
    - `python -m app.cli domain-status`
 
-## 2. Smoke Run (2,000 ticks)
+## 2. Smoke Run
 Run:
-- `python -m app.cli long-run-check --profile smoke --ticks 2000 --seed 42`
+- `python -m app.cli long-run-check --tier smoke --seed 42`
 
 Required checks:
 - replay remains readable (`replay_ok=true`)
 - no invalid-state deadlock
 - `profile_acceptance.accepted=true` if profile floors are met
 
-## 3. Stability Run (20,000 ticks)
+## 3. Bootstrap Or Aggressive Run
 Run:
-- `python -m app.cli long-run-check --profile stability --ticks 20000 --seed 42`
+- `python -m app.cli long-run-check --tier bootstrap --seed 42`
+- `python -m app.cli long-run-check --tier aggressive --seed 42`
 
 Review:
 - policy/evaluation generation growth
 - lineage diversity and dominance index
 - active domain count and domain lifecycle distribution
 
-## 4. Endurance Run (100,000 ticks)
+## 4. Soak Run (50,000 ticks)
 Run:
-- `python -m app.cli long-run-check --profile endurance --ticks 100000 --seed 42`
+- `python -m app.cli long-run-check --tier soak --seed 42`
 
 This run is soak-tier; execute in CI nightly/weekly, not per-commit.
 

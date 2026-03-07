@@ -1,6 +1,6 @@
 # METAOS Intro
 
-METAOS is a bounded autonomous exploration civilization engine. It is not a problem-solving app.
+METAOS is an autonomous exploration civilization engine with bounded validation modes and an unbounded production mode. It is not a problem-solving app.
 
 Start here:
 - [GENESIS](./docs/core/GENESIS.md)

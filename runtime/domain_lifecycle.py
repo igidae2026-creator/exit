@@ -3,6 +3,8 @@ from __future__ import annotations
 from collections import Counter
 from typing import Any, Mapping, Sequence
 
+from ecosystem.domain_clusters import domain_cluster_state
+
 
 def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
     return round(max(low, min(high, float(value))), 4)
@@ -65,6 +67,11 @@ def domain_lifecycle_state(
     active_rate = _clamp(len(active) / max(1.0, float(len(known))))
     retirement_rate = _clamp(len(retired) / max(1.0, float(len(known))))
     turnover = _clamp((len(active) + len(retired)) / max(1.0, float((2 * len(known)) or 1)))
+    clusters = domain_cluster_state([{"node_domains": [name], "cluster": name.split("_")[0] if "_" in name else name[:4] or "core"} for name in known])
+    competition_index = _clamp(max(recent_counts.values(), default=0) / max(1.0, float(sum(recent_counts.values()) or 1)))
+    arbitration_queue = sorted(name for name, count in recent_counts.items() if count <= 1 and name in active)
+    migration_candidates = sorted(name for name in inactive if long_counts.get(name, 0) >= 2)
+    niches = {name: ("frontier" if recent_counts.get(name, 0) <= 1 else "core") for name in known}
     transitions: list[str] = []
     if retirement_rate > 0.45:
         transitions.append("slow_domain_creation")
@@ -85,6 +92,13 @@ def domain_lifecycle_state(
         "lineage_domain_matrix": lineage_domain_matrix,
         "domain_lineage_coverage": round(domain_lineage_total / max(1.0, float(len(known) or 1)), 4),
         "dormant_domain_reactivation_count": len(resurrectable),
+        "domain_clusters": dict(clusters.get("domain_clusters", {})),
+        "cluster_activity": dict(clusters.get("cluster_activity", {})),
+        "domain_competition_index": competition_index,
+        "domain_resource_arbitration_queue": arbitration_queue,
+        "cross_domain_recombination_candidates": sorted(name for name, lineages in lineage_domain_matrix.items() if len(lineages) >= 2),
+        "domain_migration_candidates": migration_candidates,
+        "domain_niches": niches,
         "imported_domains": imported_domains,
         "adopted_domains": adopted_domains,
         "active_imported_domains": active_imported_domains,

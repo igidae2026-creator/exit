@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence
 
+from runtime.ceiling_metrics import latest_ceiling_metrics
+from runtime.environment_pressure import latest_environment_signals
+
 
 def _ratio(values: Mapping[str, Any]) -> float:
     total = sum(max(0.0, float(value)) for value in values.values())
@@ -48,12 +51,48 @@ def pressure_frame(civilization_state: Mapping[str, Any], recent_truth: Sequence
     recent_novelty = _recent_signal(recent_truth, "novelty")
     recent_fail = _recent_signal(recent_truth, "fail_rate")
     budget_exhausted = float(bool(civilization_state.get("budget_exhausted", False)))
-    novelty_pressure = _clamp(0.58 - (0.22 * knowledge_density) - (0.08 * memory_growth) + (0.08 * (1.0 - min(1.0, policy_generations / 32.0))) + (0.05 * (1.0 - recent_novelty)))
-    diversity_pressure = _clamp((0.58 * _ratio(lineage_population)) + (0.15 * float(lineage_total <= 1.0)) + (0.10 * float(domain_total <= 2.0)))
-    efficiency_pressure = _clamp((0.18 * memory_growth) + (0.18 * min(1.0, artifact_total / max(1.0, exploration_budget * 4.0))) + (0.16 * budget_exhausted))
+    ceiling = latest_ceiling_metrics(recent_truth)
+    environment = latest_environment_signals(recent_truth)
+    novelty_pressure = _clamp(
+        0.52
+        - (0.18 * knowledge_density)
+        - (0.08 * memory_growth)
+        + (0.08 * (1.0 - min(1.0, policy_generations / 32.0)))
+        + (0.05 * (1.0 - recent_novelty))
+        + (0.10 * float(ceiling.get("policy_staleness_score", 0.0)))
+        + (0.10 * float(environment.get("competition_pressure", 0.0)))
+    )
+    diversity_pressure = _clamp(
+        (0.48 * _ratio(lineage_population))
+        + (0.15 * float(lineage_total <= 1.0))
+        + (0.10 * float(domain_total <= 2.0))
+        + (0.12 * float(ceiling.get("portfolio_concentration_risk", 0.0)))
+        + (0.08 * float(environment.get("platform_policy_pressure", 0.0)))
+    )
+    efficiency_pressure = _clamp(
+        (0.18 * memory_growth)
+        + (0.18 * min(1.0, artifact_total / max(1.0, exploration_budget * 4.0)))
+        + (0.16 * budget_exhausted)
+        + (0.10 * float(environment.get("environment_volatility", 0.0)))
+        + (0.08 * float(ceiling.get("dominant_lock_in_risk", 0.0)))
+    )
     repair_pressure = _clamp(0.12 + (0.30 * recent_fail) + (0.22 * recent_repair) + (0.16 * float(memory_growth > 0.9 and knowledge_density < 0.45)))
-    domain_shift_pressure = _clamp((0.30 * novelty_pressure) + (0.22 * diversity_pressure) + (0.10 * float(domain_total <= 2.0)) + (0.08 * budget_exhausted))
-    reframing_pressure = _clamp((0.25 * novelty_pressure) + (0.18 * diversity_pressure) + (0.12 * repair_pressure) + (0.10 * float(exploration_budget <= 3.0)))
+    domain_shift_pressure = _clamp(
+        (0.24 * novelty_pressure)
+        + (0.20 * diversity_pressure)
+        + (0.10 * float(domain_total <= 2.0))
+        + (0.08 * budget_exhausted)
+        + (0.18 * float(environment.get("market_adoption_pressure", 0.0)))
+        + (0.10 * float(ceiling.get("threshold_crossing_score", 0.0)))
+    )
+    reframing_pressure = _clamp(
+        (0.20 * novelty_pressure)
+        + (0.16 * diversity_pressure)
+        + (0.12 * repair_pressure)
+        + (0.10 * float(exploration_budget <= 3.0))
+        + (0.14 * float(environment.get("audience_feedback_pressure", 0.0)))
+        + (0.14 * float(ceiling.get("breakout_acceleration_score", 0.0)))
+    )
     return {
         "novelty_pressure": novelty_pressure,
         "diversity_pressure": diversity_pressure,
@@ -61,6 +100,8 @@ def pressure_frame(civilization_state: Mapping[str, Any], recent_truth: Sequence
         "repair_pressure": repair_pressure,
         "domain_shift_pressure": domain_shift_pressure,
         "reframing_pressure": reframing_pressure,
+        **{key: round(float(value), 4) for key, value in ceiling.items()},
+        **{key: round(float(value), 4) for key, value in environment.items()},
     }
 
 

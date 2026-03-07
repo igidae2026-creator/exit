@@ -40,13 +40,20 @@ def assess_lineages(
     zombie = sorted(name for name, value in counts.items() if value == 1 and recent_counts.get(name, 0) == 1)
     fake_diversity = surviving >= int(diversity_floor) and effective_diversity < 0.35
     actions: list[str] = []
+    branch_pressure = round(min(1.0, max(0.0, concentration + (0.4 * float(fake_diversity)) - (0.25 * effective_diversity))), 4)
+    dominance_suppression = round(min(1.0, max(0.0, (concentration - 0.55) * 2.0)), 4)
     if concentration >= 0.7:
         actions.append("selection_penalty_on_dominant_lineage")
+        actions.append("dominance_suppression")
     if surviving < int(diversity_floor) or fake_diversity:
         actions.append("increase_diversity_pressure")
         actions.append("explore_underrepresented_lineages")
     if zombie:
         actions.append("archive_dormant_lineages")
+    if dormant and concentration >= 0.55:
+        actions.append("resurrect_dormant_lineages")
+    if branch_pressure >= 0.45:
+        actions.append("increase_branch_pressure")
     branch_rate = round(min(1.0, max(0.0, surviving / max(1.0, float(total)))), 4)
     merge_rate = round(min(1.0, merge_candidates / max(1.0, float(len(lineage_rows) or 1))), 4)
     return {
@@ -66,6 +73,10 @@ def assess_lineages(
         "dormant_lineages": dormant,
         "zombie_lineages": zombie,
         "fake_diversity": fake_diversity,
+        "dominance_suppression": dominance_suppression,
+        "branch_pressure": branch_pressure,
+        "dormant_resurrection_candidates": dormant[:8],
+        "lineage_migration_targets": dormant[:4] if concentration >= 0.6 else [],
         "lineage_actions": actions[:8],
         "branch_rate": branch_rate,
         "merge_rate": merge_rate,

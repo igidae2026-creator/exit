@@ -7,12 +7,33 @@ from genesis.replay import replay_state
 from runtime.civilization_state import civilization_status as state_civilization_status
 from runtime.civilization_memory import civilization_state
 from runtime.lineage_ecology import assess_lineages
+from runtime.replay_state import replay_ops_state
 from runtime.runtime_safety import runtime_safety
 
 
 def pressure_summary() -> dict[str, Any]:
     state = replay_state()
-    return dict(state.get("pressure_state", {}))
+    summary = dict(state.get("pressure_state", {}))
+    civ = civilization_state()
+    for key in (
+        "threshold_crossing_score",
+        "breakout_acceleration_score",
+        "tail_yield_score",
+        "dominant_lock_in_risk",
+        "resurrection_potential",
+        "portfolio_concentration_risk",
+        "policy_staleness_score",
+        "exploration_entropy",
+        "lineage_entropy",
+        "innovation_density",
+        "competition_pressure",
+        "market_adoption_pressure",
+        "platform_policy_pressure",
+        "audience_feedback_pressure",
+        "environment_volatility",
+    ):
+        summary[key] = float(civ.get(key, summary.get(key, 0.0)))
+    return summary
 
 
 def economy_summary() -> dict[str, Any]:
@@ -55,6 +76,8 @@ def lineage_summary() -> dict[str, Any]:
     out["dormant_lineage_count"] = int(civ.get("dormant_lineage_count", out.get("dormant_lineage_count", 0)))
     out["branch_rate"] = float(civ.get("branch_rate", 0.0))
     out["merge_rate"] = float(civ.get("merge_rate", 0.0))
+    out["branch_pressure"] = float(civ.get("branch_pressure", 0.0))
+    out["dominance_suppression"] = float(civ.get("dominance_suppression", 0.0))
     out["zombie_lineages"] = list(civ.get("zombie_lineages", out.get("zombie_lineages", []))) if isinstance(civ.get("zombie_lineages"), list) else out.get("zombie_lineages", [])
     return out
 
@@ -75,6 +98,9 @@ def domain_summary() -> dict[str, Any]:
         "domain_activation_rate": float(civ.get("domain_activation_rate", 0.0)),
         "domain_retirement_rate": float(civ.get("domain_retirement_rate", 0.0)),
         "domain_lineage_coverage": float(civ.get("domain_lineage_coverage", 0.0)),
+        "domain_clusters": dict(civ.get("domain_clusters", {})),
+        "domain_competition": float(civ.get("domain_competition_index", 0.0)),
+        "domain_niches": dict(civ.get("domain_niches", {})),
     }
 
 
@@ -94,6 +120,7 @@ def replay_summary() -> dict[str, Any]:
         "metrics": int(state.get("metrics", 0)),
         "artifacts": int(state.get("artifacts", 0)),
         "replay_ok": bool(state),
+        "replay_ops": replay_ops_state(),
     }
 
 
@@ -115,6 +142,14 @@ def runtime_summary() -> dict[str, Any]:
             "active_evaluation_distribution": dict(civ.get("active_evaluation_distribution", {})),
         },
         "pressure": pressure_summary(),
+        "ceiling": {
+            "lineage_entropy": float(civ.get("lineage_entropy", 0.0)),
+            "exploration_entropy": float(civ.get("exploration_entropy", 0.0)),
+            "breakout_detection": float(civ.get("breakout_acceleration_score", 0.0)),
+            "knowledge_density": float(civ.get("knowledge_density", 0.0)),
+            "ceiling_proximity": float(civ.get("threshold_crossing_score", 0.0)),
+            "tail_yield_score": float(civ.get("tail_yield_score", 0.0)),
+        },
         "economy": economy_summary(),
         "safety": runtime_safety(),
         "stability": {
@@ -127,6 +162,11 @@ def runtime_summary() -> dict[str, Any]:
             "diversification_intervention_count": int(civ.get("diversification_intervention_count", 0)),
             "forced_branch_count": int(civ.get("forced_branch_count", 0)),
             "stability_actions": list(civ.get("stability_actions", [])),
+        },
+        "policy_lineage": {
+            "policy_generations": int(civ.get("policy_generations", 0)),
+            "policy_staleness_score": float(civ.get("policy_staleness_score", 0.0)),
+            "active_external_policies": int(civ.get("active_external_policies", 0)),
         },
     }
 

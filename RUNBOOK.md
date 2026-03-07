@@ -22,9 +22,12 @@ Hierarchy:
 
 Profiles:
 - `smoke`: fast validation and replay proof
+- `bootstrap`: bounded startup ecology check
+- `aggressive`: stronger bounded local validation
 - `soak`: long-run stability checks
 - `endurance`: large-budget and long-history stress
-- `civilization`: unbounded canonical runtime
+- `production`: unbounded canonical runtime
+- `civilization`: compatibility alias for `production`
 
 Operator actions:
 - install surface: `metaos --help`
@@ -40,7 +43,9 @@ Operator actions:
 - inspect stability status: `python -m app.cli stability-status`
 - inspect safety status: `python -m app.cli safety-status`
 - run long-run validation: `python -m app.cli long-run-check --tier smoke`
+- run bootstrap validation: `python -m app.cli long-run-check --tier bootstrap`
 - run bounded validation: `python -m app.cli long-run-check --tier bounded`
+- run aggressive validation: `python -m app.cli long-run-check --tier aggressive`
 - run soak validation: `python -m app.cli long-run-check --tier soak`
 - rotate runtime safely: `bash ops/rotate-runtime.sh`
 - clean transient runtime state: `bash ops/cleanup-runtime.sh`

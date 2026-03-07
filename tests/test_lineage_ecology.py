@@ -15,3 +15,5 @@ def test_lineage_ecology_preserves_diversity_floor() -> None:
     assert out["single_lineage_dominance"] is False
     assert out["lineage_diversity"] > 0.0
     assert out["dominance_index"] < 0.85
+    assert out["branch_pressure"] >= 0.0
+    assert "dominance_suppression" in out

@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from runtime.ceiling_metrics import compute_ceiling_metrics
+
 
 def _utc_timestamp() -> str:
     return dt.datetime.now(dt.timezone.utc).isoformat()
@@ -93,6 +95,7 @@ class MetricsEngine:
             "cost": round(cost, 6),
             "score": round(score, 6),
         }
+        metrics.update(compute_ceiling_metrics({**context, **metrics}))
 
         record = {
             "timestamp": _utc_timestamp(),

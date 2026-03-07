@@ -3,12 +3,14 @@ import tempfile
 from pathlib import Path
 
 from metaos.runtime.policy_runtime import evolve_policy, load_policy_artifact, swap_policy
+from genesis.spine import read_events
 from strategy.policy_proposals import propose_policy_bundle
 
 
 def test_policy_evolves_as_immutable_artifact_and_swaps_at_tick_boundary() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
+        os.environ["METAOS_ROOT"] = str(root)
         os.environ["METAOS_REGISTRY"] = str(root / "artifact_registry.jsonl")
         os.environ["METAOS_ARTIFACT_STORE"] = str(root / "artifact_store")
         try:
@@ -19,8 +21,14 @@ def test_policy_evolves_as_immutable_artifact_and_swaps_at_tick_boundary() -> No
             assert artifact["immutable"] is True
             assert artifact["artifact_type"] == "runtime_policy"
             assert artifact["payload"]["policy"]["mutation_rate"] == 0.3
+            assert artifact["payload"]["policy_id"].startswith("policy:7:")
+            assert artifact["policy_id"].startswith("policy:7:")
+            assert artifact["payload"]["evaluation_vector"]["turnover_quality"] >= 0.0
+            events = read_events()
+            assert any(row.get("event_type") == "policy_evolved" for row in events)
             assert bound["tick"] == 8
             assert bound["bundle_id"] == bundle_id
         finally:
+            os.environ.pop("METAOS_ROOT", None)
             os.environ.pop("METAOS_REGISTRY", None)
             os.environ.pop("METAOS_ARTIFACT_STORE", None)

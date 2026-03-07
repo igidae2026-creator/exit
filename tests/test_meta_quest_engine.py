@@ -10,6 +10,8 @@ def test_meta_quest_requires_novelty_plus_structural_trigger() -> None:
     assert quest["type"] == "meta"
     assert "novelty_sustained_low" in quest["reasons"]
     assert "diversity_collapse_sustained" in quest["reasons"]
+    assert "knowledge_guidance" in quest
+    assert "reuse_bias" in quest["knowledge_guidance"]
 
 
 def test_meta_quest_returns_none_for_novelty_only() -> None:

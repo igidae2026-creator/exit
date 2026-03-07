@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import hashlib
+import json
 from typing import Any, Mapping
 
 
@@ -64,22 +66,91 @@ def artifact_envelope(
         "efficiency": float((provenance or {}).get("efficiency", 0.0) or 0.0),
         "cost": float((provenance or {}).get("cost", 0.0) or 0.0),
     }
+    evaluation_vector = {
+        key: float((provenance or {}).get(key, score_vector.get(key, 0.0)) or 0.0)
+        for key in ("score", "novelty", "diversity", "efficiency", "cost", "repair", "transfer")
+    }
+    fitness_vector = {
+        "quality": score_vector["score"],
+        "novelty": score_vector["novelty"],
+        "diversity": score_vector["diversity"],
+        "efficiency": score_vector["efficiency"],
+        "resilience": float((provenance or {}).get("repair", 0.0) or 0.0),
+    }
+    domain = str(
+        normalized_spec.get("domain")
+        or normalized_spec.get("routing", {}).get("selected_domain")
+        or normalized_refs["context"].get("domain")
+        or "unknown"
+    )
+    runtime_context = {
+        "tick": normalized_spec.get("tick", normalized_refs["context"].get("tick")),
+        "goal": normalized_spec.get("goal", normalized_refs["context"].get("goal")),
+        "selected_domain": domain,
+        "quest_type": normalized_spec.get("quest", {}).get("type") if isinstance(normalized_spec.get("quest"), Mapping) else normalized_refs["context"].get("quest_type"),
+    }
+    content_hash = hashlib.sha256(
+        json.dumps(normalized_spec, sort_keys=True, ensure_ascii=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    replay_checksum = hashlib.sha256(
+        json.dumps(
+            {
+                "artifact_id": artifact_id,
+                "class": aclass,
+                "type": atype,
+                "parent_ids": list(normalized_refs["parents"]),
+                "payload": normalized_spec,
+                "runtime_context": runtime_context,
+            },
+            sort_keys=True,
+            ensure_ascii=True,
+            separators=(",", ":"),
+        ).encode("utf-8")
+    ).hexdigest()
+    lineage_id = str(
+        normalized_spec.get("lineage_id")
+        or normalized_spec.get("metadata", {}).get("lineage_id")
+        or normalized_refs["context"].get("lineage_id")
+        or (list(normalized_refs["parents"])[0] if normalized_refs["parents"] else artifact_id)
+    )
+    policy_id = str(
+        normalized_spec.get("policy_id")
+        or normalized_spec.get("policy", {}).get("policy_id")
+        or normalized_refs["context"].get("policy_id")
+        or ""
+    )
+    strategy_id = str(
+        normalized_spec.get("strategy_id")
+        or normalized_spec.get("strategy", {}).get("strategy_id")
+        or normalized_refs["context"].get("strategy_id")
+        or ""
+    )
     return {
         "artifact_id": artifact_id,
         "class": aclass,
         "type": atype,
         "artifact_type": atype,
+        "lineage_id": lineage_id,
         "parent_ids": list(normalized_refs["parents"]),
+        "domain": domain,
+        "policy_id": policy_id,
+        "strategy_id": strategy_id,
         "payload": normalized_spec,
         "score_vector": score_vector,
+        "evaluation_vector": evaluation_vector,
+        "fitness_vector": fitness_vector,
         "schema_version": schema_version,
         "created_at": created_at,
+        "creation_timestamp": created_at,
         "immutable": bool(immutable),
         "spec": normalized_spec,
         "blobs": dict(blobs or {}),
         "refs": normalized_refs,
         "provenance": dict(provenance or {}),
         "constraints": dict(constraints or {}),
+        "runtime_context": runtime_context,
+        "content_hash": content_hash,
+        "replay_checksum": replay_checksum,
     }
 
 

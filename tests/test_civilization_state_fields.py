@@ -31,6 +31,8 @@ def test_civilization_state_reports_domain_counts_consistently() -> None:
             assert "active_domain_distribution" in civ
             assert "created_domain_count" in civ
             assert "active_domain_count" in civ
+            assert "ceiling_metrics" in civ
+            assert "environment_signals" in civ
             assert civ["created_domain_count"] == len(civ["created_domains"])
             assert civ["active_domain_count"] == len(civ["active_domains"])
             assert sorted(civ["created_domains"]) == sorted(civ["active_domains"] + civ["inactive_domains"])

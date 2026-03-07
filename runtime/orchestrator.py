@@ -8,17 +8,16 @@ from pathlib import Path
 from typing import Any
 
 from runtime.kernel_adapter import DEFAULT_RUNTIME_ROOT, KernelAdapter
-from runtime.profiles import runtime_profile
+from runtime.profiles import active_profile, runtime_profile
 from runtime.replay_state import replay_state
 from runtime.supervisor import Supervisor
-from runtime.profiles import active_profile
 
 
 @dataclass(slots=True)
 class OrchestratorConfig:
     tick_seconds: float = 0.05
     max_ticks: int | None = None
-    profile: str = "run"
+    profile: str = "production"
     runtime_profile: str = "smoke"
     data_dir: Path = DEFAULT_RUNTIME_ROOT / "data"
     artifact_store_dir: Path = DEFAULT_RUNTIME_ROOT / "artifact_store"
@@ -30,18 +29,17 @@ class OrchestratorConfig:
     def from_env(cls) -> "OrchestratorConfig":
         runtime_root = Path(os.getenv("METAOS_RUNTIME_ROOT", str(DEFAULT_RUNTIME_ROOT)))
         profile = active_profile(os.getenv("METAOS_PROFILE"))
+        runtime_validation_profile = runtime_profile(os.getenv("METAOS_RUNTIME_PROFILE"))
         return cls(
             tick_seconds=_env_float("METAOS_TICK_SECONDS", profile.tick_seconds),
             max_ticks=_env_int_or_none("METAOS_MAX_TICKS", profile.default_ticks),
             profile=profile.name,
-            tick_seconds=_env_float("METAOS_TICK_SECONDS", 0.05),
-            max_ticks=_env_optional_int("METAOS_MAX_TICKS"),
+            runtime_profile=runtime_validation_profile.name,
             data_dir=Path(os.getenv("METAOS_DATA_DIR", str(runtime_root / "data"))),
             artifact_store_dir=Path(os.getenv("METAOS_ARTIFACT_STORE", str(runtime_root / "artifact_store"))),
             state_dir=Path(os.getenv("METAOS_STATE_DIR", str(runtime_root / "state"))),
             archive_dir=Path(os.getenv("METAOS_ARCHIVE_DIR", str(runtime_root / "archive"))),
             canonical_domain=os.getenv("METAOS_CANONICAL_DOMAIN", "code_domain"),
-            runtime_profile=(os.getenv("METAOS_RUNTIME_PROFILE", "smoke") or "smoke").strip().lower(),
         )
 
 
@@ -58,47 +56,49 @@ class Orchestrator:
         self.supervisor = Supervisor(self.adapter)
 
     def run(self, *, max_ticks: int | None = None) -> list[dict[str, Any]]:
-        limit = self.config.max_ticks if max_ticks is None else max_ticks
+        limit = self._resolved_limit(max_ticks=max_ticks)
         reports: list[dict[str, Any]] = []
-        if limit is not None and limit <= 0:
-            limit = 1
-        remaining = limit
-        while remaining is None or remaining > 0:
-        if limit is None:
-            while True:
-                state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
-                report = self.supervisor.run_cycle(state)
-                reports.append(report)
-                print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
-                if self.config.tick_seconds > 0:
-                    time.sleep(self.config.tick_seconds)
-            return reports
-        if limit <= 0:
-        profile = runtime_profile(self.config.runtime_profile)
-        if limit is None:
-            limit = profile.target_ticks
-        if limit is not None and limit <= 0:
-            limit = 1
         tick_count = 0
-        while True:
-            if limit is not None and tick_count >= limit:
-                break
-            state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
+        while limit is None or tick_count < limit:
+            state = replay_state(
+                self.config.data_dir,
+                state_dir=self.config.state_dir,
+                archive_dir=self.config.archive_dir,
+            )
             report = self.supervisor.run_cycle(state)
             reports.append(report)
             tick_count += 1
             print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
             if self.config.tick_seconds > 0:
                 time.sleep(self.config.tick_seconds)
-            if remaining is not None:
-                remaining -= 1
         return reports
 
+    def _resolved_limit(self, *, max_ticks: int | None) -> int | None:
+        if max_ticks is not None:
+            return None if int(max_ticks) <= 0 else int(max_ticks)
+        if self.config.max_ticks is not None:
+            return None if int(self.config.max_ticks) <= 0 else int(self.config.max_ticks)
+        profile = active_profile(self.config.profile)
+        if profile.default_ticks is not None:
+            return int(profile.default_ticks)
+        return None
+
     def validate(self) -> dict[str, Any]:
-        return self.supervisor.validate()
+        validation_profile = runtime_profile(self.config.runtime_profile)
+        summary = self.supervisor.validate()
+        summary["runtime_profile"] = validation_profile.name
+        summary["runtime_target_ticks"] = validation_profile.target_ticks
+        summary["runtime_target_lineages"] = validation_profile.target_surviving_lineages
+        summary["runtime_target_domains"] = validation_profile.target_active_domains
+        summary["bounded"] = self.config.max_ticks is not None
+        return summary
 
     def replay(self) -> dict[str, Any]:
-        state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
+        state = replay_state(
+            self.config.data_dir,
+            state_dir=self.config.state_dir,
+            archive_dir=self.config.archive_dir,
+        )
         return {
             "tick": state.tick,
             "best_score": state.best_score,
@@ -123,27 +123,17 @@ def _env_float(name: str, default: float) -> float:
         return default
 
 
-def _env_optional_int(name: str) -> int | None:
+def _env_int_or_none(name: str, default: int | None) -> int | None:
     raw = os.getenv(name)
     if raw is None:
-        return None
-    try:
-        return int(raw)
-    except ValueError:
-        return None
-
-
-def _env_optional_int(name: str) -> int | None:
-    raw = os.getenv(name)
-    if raw is None:
-        return None
+        return default
     text = raw.strip().lower()
     if text in {"", "none", "null", "unbounded", "infinite", "continuous"}:
         return None
     try:
         value = int(raw)
     except ValueError:
-        return None
+        return default
     return None if value <= 0 else value
 
 
@@ -153,13 +143,3 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
-
-
-def _env_int_or_none(name: str, default: int | None) -> int | None:
-    raw = os.getenv(name)
-    if raw is None:
-        return default
-    try:
-        return int(raw)
-    except ValueError:
-        return default

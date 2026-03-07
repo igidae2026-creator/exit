@@ -29,7 +29,7 @@
 1. `python -m app.cli validate`
 2. `python -m app.cli run-once --ticks 3`
 3. `python -m app.cli replay-check`
-4. `python -m app.cli long-run-check --profile smoke`
+4. `python -m app.cli long-run-check --tier smoke`
 5. `python -m app.cli validate-release`
 Canonical owners:
 - `genesis/` truth spine and replay invariants.

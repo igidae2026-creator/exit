@@ -7,8 +7,10 @@ from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_memory import civilization_state as memory_civilization_state
 from runtime.civilization_memory import latest_memory, memory_window, metrics_window
+from runtime.ceiling_metrics import CEILING_METRICS, latest_ceiling_metrics
 from runtime.domain_lifecycle import domain_lifecycle_state
 from runtime.evaluation_lifecycle import evaluation_lifecycle
+from runtime.environment_pressure import ENVIRONMENT_SIGNAL_KEYS, latest_environment_signals
 from runtime.lineage_branching import lineage_branching
 from runtime.long_horizon_stability import long_horizon_stability
 from runtime.self_tuning_guardrails import self_tuning_guardrails
@@ -350,6 +352,8 @@ def civilization_state(
         intervention_actions.append("bounded_diversification_pressure")
     diversification_intervention_count = len(intervention_actions)
     forced_branch_count = int(bool(lineage_branch_state.get("forced_branch"))) + sum(1 for action in guardrails.get("guardrail_actions", []) if action == "force_branching_pressure")
+    ceiling_metrics = latest_ceiling_metrics(history_rows if history_rows else metrics_window(64))
+    environment_signals = latest_environment_signals(memory_window(64) if allow_memory_lookup else history_rows)
     return {
         "artifact_population": artifact_population,
         "lineage_population": lineage_population_dict,
@@ -359,6 +363,10 @@ def civilization_state(
         "memory_population": memory_population,
         "knowledge_density": knowledge_density,
         "memory_growth": memory_growth,
+        "ceiling_metrics": ceiling_metrics,
+        **{key: float(ceiling_metrics.get(key, 0.0)) for key in CEILING_METRICS},
+        "environment_signals": environment_signals,
+        **{key: float(environment_signals.get(key, 0.0)) for key in ENVIRONMENT_SIGNAL_KEYS},
         "exploration_budget": exploration_budget_value,
         "budget_cycle_count": int(budget_cycle.get("budget_cycle_count", runtime_state.get("budget_cycle_count", 0)) or 0),
         "budget_exhausted": bool(budget_cycle.get("budget_exhausted", runtime_state.get("budget_exhausted", False))),
@@ -377,6 +385,10 @@ def civilization_state(
         "dormant_lineage_count": dormant_lineage_count,
         "branch_rate": float(lineage_branch_state.get("branch_rate", 0.0)),
         "merge_rate": float(lineage_branch_state.get("merge_rate", 0.0)),
+        "branch_pressure": float(lineage_branch_state.get("branch_pressure", 0.0)),
+        "dominance_suppression": float(lineage_branch_state.get("dominance_suppression", 0.0)),
+        "dormant_resurrection_candidates": list(lineage_branch_state.get("dormant_resurrection_candidates", [])),
+        "lineage_migration_targets": list(lineage_branch_state.get("lineage_migration_targets", [])),
         "concentration_streak": int(lineage_branch_state.get("concentration_streak", 0)),
         "policy_generations": int(policy_population.get("generations", 0)),
         "evaluation_generations": int(evaluation_population.get("generations", 0)),
@@ -416,6 +428,13 @@ def civilization_state(
         "domain_retirement_rate": float(domain_lifecycle.get("domain_retirement_rate", 0.0)),
         "lineage_domain_matrix": dict(domain_lifecycle.get("lineage_domain_matrix", {})),
         "domain_lineage_coverage": float(domain_lifecycle.get("domain_lineage_coverage", 0.0)),
+        "domain_clusters": dict(domain_lifecycle.get("domain_clusters", {})),
+        "cluster_activity": dict(domain_lifecycle.get("cluster_activity", {})),
+        "domain_competition_index": float(domain_lifecycle.get("domain_competition_index", 0.0)),
+        "domain_resource_arbitration_queue": list(domain_lifecycle.get("domain_resource_arbitration_queue", [])),
+        "cross_domain_recombination_candidates": list(domain_lifecycle.get("cross_domain_recombination_candidates", [])),
+        "domain_migration_candidates": list(domain_lifecycle.get("domain_migration_candidates", [])),
+        "domain_niches": dict(domain_lifecycle.get("domain_niches", {})),
         "dormant_domain_reactivation_count": int(domain_lifecycle.get("dormant_domain_reactivation_count", 0)),
         "economy_balance_score": economy_balance_score,
         "budget_skew": budget_skew,

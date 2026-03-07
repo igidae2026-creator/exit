@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
+from runtime.knowledge_system import knowledge_guidance
 from runtime.meta_cooldown import quest_cooldown
 
 
@@ -53,4 +54,8 @@ def meta_quest(
         "quest_types": sorted(QUEST_TYPES),
         "pressure": {key: round(float(value), 4) for key, value in dict(pressure).items()},
         "cooldown": cooldown_state,
+        "knowledge_guidance": knowledge_guidance(
+            domain=str(recent_state.get("selected_domain", recent_state.get("domain", "default"))),
+            pressure=dict(pressure),
+        ),
     }
