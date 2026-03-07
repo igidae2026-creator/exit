@@ -14,6 +14,12 @@ def test_long_run_validation_uses_profile_minimums() -> None:
     assert out["profile_requirements"]["ticks"] == PROFILE_TABLE["smoke"].min_ticks
     assert isinstance(out["threshold_checks"], dict)
     assert "replay_ok" in out["threshold_checks"]
+
+
+def test_long_run_validation_preserves_explicit_ticks_without_profile_override() -> None:
+    out = validate_long_run(ticks=4, seed=11, fail_open=False)
+    assert out["resolved_ticks"] == 4
+    assert out["ticks"] == 4
 from runtime.profiles import RUNTIME_PROFILES, runtime_profile
 
 

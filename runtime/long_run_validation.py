@@ -7,6 +7,14 @@ from typing import Any
 from genesis.replay import replay_state
 from runtime.civilization_memory import civilization_state as memory_civilization_state
 from runtime.civilization_state import civilization_state as runtime_civilization_state
+from runtime.genesis_ceiling import (
+    CANONICAL_EXPLORATION_LOOP,
+    DOMAIN_ECOLOGY,
+    DOMINANCE_CAP,
+    DOMINANCE_EMERGENCY,
+    FAILURE_PROTOCOL_STATES,
+    LINEAGE_ECOLOGY,
+)
 from runtime.observability import (
     domain_summary,
     economy_summary,
@@ -44,9 +52,9 @@ PROFILE_TABLE: dict[str, ValidationProfile] = {
     "bootstrap": ValidationProfile("bootstrap", 1_000, 4, 3, 12, 0.70),
     "aggressive": ValidationProfile("aggressive", 5_000, 6, 4, 24, 0.72),
     "soak": ValidationProfile("soak", 50_000, 8, 4, 32, 0.75),
-    "production": ValidationProfile("production", 100_000, 8, 4, 32, 0.75),
-    "endurance": ValidationProfile("endurance", 100_000, 16, 8, 64, 0.80),
-    "civilization": ValidationProfile("civilization", 100_000, 16, 8, 64, 0.80),
+    "production": ValidationProfile("production", 100_000, LINEAGE_ECOLOGY.minimum, DOMAIN_ECOLOGY.minimum, 32, 0.75),
+    "endurance": ValidationProfile("endurance", 100_000, LINEAGE_ECOLOGY.preferred, DOMAIN_ECOLOGY.preferred, 64, 0.80),
+    "civilization": ValidationProfile("civilization", 100_000, LINEAGE_ECOLOGY.preferred, DOMAIN_ECOLOGY.preferred, 64, 0.80),
 }
 
 
@@ -94,16 +102,16 @@ _TIER_FLOORS: dict[str, dict[str, float]] = {
         "economy_balance_score": 0.70,
         "domain_lineage_coverage": 0.75,
         "evaluation_diversity": 0.60,
-        "dominance_index_max": 0.35,
+        "dominance_index_max": DOMINANCE_CAP,
     },
     "production": {
-        "active_lineage_count": 8,
-        "active_domain_count": 4,
+        "active_lineage_count": LINEAGE_ECOLOGY.minimum,
+        "active_domain_count": DOMAIN_ECOLOGY.minimum,
         "stability_score": 0.75,
         "economy_balance_score": 0.70,
         "domain_lineage_coverage": 0.75,
         "evaluation_diversity": 0.60,
-        "dominance_index_max": 0.35,
+        "dominance_index_max": DOMINANCE_CAP,
     },
 }
 
@@ -146,8 +154,11 @@ def _resolve_request(
     resolved_profile_name = profile_name or "smoke"
     profile_spec = runtime_profile(resolved_profile_name)
     validation = PROFILE_TABLE.get(resolved_profile_name, PROFILE_TABLE["smoke"])
-    default_ticks = validation.min_ticks if ticks is None else max(1, int(ticks))
-    resolved_ticks = max(validation.min_ticks, default_ticks)
+    if ticks is None:
+        resolved_ticks = validation.min_ticks
+    else:
+        requested_ticks = max(1, int(ticks))
+        resolved_ticks = max(validation.min_ticks, requested_ticks) if profile_name else requested_ticks
     return resolved_profile_name, profile_spec, validation, "custom", resolved_ticks
 
 
@@ -255,6 +266,8 @@ def run_long_run_validation(
 
     payload = {
         "profile": resolved_profile_name,
+        "canonical_loop": list(CANONICAL_EXPLORATION_LOOP),
+        "failure_protocol_states": list(FAILURE_PROTOCOL_STATES),
         "profile_requirements": {
             "ticks": validation_spec.min_ticks,
             "surviving_lineages": validation_spec.min_surviving_lineages,
@@ -291,6 +304,14 @@ def run_long_run_validation(
         "budget_cycle_count": observed_budget_cycle_count,
         "stability_score": stability_score,
         "economy_balance_score": economy_balance_score,
+        "ceiling_targets": {
+            "minimum_active_lineages": LINEAGE_ECOLOGY.minimum,
+            "preferred_active_lineages": LINEAGE_ECOLOGY.preferred,
+            "minimum_active_domains": DOMAIN_ECOLOGY.minimum,
+            "preferred_active_domains": DOMAIN_ECOLOGY.preferred,
+            "dominance_cap": DOMINANCE_CAP,
+            "dominance_emergency_threshold": DOMINANCE_EMERGENCY,
+        },
         "active_lineage_count": int(civ_state.get("active_lineage_count", 0)),
         "dormant_lineage_count": int(civ_state.get("dormant_lineage_count", 0)),
         "effective_lineage_diversity": float(civ_state.get("effective_lineage_diversity", 0.0)),
@@ -325,6 +346,15 @@ def run_long_run_validation(
         "threshold_checks": threshold_checks,
     }
     payload["profile_acceptance"] = _profile_acceptance(resolved_profile_name, payload)
+    payload["ceiling_alignment"] = {
+        "minimum_lineages": surviving_lineages >= LINEAGE_ECOLOGY.minimum,
+        "preferred_lineages": surviving_lineages >= LINEAGE_ECOLOGY.preferred,
+        "minimum_domains": domain_count >= DOMAIN_ECOLOGY.minimum,
+        "preferred_domains": domain_count >= DOMAIN_ECOLOGY.preferred,
+        "dominance_cap_ok": float(payload["dominance_index"]) <= DOMINANCE_CAP,
+        "dominance_emergency": float(payload["dominance_index"]) > DOMINANCE_EMERGENCY,
+        "failure_protocol_state": str(safety.get("failure_protocol_state", "resume")),
+    }
     payload["healthy_smoke"] = (
         bool(payload["replay_ok"])
         and payload["append_only_violation_count"] == 0

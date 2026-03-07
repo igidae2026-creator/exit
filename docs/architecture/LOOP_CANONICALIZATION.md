@@ -22,4 +22,7 @@
 
 - `runtime/orchestrator.py` is the canonical execution entrypoint.
 - `runtime/long_run_validation.py` is the canonical bounded validation surface.
+- `runtime/genesis_ceiling.py` is the single-source ceiling owner for loop order, ecology floors, dominance caps, and failure protocol states.
+- `runtime/core_loop.py` preserves legacy handler aliases but normalizes execution to the canonical stage names.
 - `metaos/cli.py` and `ops/*.sh` must call these surfaces without inventing alternate stage order.
+- runtime, validation, tests, docs, observer projections, and release verification must all expose the same external sequence: `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`.

@@ -1,7 +1,7 @@
 """METAOS core runtime loop.
 
-Pipeline order:
-signal -> strategy -> artifact -> metrics -> mutation -> quest -> decision -> log
+Canonical pipeline order:
+signal -> generate -> evaluate -> select -> mutate -> archive -> repeat
 """
 
 from __future__ import annotations
@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, Iterable, List, Mapping, MutableMapping
 
 from runtime.oed_orchestrator import step as oed_step
+from runtime.genesis_ceiling import CANONICAL_EXPLORATION_LOOP
 from signal.pressure import pressure_frame
 from strategy.quota import quota_frame
 from strategy.quest_portfolio import active_quest, quest_slots
@@ -19,16 +20,17 @@ from strategy.quest_portfolio import active_quest, quest_slots
 
 StageHandler = Callable[[MutableMapping[str, Any]], Any]
 
-DEFAULT_STAGE_ORDER: List[str] = [
-    "signal",
-    "strategy",
-    "artifact",
-    "metrics",
-    "mutation",
-    "quest",
-    "decision",
-    "log",
-]
+DEFAULT_STAGE_ORDER: List[str] = list(CANONICAL_EXPLORATION_LOOP)
+
+LEGACY_STAGE_ALIASES: Dict[str, tuple[str, ...]] = {
+    "signal": ("signal", "metrics"),
+    "generate": ("generate", "strategy", "quest"),
+    "evaluate": ("evaluate", "artifact"),
+    "select": ("select", "decision"),
+    "mutate": ("mutate", "mutation"),
+    "archive": ("archive", "log"),
+    "repeat": ("repeat",),
+}
 
 
 @dataclass(slots=True)
@@ -46,6 +48,13 @@ class RuntimeLoop:
         self.config = config or LoopConfig()
         self._stage_order = list(self.config.stage_order)
         self._handlers: Dict[str, StageHandler] = dict(handlers)
+
+    def _handler_for_stage(self, stage_name: str) -> StageHandler:
+        for candidate in LEGACY_STAGE_ALIASES.get(stage_name, (stage_name,)):
+            handler = self._handlers.get(candidate)
+            if handler is not None:
+                return handler
+        return _noop_handler
 
     def run_forever(self) -> None:
         """Run the pipeline forever, sleeping for tick_seconds between iterations."""
@@ -66,8 +75,8 @@ class RuntimeLoop:
         }
 
         for stage_name in self._stage_order:
-            handler = self._handlers.get(stage_name, _noop_handler)
-            if stage_name == "log":
+            handler = self._handler_for_stage(stage_name)
+            if stage_name == "repeat":
                 context["tick_completed_at"] = time.time()
             try:
                 context["stage_results"][stage_name] = handler(context)

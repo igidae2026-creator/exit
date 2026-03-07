@@ -41,6 +41,12 @@ include = [
     "strategy*",
     "validation*",
 ]
+exclude = [
+    "build*",
+    "dist*",
+    "*.egg-info*",
+    "tests*",
+]
 
 [tool.setuptools.package-data]
 validation = ["ownership_manifest.json"]

@@ -8,6 +8,13 @@ from ecosystem.ecosystem_state import ecosystem_state
 from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_state import civilization_state
+from runtime.genesis_ceiling import (
+    DOMAIN_ECOLOGY,
+    DOMINANCE_CAP,
+    DOMINANCE_EMERGENCY,
+    LINEAGE_ECOLOGY,
+    failure_protocol_state,
+)
 from runtime.pressure_derivation import pressure_frame
 from runtime.profiles import runtime_profile
 from runtime.self_tuning_guardrails import self_tuning_guardrails
@@ -46,14 +53,22 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
     replay = replay_state()
     civilization = civilization_state()
     pressure = pressure_frame(civilization)
-    surviving_lineages = len(dict(civilization.get("lineage_counts", {})))
-    active_domains = len(dict(civilization.get("domain_distribution", {})))
-    if surviving_lineages <= 1:
+    active_lineage_count = civilization.get("active_lineage_count")
+    surviving_lineages = int(active_lineage_count) if active_lineage_count is not None else len(dict(civilization.get("lineage_counts", {})))
+    active_domain_count = civilization.get("active_domain_count")
+    active_domains = int(active_domain_count) if active_domain_count is not None else len(dict(civilization.get("active_domain_distribution", {})))
+    dominance_index = float(civilization.get("dominance_index", 0.0) or 0.0)
+    if surviving_lineages < LINEAGE_ECOLOGY.minimum:
         actions.append("force_diversity_recovery")
-    if active_domains <= 1:
+    if active_domains < DOMAIN_ECOLOGY.minimum:
         actions.append("force_domain_expansion_review")
     if float(pressure.get("repair_pressure", 0.0)) >= 0.75:
         actions.append("repair_escalation")
+    if dominance_index > DOMINANCE_EMERGENCY:
+        actions.append("anti_monoculture_repair")
+        actions.append("resurrect_dormant_lineages")
+    elif dominance_index > DOMINANCE_CAP:
+        actions.append("dominance_watch")
     federation = federation_state()
     federation_nodes = len(list(federation.get("federation_nodes", [])))
     artifact_exchange_rate = float(federation.get("artifact_exchange_rate", 0.0) or 0.0)
@@ -98,6 +113,14 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
     )
     actions.extend(str(name) for name in guardrails.get("guardrail_actions", []) if str(name) not in actions)
     actions.extend(str(name) for name in guardrails.get("federation_safety_actions", []) if str(name) not in actions)
+    replay_ok = bool(replay)
+    protocol_state = failure_protocol_state(
+        replay_ok=replay_ok,
+        repair_pressure=float(pressure.get("repair_pressure", 0.0)),
+        surviving_lineages=surviving_lineages,
+        active_domains=active_domains,
+        dominance_index=dominance_index,
+    )
     return {
         "profile": profile_spec.name,
         "storage_pressure": storage_pressure,
@@ -105,9 +128,22 @@ def runtime_safety(*, profile: str | None = None) -> dict[str, Any]:
         "archive_pressure": archive_pressure,
         "safety_actions": actions,
         "log_sizes": sizes,
-        "replay_ok": bool(replay),
+        "replay_ok": replay_ok,
         "surviving_lineages": surviving_lineages,
         "active_domains": active_domains,
+        "lineage_floor": LINEAGE_ECOLOGY.minimum,
+        "lineage_preferred_floor": LINEAGE_ECOLOGY.preferred,
+        "domain_floor": DOMAIN_ECOLOGY.minimum,
+        "domain_target_floor": DOMAIN_ECOLOGY.preferred,
+        "lineage_floor_ok": surviving_lineages >= LINEAGE_ECOLOGY.minimum,
+        "domain_floor_ok": active_domains >= DOMAIN_ECOLOGY.minimum,
+        "dominance_index": dominance_index,
+        "dominance_cap": DOMINANCE_CAP,
+        "dominance_emergency_threshold": DOMINANCE_EMERGENCY,
+        "dominance_state": (
+            "emergency" if dominance_index > DOMINANCE_EMERGENCY else "watch" if dominance_index > DOMINANCE_CAP else "healthy"
+        ),
+        "failure_protocol_state": protocol_state,
         "federation_nodes": federation_nodes,
         "ecosystem_nodes": node_population,
         "federation_pressure": float(guardrails.get("federation_pressure", 0.0)),

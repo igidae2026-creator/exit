@@ -26,7 +26,7 @@
 
 ## 운영 절차
 - 기본 런타임은 unbounded 실행: `python -m app.cli run`.
-- 장기 검증은 profile 기반 실행: `python -m app.cli long-run-check --profile smoke|soak|endurance`.
+- 장기 검증은 tier 기반 실행: `python -m app.cli long-run-check --tier smoke|bootstrap|aggressive|soak`.
 - 운영자는 health/status/replay/safety를 주기적으로 검증.
 
 ## Acceptance Criteria

@@ -27,5 +27,9 @@ setup(
     version="0.4.0rc1",
     include_package_data=True,
     package_data={"validation": ["ownership_manifest.json"]},
-    packages=find_packages(where=".", include=RUNTIME_PACKAGES),
+    packages=find_packages(
+        where=".",
+        include=RUNTIME_PACKAGES,
+        exclude=["build*", "dist*", "*.egg-info*", "tests*"],
+    ),
 )
