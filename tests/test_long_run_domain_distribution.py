@@ -11,7 +11,7 @@ def test_long_run_reports_created_domains_in_distribution() -> None:
         os.environ["METAOS_ROOT"] = str(root)
         os.environ["METAOS_SOAK_FAST"] = "1"
         try:
-            out = validate_long_run(ticks=240, seed=21)
+            out = validate_long_run(ticks=4096, seed=21, tier="bounded")
             assert out["summary"]["new_domain_count"] > 0
             distribution = out["civilization_state"]["domain_distribution"]
             assert any(name != "default" and value > 0.0 for name, value in distribution.items())

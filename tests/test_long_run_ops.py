@@ -11,7 +11,7 @@ def test_long_run_validation_reports_healthy_runtime() -> None:
         os.environ["METAOS_ROOT"] = str(root)
         os.environ["METAOS_SOAK_FAST"] = "1"
         try:
-            out = run_long_run_validation(ticks=60, seed=42, fail_open=True)
+            out = run_long_run_validation(ticks=256, seed=42, fail_open=True, tier="smoke")
             assert out["replay_ok"] is True
             assert out["memory_growth"] > 0.0
             assert out["healthy"] is True
