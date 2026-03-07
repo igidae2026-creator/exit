@@ -2,11 +2,11 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from metaos.archive.archive import save
-from metaos.archive.civilization_memory import remember
+from artifact.archive import save
 from metaos.observer.metrics_history import novelty_drop, plateau
 from metaos.observer.metrics_history import tail as metrics_tail
 from metaos.policy.evaluation_artifact import load_all as load_evaluations
+from runtime.civilization_memory import remember
 from runtime.evaluation_evolution import evolve_evaluations as evolve_evaluation
 from metaos.policy.evolve_policy import evolve as evolve_policy
 from metaos.registry.lineage_graph import concentration
