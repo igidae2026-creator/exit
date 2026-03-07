@@ -7,7 +7,51 @@ from genesis.replay import replay_state
 from runtime.civilization_memory import civilization_state
 from runtime.civilization_state import civilization_state as build_civilization_state
 from runtime.observability import domain_summary, economy_summary, lineage_summary, safety_status, stability_status
+from runtime.observability import (
+    domain_summary,
+    economy_summary,
+    lineage_summary,
+    safety_status,
+    stability_status,
+)
 from runtime.runtime_safety import runtime_safety
+from runtime.soak_runner import run_soak
+
+LONG_RUN_TIERS: dict[str, dict[str, int]] = {
+    "smoke": {"ticks": 256},
+    "bounded": {"ticks": 4096},
+    "soak": {"ticks": 50000},
+}
+
+_MIN_FLOORS: dict[str, dict[str, float]] = {
+    "smoke": {
+        "active_lineage_count": 2,
+        "active_domain_count": 2,
+        "stability_score": 0.30,
+        "economy_balance_score": 0.30,
+        "domain_lineage_coverage": 0.15,
+        "evaluation_diversity": 0.15,
+        "dominance_index_max": 0.85,
+    },
+    "bounded": {
+        "active_lineage_count": 4,
+        "active_domain_count": 3,
+        "stability_score": 0.60,
+        "economy_balance_score": 0.60,
+        "domain_lineage_coverage": 0.50,
+        "evaluation_diversity": 0.40,
+        "dominance_index_max": 0.50,
+    },
+    "soak": {
+        "active_lineage_count": 8,
+        "active_domain_count": 6,
+        "stability_score": 0.75,
+        "economy_balance_score": 0.70,
+        "domain_lineage_coverage": 0.75,
+        "evaluation_diversity": 0.60,
+        "dominance_index_max": 0.35,
+    },
+}
 
 LONG_RUN_HORIZONS: dict[str, int] = {
     "smoke": 2_000,
@@ -92,6 +136,43 @@ def run_long_run_validation(*, ticks: int = 120, seed: int = 42, fail_open: bool
     from runtime.soak_runner import run_soak
 
     soak_ticks, summary = run_soak(ticks=ticks, seed=seed, fail_open=fail_open)
+def _resolve_tier(ticks: int, tier: str | None) -> tuple[str, int]:
+    if tier:
+        canonical = tier.lower().strip()
+        if canonical not in LONG_RUN_TIERS:
+            raise ValueError(f"unknown long-run tier: {tier}")
+        return canonical, LONG_RUN_TIERS[canonical]["ticks"]
+    return "custom", max(1, int(ticks))
+
+
+def _tier_health(payload: dict[str, Any], *, tier: str) -> bool:
+    floors = _MIN_FLOORS.get(tier)
+    if not floors:
+        return bool(payload.get("healthy_smoke"))
+    return (
+        bool(payload.get("replay_ok"))
+        and int(payload.get("append_only_violation_count", 0)) == 0
+        and int(payload.get("invariant_violation_count", 0)) == 0
+        and int(payload.get("replay_mismatch_count", 0)) == 0
+        and int(payload.get("active_lineage_count", 0)) >= int(floors["active_lineage_count"])
+        and int(payload.get("domain_count", 0)) >= int(floors["active_domain_count"])
+        and float(payload.get("stability_score", 0.0)) >= float(floors["stability_score"])
+        and float(payload.get("economy_balance_score", 0.0)) >= float(floors["economy_balance_score"])
+        and float(payload.get("domain_lineage_coverage", 0.0)) >= float(floors["domain_lineage_coverage"])
+        and float(payload.get("evaluation_diversity", 0.0)) >= float(floors["evaluation_diversity"])
+        and float(payload.get("dominance_index", 1.0)) <= float(floors["dominance_index_max"])
+        and bool(payload.get("policy_population_evolved"))
+        and int(payload.get("active_evaluation_generations", 0)) > 1
+        and bool(payload.get("domains_expanded"))
+    )
+
+
+def run_long_run_validation(
+    *, ticks: int = 256, seed: int = 42, fail_open: bool = True, tier: str | None = None
+) -> dict[str, Any]:
+    os.environ.setdefault("METAOS_SOAK_FAST", "1")
+    resolved_tier, resolved_ticks = _resolve_tier(ticks, tier)
+    soak_ticks, summary = run_soak(ticks=resolved_ticks, seed=seed, fail_open=fail_open)
     observed_budget_cycle_count = max(int(summary.get("budget_cycle_count", 0)), _observed_budget_cycles(list(soak_ticks)))
     replay = replay_state()
     civ = civilization_state()
@@ -107,7 +188,15 @@ def run_long_run_validation(*, ticks: int = 120, seed: int = 42, fail_open: bool
     policy_population = dict(civ_state.get("policy_population", {}))
     domain_population = dict(civ_state.get("domain_population", {}))
     payload = {
+    invariant_violations = int(len(civ_state.get("invariant_violations", [])))
+    append_only_violations = int(len(civ_state.get("append_only_violations", [])))
+    replay_mismatches = int(len(civ_state.get("replay_mismatches", [])))
+
+    out = {
         "ticks": len(soak_ticks),
+        "requested_ticks": int(ticks),
+        "resolved_ticks": resolved_ticks,
+        "tier": resolved_tier,
         "summary": summary,
         "replay_ok": bool(replay),
         "civilization_state": civ,
@@ -148,28 +237,33 @@ def run_long_run_validation(*, ticks: int = 120, seed: int = 42, fail_open: bool
         "forced_branch_count": int(civ_state.get("forced_branch_count", 0)),
         "domain_lineage_coverage": float(civ_state.get("domain_lineage_coverage", 0.0)),
         "guardrail_actions": list(civ_state.get("guardrail_actions", [])),
+        "append_only_violation_count": append_only_violations,
+        "invariant_violation_count": invariant_violations,
+        "replay_mismatch_count": replay_mismatches,
         "artifact_population_changed": bool(artifact_population),
         "policy_population_evolved": int(policy_population.get("generations", 0)) > 0,
         "knowledge_density_increased": float(civ.get("knowledge_density", 0.0)) > 0.0,
         "domains_expanded": len(domain_population) > 1 or int(summary.get("new_domain_count", 0)) > 0,
-        "healthy": (
-            bool(replay)
-            and float(civ.get("memory_growth", 0.0)) > 0.0
-            and float(civ.get("knowledge_density", 0.0)) > 0.0
-            and int(policy_population.get("generations", 0)) > 0
-            and float(civ_state.get("stability_score", 0.0)) > 0.2
-            and float(civ_state.get("economy_balance_score", 0.0)) > 0.2
-            and int(civ_state.get("active_lineage_count", 0)) > 1
-            and int(civ_state.get("evaluation_generations", 0)) > 0
-            and int(civ_state.get("active_evaluation_generations", 0)) > 1
-        ),
     }
     payload["profile_acceptance"] = _profile_acceptance(profile, payload) if profile else None
     return payload
+    out["healthy_smoke"] = (
+        bool(out["replay_ok"])
+        and out["append_only_violation_count"] == 0
+        and out["invariant_violation_count"] == 0
+        and out["replay_mismatch_count"] == 0
+        and out["memory_growth"] > 0.0
+        and bool(out["policy_population_evolved"])
+    )
+    out["healthy"] = _tier_health(out, tier=resolved_tier if resolved_tier in _MIN_FLOORS else "smoke")
+    return out
 
 
-def validate_long_run(*, ticks: int = 120, seed: int = 42, fail_open: bool = True) -> dict[str, Any]:
-    return run_long_run_validation(ticks=ticks, seed=seed, fail_open=fail_open)
+def validate_long_run(
+    *, ticks: int = 256, seed: int = 42, fail_open: bool = True, tier: str | None = None
+) -> dict[str, Any]:
+    return run_long_run_validation(ticks=ticks, seed=seed, fail_open=fail_open, tier=tier)
 
 
 __all__ = ["LONG_RUN_HORIZONS", "run_long_run_validation", "validate_long_run"]
+__all__ = ["LONG_RUN_TIERS", "run_long_run_validation", "validate_long_run"]

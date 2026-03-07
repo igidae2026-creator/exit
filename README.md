@@ -85,7 +85,9 @@ Deprecated surfaces are compatibility-only:
 - `python -m app.cli economy-status`
 - `python -m app.cli stability-status`
 - `python -m app.cli safety-status`
-- `python -m app.cli long-run-check`
+- `python -m app.cli long-run-check --tier smoke`
+- `python -m app.cli long-run-check --tier bounded`
+- `python -m app.cli long-run-check --tier soak`
 - `bash ops/run-metaos.sh`
 - `bash ops/validate-runtime.sh`
 
@@ -97,3 +99,9 @@ Deprecated surfaces are compatibility-only:
 - lineage health distinguishes active, dormant, zombie, and dominant lock-in cases
 - economy balance is tracked independently from raw throughput
 - artifact, lineage, economy, domain, stability, and safety status are observable through CLI and ops surfaces
+
+
+Long-run tiers:
+- smoke: minimum 256 ticks
+- bounded: minimum 4096 ticks
+- soak: minimum 50000 ticks

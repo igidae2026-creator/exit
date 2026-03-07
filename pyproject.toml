@@ -22,13 +22,21 @@ where = ["."]
 include = [
     "app",
     "artifact",
+    "core",
     "domains",
+    "ecosystem",
+    "evolution",
+    "federation",
     "genesis",
+    "kernel",
     "metaos",
     "metaos_a",
     "metaos_b",
     "metaos_c",
+    "observer",
     "runtime",
+    "signal",
+    "strategy",
     "validation",
 ]
 
@@ -51,13 +59,21 @@ python_version = "3.11"
 files = [
     "app",
     "artifact",
+    "core",
     "domains",
+    "ecosystem",
+    "evolution",
+    "federation",
     "genesis",
+    "kernel",
     "metaos",
     "metaos_a",
     "metaos_b",
     "metaos_c",
+    "observer",
     "runtime",
+    "signal",
+    "strategy",
     "validation",
 ]
 exclude = "^(docs|tests)/"
@@ -72,5 +88,5 @@ show_error_codes = true
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["app", "artifact", "domains", "genesis", "metaos", "metaos_a", "metaos_b", "metaos_c", "runtime", "validation"]
+source = ["app", "artifact", "core", "domains", "ecosystem", "evolution", "federation", "genesis", "kernel", "metaos", "metaos_a", "metaos_b", "metaos_c", "observer", "runtime", "signal", "strategy", "validation"]
 omit = ["tests/*"]
