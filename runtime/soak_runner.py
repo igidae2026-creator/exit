@@ -21,8 +21,8 @@ import runtime.domain_router as domain_router
 import runtime.exploration_strategy_artifact as exploration_strategy_artifact
 import runtime.oed_orchestrator as oed_orchestrator
 import runtime.strategy_of_strategy as strategy_of_strategy_registry
-from metaos.archive.archive import save
-from metaos.archive.civilization_memory import remember
+from artifact.archive import save
+from runtime.civilization_memory import remember
 from metaos.core.supervisor import guarded_step
 from runtime.collapse_guard import detect_guard_state
 from runtime.oed_orchestrator import step as oed_step

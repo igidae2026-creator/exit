@@ -23,12 +23,17 @@ include = [
     "app",
     "artifact",
     "domains",
+    "federation",
     "genesis",
+    "loop",
     "metaos",
+    "observer",
     "metaos_a",
     "metaos_b",
     "metaos_c",
     "runtime",
+    "signal",
+    "strategy",
     "validation",
 ]
 
@@ -52,12 +57,17 @@ files = [
     "app",
     "artifact",
     "domains",
+    "federation",
     "genesis",
+    "loop",
     "metaos",
+    "observer",
     "metaos_a",
     "metaos_b",
     "metaos_c",
     "runtime",
+    "signal",
+    "strategy",
     "validation",
 ]
 exclude = "^(docs|tests)/"
@@ -72,5 +82,5 @@ show_error_codes = true
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["app", "artifact", "domains", "genesis", "metaos", "metaos_a", "metaos_b", "metaos_c", "runtime", "validation"]
+source = ["app", "artifact", "domains", "federation", "genesis", "loop", "metaos", "metaos_a", "metaos_b", "metaos_c", "observer", "runtime", "signal", "strategy", "validation"]
 omit = ["tests/*"]
