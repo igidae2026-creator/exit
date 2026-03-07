@@ -10,8 +10,14 @@ from artifact.archive import append_archive, latest_archive, load_archive, remem
 from artifact.civilization_registry import civilization_memory_snapshot as artifact_civilization_memory_snapshot
 from artifact.civilization_registry import civilization_state as artifact_civilization_state
 from federation.federation_state import federation_state
+from federation.federation_state import _federation_dir
 from runtime.ceiling_metrics import CEILING_METRICS, latest_ceiling_metrics
 from runtime.environment_pressure import ENVIRONMENT_SIGNAL_KEYS, latest_environment_signals
+from artifact.archive import _archive_path
+from artifact.registry import _registry_path
+
+_CIVILIZATION_STATE_CACHE_KEY: tuple[tuple[str, bool, int, int], ...] | None = None
+_CIVILIZATION_STATE_CACHE_VALUE: dict[str, Any] | None = None
 
 
 def _memory_path() -> Path:
@@ -47,6 +53,13 @@ def _metrics_path() -> Path:
     if root:
         return Path(root) / "metrics.jsonl"
     return Path(".metaos_runtime/data/metrics.jsonl")
+
+
+def _signature(path: Path) -> tuple[str, bool, int, int]:
+    if not path.exists():
+        return (str(path), False, 0, 0)
+    stat = path.stat()
+    return (str(path), True, int(stat.st_size), int(stat.st_mtime_ns))
 
 
 def _metrics_rows() -> list[dict[str, Any]]:
@@ -131,6 +144,16 @@ def _domain_counts_from_runtime(metrics_rows: list[dict[str, Any]], memory_rows:
 
 
 def civilization_state() -> dict[str, Any]:
+    global _CIVILIZATION_STATE_CACHE_KEY, _CIVILIZATION_STATE_CACHE_VALUE
+    cache_key = (
+        _signature(_metrics_path()),
+        _signature(_memory_path()),
+        _signature(_archive_path()),
+        _signature(_registry_path()),
+        _signature(_federation_dir() / "events.jsonl"),
+    )
+    if _CIVILIZATION_STATE_CACHE_KEY == cache_key and _CIVILIZATION_STATE_CACHE_VALUE is not None:
+        return dict(_CIVILIZATION_STATE_CACHE_VALUE)
     archive_rows = load_archive()
     memory_rows = _memory_rows()
     metrics_rows = _metrics_rows()
@@ -178,7 +201,7 @@ def civilization_state() -> dict[str, Any]:
     ceiling_metrics = latest_ceiling_metrics(metrics_rows)
     environment_signals = latest_environment_signals(memory_rows)
     environment_signal_count = sum(1 for row in memory_rows if str(row.get("kind", "")) == "environment_signal")
-    return {
+    payload = {
         "knowledge_density": knowledge_density,
         "memory_growth": memory_growth,
         "artifact_distribution": artifact_distribution,
@@ -231,6 +254,9 @@ def civilization_state() -> dict[str, Any]:
             "outcome_kinds": sorted(kind for kind in archive_kinds if kind),
         },
     }
+    _CIVILIZATION_STATE_CACHE_KEY = cache_key
+    _CIVILIZATION_STATE_CACHE_VALUE = dict(payload)
+    return payload
 
 
 def remember(kind: str, payload: Any) -> dict[str, Any]:

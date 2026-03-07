@@ -9,6 +9,9 @@ from typing import Any
 from federation.federation_topology import topology_state
 from federation.federation_transport import transport_state
 
+_FEDERATION_CACHE_KEY: tuple[str, bool, int, int] | None = None
+_FEDERATION_CACHE_VALUE: dict[str, Any] | None = None
+
 def _root() -> Path:
     root = os.environ.get("METAOS_ROOT")
     return Path(root) if root else Path(".metaos_runtime")
@@ -60,11 +63,20 @@ def _rows() -> list[dict[str, Any]]:
     return out
 
 
+def _event_signature() -> tuple[str, bool, int, int]:
+    path = _path("events.jsonl")
+    if not path.exists():
+        return (str(path), False, 0, 0)
+    stat = path.stat()
+    return (str(path), True, int(stat.st_size), int(stat.st_mtime_ns))
+
+
 def federation_state() -> dict[str, Any]:
+    global _FEDERATION_CACHE_KEY, _FEDERATION_CACHE_VALUE
     path = _path("events.jsonl")
     if not federation_enabled() and not path.exists():
         topology = topology_state([local_node_id()], "peer", artifact_events=0, knowledge_events=0)
-        return {
+        payload = {
             "federation_enabled": False,
             "federation_nodes": [local_node_id()],
             "shared_artifacts": [],
@@ -111,6 +123,12 @@ def federation_state() -> dict[str, Any]:
             "adoption_completion_rate": 0.0,
             "federation_monoculture_score": 0.0,
         }
+        _FEDERATION_CACHE_KEY = _event_signature()
+        _FEDERATION_CACHE_VALUE = dict(payload)
+        return payload
+    cache_key = _event_signature()
+    if _FEDERATION_CACHE_KEY == cache_key and _FEDERATION_CACHE_VALUE is not None:
+        return dict(_FEDERATION_CACHE_VALUE)
     rows = _rows()
     nodes = sorted(
         {
@@ -200,7 +218,7 @@ def federation_state() -> dict[str, Any]:
     mirror_lineage_count = len({tuple(row.get("mirror_parent_ids", [])) for row in hydration_rows if row.get("mirror_parent_ids")})
     total_hydration = sum(hydration_depth_distribution.values()) or 1
     hydration_rate = round(mirrored_external_artifacts / max(1.0, float(adoption_counts.get("artifact:adopted", 0) or 1)), 4)
-    return {
+    payload = {
         "federation_enabled": federation_enabled(),
         "federation_nodes": nodes,
         "shared_artifacts": shared_artifacts[-128:],
@@ -250,6 +268,9 @@ def federation_state() -> dict[str, Any]:
         "adoption_completion_rate": float(transport.get("adoption_completion_rate", 0.0)),
         "federation_monoculture_score": round(dominant_origin_share, 4),
     }
+    _FEDERATION_CACHE_KEY = cache_key
+    _FEDERATION_CACHE_VALUE = dict(payload)
+    return payload
 
 
 __all__ = [

@@ -61,6 +61,19 @@ def save(
             )
             + "\n"
         )
+    row = {
+        "kind": kind,
+        "payload": payload,
+        "visibility": visibility,
+        "origin_status": origin_status,
+        "artifact_origin": artifact_origin,
+        "artifact_scope": artifact_scope or visibility,
+        "artifact_adoption_count": int(artifact_adoption_count),
+        "artifact_propagation_depth": int(artifact_propagation_depth),
+    }
+    from artifact.civilization_registry import record_archive_row
+
+    record_archive_row(row)
     if str(kind) == "memory":
         remember_extinction(kind, payload)
 
@@ -99,6 +112,9 @@ def append_archive(
     }
     with _archive_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    from artifact.civilization_registry import record_archive_row
+
+    record_archive_row(row)
     if visibility == "shared":
         from federation.federation_exchange import export_artifact
 

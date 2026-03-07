@@ -16,6 +16,9 @@ CANONICAL_PRESSURE_KEYS = (
     "reframing_pressure",
 )
 
+_REPLAY_CACHE_KEY: tuple[tuple[str, bool, int, int], ...] | None = None
+_REPLAY_CACHE_VALUE: dict[str, Any] | None = None
+
 
 def _active_root() -> Path | None:
     root = os.environ.get("METAOS_ROOT")
@@ -42,6 +45,13 @@ def _canonical_paths() -> dict[str, Path]:
         "archive": _canonical_path("METAOS_ARCHIVE", "archive.jsonl", ".metaos_runtime/archive/archive.jsonl"),
         "signals": _canonical_path("METAOS_SIGNALS", "signals.jsonl", ".metaos_runtime/data/signals.jsonl"),
     }
+
+
+def _path_signature(path: Path) -> tuple[str, bool, int, int]:
+    if not path.exists():
+        return (str(path), False, 0, 0)
+    stat = path.stat()
+    return (str(path), True, int(stat.st_size), int(stat.st_mtime_ns))
 
 
 def _read_jsonl(path: Path) -> list[dict[str, Any]]:
@@ -212,7 +222,11 @@ def _signal_state(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
 
 
 def replay_state() -> dict[str, Any]:
+    global _REPLAY_CACHE_KEY, _REPLAY_CACHE_VALUE
     paths = _canonical_paths()
+    cache_key = tuple(sorted((name, *_path_signature(path)) for name, path in paths.items()))
+    if _REPLAY_CACHE_KEY == cache_key and _REPLAY_CACHE_VALUE is not None:
+        return dict(_REPLAY_CACHE_VALUE)
     events = _read_jsonl(paths["event_log"])
     metrics = _read_jsonl(paths["metrics"])
     archive_rows = _read_jsonl(paths["archive"])
@@ -237,7 +251,7 @@ def replay_state() -> dict[str, Any]:
     artifact_type_counts: Counter[str] = Counter(str(envelope.get("artifact_type", envelope.get("type", ""))) for envelope in envelopes)
     from federation.federation_replay import federation_replay_state
 
-    return {
+    payload = {
         "tick": int(last_metric.get("tick") or (last_event.get("payload", {}) if isinstance(last_event.get("payload"), Mapping) else {}).get("tick", 0) or 0),
         "events": len(events),
         "metrics": len(metrics),
@@ -259,6 +273,9 @@ def replay_state() -> dict[str, Any]:
         "signal_state": _signal_state(signals),
         "federation_replay": federation_replay_state(),
     }
+    _REPLAY_CACHE_KEY = cache_key
+    _REPLAY_CACHE_VALUE = dict(payload)
+    return payload
 
 
 def replay_state_hash() -> str:

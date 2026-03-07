@@ -89,6 +89,9 @@ def register_envelope(
     if not validation["ok"]:
         raise ValueError(f"artifact law violation: {validation}")
     append_jsonl(_registry_path(), row)
+    from artifact.civilization_registry import record_registry_row
+
+    record_registry_row(row)
     return artifact_id
 
 
@@ -207,4 +210,7 @@ def register_mirrored_artifact(
     if not validation["ok"]:
         raise ValueError(f"artifact law violation: {validation}")
     append_jsonl(_registry_path(), row)
+    from artifact.civilization_registry import record_registry_row
+
+    record_registry_row(row)
     return artifact_id
