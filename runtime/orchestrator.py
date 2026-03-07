@@ -11,12 +11,14 @@ from runtime.kernel_adapter import DEFAULT_RUNTIME_ROOT, KernelAdapter
 from runtime.profiles import runtime_profile
 from runtime.replay_state import replay_state
 from runtime.supervisor import Supervisor
+from runtime.profiles import active_profile
 
 
 @dataclass(slots=True)
 class OrchestratorConfig:
     tick_seconds: float = 0.05
     max_ticks: int | None = None
+    profile: str = "run"
     runtime_profile: str = "smoke"
     data_dir: Path = DEFAULT_RUNTIME_ROOT / "data"
     artifact_store_dir: Path = DEFAULT_RUNTIME_ROOT / "artifact_store"
@@ -27,7 +29,11 @@ class OrchestratorConfig:
     @classmethod
     def from_env(cls) -> "OrchestratorConfig":
         runtime_root = Path(os.getenv("METAOS_RUNTIME_ROOT", str(DEFAULT_RUNTIME_ROOT)))
+        profile = active_profile(os.getenv("METAOS_PROFILE"))
         return cls(
+            tick_seconds=_env_float("METAOS_TICK_SECONDS", profile.tick_seconds),
+            max_ticks=_env_int_or_none("METAOS_MAX_TICKS", profile.default_ticks),
+            profile=profile.name,
             tick_seconds=_env_float("METAOS_TICK_SECONDS", 0.05),
             max_ticks=_env_optional_int("METAOS_MAX_TICKS"),
             data_dir=Path(os.getenv("METAOS_DATA_DIR", str(runtime_root / "data"))),
@@ -54,6 +60,16 @@ class Orchestrator:
     def run(self, *, max_ticks: int | None = None) -> list[dict[str, Any]]:
         limit = self.config.max_ticks if max_ticks is None else max_ticks
         reports: list[dict[str, Any]] = []
+        if limit is None:
+            while True:
+                state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
+                report = self.supervisor.run_cycle(state)
+                reports.append(report)
+                print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
+                if self.config.tick_seconds > 0:
+                    time.sleep(self.config.tick_seconds)
+            return reports
+        if limit <= 0:
         profile = runtime_profile(self.config.runtime_profile)
         if limit is None:
             limit = profile.target_ticks
@@ -117,3 +133,13 @@ def run() -> None:
 
 if __name__ == "__main__":
     run()
+
+
+def _env_int_or_none(name: str, default: int | None) -> int | None:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default

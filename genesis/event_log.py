@@ -16,6 +16,7 @@ class SpinePaths:
     events_path: Path
     registry_path: Path
     metrics_path: Path
+    signals_path: Path
 
 
 def utc_now() -> str:
@@ -29,13 +30,14 @@ def resolve_spine(data_dir: str | Path = "data") -> SpinePaths:
         events_path=root / "events.jsonl",
         registry_path=root / "artifact_registry.jsonl",
         metrics_path=root / "metrics.jsonl",
+        signals_path=root / "signals.jsonl",
     )
 
 
 def ensure_spine(data_dir: str | Path = "data") -> SpinePaths:
     spine = resolve_spine(data_dir)
     spine.root.mkdir(parents=True, exist_ok=True)
-    for path in (spine.events_path, spine.registry_path, spine.metrics_path):
+    for path in (spine.events_path, spine.registry_path, spine.metrics_path, spine.signals_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.touch(exist_ok=True)
     return spine
@@ -103,3 +105,7 @@ def read_registry(data_dir: str | Path = "data") -> Iterable[dict[str, Any]]:
 
 def read_metrics(data_dir: str | Path = "data") -> Iterable[dict[str, Any]]:
     return read_jsonl(resolve_spine(data_dir).metrics_path)
+
+
+def read_signals(data_dir: str | Path = "data") -> Iterable[dict[str, Any]]:
+    return read_jsonl(resolve_spine(data_dir).signals_path)

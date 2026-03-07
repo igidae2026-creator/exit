@@ -71,7 +71,7 @@ def discover_domains(
         "mutation_priors": {"mutation_rate": round(0.18 + 0.22 * domain_shift, 4)},
         "lineage_branch_seed": f"{name}:root",
     }
-    registered = register_domain(name, genome)
+    register_domain(name, genome)
     register_envelope(
         aclass="domain",
         atype="domain_genome",

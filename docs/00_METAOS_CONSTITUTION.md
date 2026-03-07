@@ -1,8 +1,8 @@
 # METAOS Constitution
 
 Highest-order law:
-- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
-- [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
+- [GENESIS](docs/core/GENESIS.md)
+- [METAOS Final Definition](docs/core/METAOS_FINAL_DEFINITION.md)
 
 METAOS is an exploration-first system built on artifact-first principles, append-only truth, replayable state, and minimal core design.
 
