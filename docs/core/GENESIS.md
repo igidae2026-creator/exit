@@ -1,13 +1,7 @@
 # GENESIS
 
-Purpose
-Create a system that continuously explores and evolves solutions under invariant constraints.
+GENESIS is the top-level law for METAOS.
 
-Core Loop
-signal -> generate -> evaluate -> select -> mutate -> archive -> repeat
-The loop must never stop.
-
-Human Authority
 Human defines only:
 - goal
 - essence
@@ -19,65 +13,44 @@ System performs:
 - implementation
 - validation
 - evolution
+- expansion
 
-Invariants
+State law:
+- state = append-only history + replayed effective state
+- `civilization_state` is the primary runtime control surface above the kernel
+
+Core loop:
+- `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+
+Civilization control flow:
+- `civilization_state`
+- `-> pressure`
+- `-> allocation`
+- `-> questing`
+- `-> artifact evolution`
+- `-> domain evolution`
+- `-> memory accumulation`
+
+Invariants:
 - append-only truth
-- replayable state
-- artifact immutability
-- minimal core
+- replayable effective state
+- immutable artifacts
+- minimal kernel
 - domain autonomy
+- multiple lineages survive
+- pressure drives allocation, selection, mutation, and quest generation
 
-Artifact Law
-Everything that evolves is an artifact.
-Artifacts must be:
-- immutable
-- lineage-tracked
-- replayable
+Artifact law:
+- everything that evolves is an artifact
+- every mutation creates a new immutable artifact
+- lineage remains replayable
 
-Exploration Control
-Pressure determines exploration direction.
-Canonical pressures:
-- novelty_pressure
-- diversity_pressure
-- efficiency_pressure
-- repair_pressure
-- domain_shift_pressure
-- reframing_pressure
-
-Pressure influences:
-- mutation
-- selection
-- allocation
-- quest generation
-
-Policy Evolution
-Policies evolve through artifact selection and must be replaceable during runtime.
-
-Resource Allocation
-Exploration resources are dynamically allocated in response to system pressure.
-
-Lineage Ecology
-Multiple exploration lineages must coexist.
-Lineage diversity must be preserved.
-
-Knowledge
-System history becomes system knowledge.
-Future exploration must leverage accumulated artifacts.
-
-Domain Expansion
-The system must expand into new domains without modifying the core.
-
-Failure Protocol
-- plateau -> exploration
-- collapse -> diversity
+Failure protocol:
+- plateau -> exploration or reframing
+- collapse -> diversity pressure
 - repair failure -> repair escalation
 - invalid state -> replay restore
 
-Definition
-METAOS is a goal-driven exploration system that evolves its own implementation through artifact selection under invariant constraints.
-
-Ultimate Law
-human defines goals
-system evolves solutions
-tests/test_domain_autonomy.py
-tests/test_failure_protocol.py
+Ultimate law:
+- human defines goals
+- system evolves solutions

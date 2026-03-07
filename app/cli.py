@@ -1,6 +1,18 @@
 from __future__ import annotations
 
-from metaos.cli import build_parser, main
+from typing import Sequence
+
+
+def build_parser():
+    from metaos.cli import build_parser as _build_parser
+
+    return _build_parser()
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    from metaos.cli import main as _main
+
+    return _main(argv)
 
 
 __all__ = ["build_parser", "main"]

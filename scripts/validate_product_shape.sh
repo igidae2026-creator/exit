@@ -13,7 +13,11 @@ done
 python - <<'PY'
 from pathlib import Path
 
-deprecated_roots = [Path("kernel"), Path("evolution"), Path("metaos/kernel"), Path("metaos/runtime")]
+pyproject = Path("pyproject.toml").read_text(encoding="utf-8")
+if 'package-dir = {"" = "src"}' in pyproject:
+    raise SystemExit("fake src package-dir still present")
+
+deprecated_roots = [Path("core"), Path("kernel"), Path("evolution"), Path("metaos/kernel"), Path("metaos/runtime"), Path("metaos/domains")]
 shim_roots = {
     Path("metaos/runtime"): {
         "exploration_cycle.py",
@@ -25,6 +29,7 @@ shim_roots = {
         "policy_runtime.py",
         "pressure_model.py",
         "resource_allocator.py",
+        "soak_runner.py",
     },
 }
 for root in deprecated_roots:
@@ -34,9 +39,8 @@ for root in deprecated_roots:
         if path.name == "__init__.py":
             continue
         text = path.read_text(encoding="utf-8")
-        if len(text.splitlines()) > 220:
+        if len(text.splitlines()) > 10:
             raise SystemExit(f"deprecated surface too large: {path}")
-        shim_names = shim_roots.get(root)
-        if shim_names and path.name in shim_names and "Deprecated compatibility shim. Canonical owner:" not in text:
+        if "Deprecated compatibility shim." not in text or "Canonical owner:" not in text:
             raise SystemExit(f"missing shim header: {path}")
 PY

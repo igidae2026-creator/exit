@@ -9,11 +9,17 @@ from runtime.observability import (
     lineage_summary,
     pressure_summary,
     replay_summary,
+    safety_status,
+    stability_status,
     runtime_summary,
 )
 
 
 def status_projection() -> dict[str, Any]:
+    return runtime_summary()
+
+
+def runtime_projection() -> dict[str, Any]:
     return runtime_summary()
 
 
@@ -39,3 +45,11 @@ def economy_projection() -> dict[str, Any]:
 
 def replay_projection() -> dict[str, Any]:
     return replay_summary()
+
+
+def stability_projection() -> dict[str, Any]:
+    return stability_status()
+
+
+def safety_projection() -> dict[str, Any]:
+    return safety_status()

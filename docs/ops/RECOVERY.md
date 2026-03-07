@@ -1,7 +1,22 @@
 # Recovery
 
-- Invalid state -> replay restore: `python -m app.cli replay-check`
-- Truth verification: inspect `events.jsonl`, `metrics.jsonl`, `artifact_registry.jsonl`
-- Archive recovery: restore from `archive/` and rotation manifest
-- Restart procedure: rerun `bash ops/run-metaos.sh`
-- Safe mode: `METAOS_SOAK_FAST=1 bash ops/run-metaos.sh`
+GENESIS recovery law:
+- invalid state -> replay restore
+- repair failure -> repair escalation
+- plateau -> exploration or reframing
+- collapse -> diversity pressure
+
+Operator steps:
+- `python -m app.cli replay-check`
+- `python -m app.cli stability-status`
+- `python -m app.cli safety-status`
+- `python -m app.cli long-run-check`
+- `bash ops/rotate-runtime.sh`
+- `bash ops/cleanup-runtime.sh`
+- `bash ops/run-metaos.sh`
+
+Recovery truth:
+- replay remains append-only
+- artifacts remain immutable
+- civilization_state is reconstructed from append-only truth and replayed effective state
+- operators intervene only when guardrails keep firing, replay fails, or long-run health drops

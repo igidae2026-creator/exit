@@ -38,6 +38,13 @@ def save(kind: str, payload: Any) -> None:
         handle.write(json.dumps({"t": time.time(), "kind": kind, "payload": payload}, ensure_ascii=True) + "\n")
 
 
+def append_archive(kind: str, payload: Any) -> dict[str, Any]:
+    row = {"t": time.time(), "kind": str(kind), "payload": payload}
+    with _archive_path().open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=True) + "\n")
+    return row
+
+
 def remember_extinction(kind: str, payload: Any) -> None:
     with _resurrection_path().open("a", encoding="utf-8") as handle:
         handle.write(json.dumps({"t": time.time(), "kind": kind, "payload": payload}, ensure_ascii=True) + "\n")
@@ -57,6 +64,21 @@ def load_archive() -> list[dict[str, Any]]:
             if isinstance(row, dict):
                 rows.append(row)
     return rows
+
+
+def archive_window(*, limit: int = 64, kinds: set[str] | None = None) -> list[dict[str, Any]]:
+    rows = load_archive()
+    if kinds:
+        rows = [row for row in rows if str(row.get("kind", "")) in kinds]
+    return rows[-max(1, int(limit)) :]
+
+
+def latest_archive(kind: str, default: Any = None) -> Any:
+    target = str(kind)
+    for row in reversed(load_archive()):
+        if str(row.get("kind", "")) == target:
+            return row.get("payload")
+    return default
 
 
 def seed_bank_recovery(kind: str | None = None) -> list[dict[str, Any]]:
@@ -87,3 +109,16 @@ def resurrection_replay(kind: str | None = None) -> list[dict[str, Any]]:
     if kind is None:
         return rows
     return [row for row in rows if str(row.get("kind")) == str(kind)]
+
+
+__all__ = [
+    "append_archive",
+    "archive_window",
+    "extinction_memory",
+    "latest_archive",
+    "load_archive",
+    "remember_extinction",
+    "resurrection_replay",
+    "save",
+    "seed_bank_recovery",
+]

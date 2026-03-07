@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Mapping
 
-from kernel.contracts import QuestSlots
+from genesis.contracts import QuestSlots
 
 
 @dataclass(slots=True)

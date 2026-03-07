@@ -1,41 +1,24 @@
 # Why METAOS
 
-METAOS is for bounded autonomous exploration, not direct-answer task execution.
+METAOS is for bounded autonomous exploration under GENESIS law.
 
-Why use METAOS:
-- you need continuous exploration under invariant constraints
+Use METAOS when:
+- you need `civilization_state` to govern long-running exploration
 - you need replayable append-only truth
-- you need artifact lineage and civilization memory
-- you need runtime policy evolution without restart
+- you need artifact evolution, policy evolution, and bounded domain expansion
+- you need observable civilization, lineage ecology, domain lifecycle, economy balance, guardrail interventions, and replay status
 
-When not to use METAOS:
-- you need a simple assistant or chatbot
-- you need a one-shot workflow engine
-- you do not need replay, lineage, or pressure-driven search
+Do not use METAOS when:
+- a one-shot assistant is enough
+- replay and invariant law do not matter
+- the operator wants direct manual control over generation and selection internals
 
-What METAOS uniquely enables:
-- autonomous exploration civilization behavior
-- multiple surviving lineages over time
-- domain autonomy without kernel contamination
-- explicit laws and validation around architectural boundaries
-
-Operational Maturity:
-- philosophically complete
-- operationally durable
-- release-shaped
-- replay-safe
-- long-run ready
-
-Reference stack:
-- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
-- [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
-- [Layers](/home/meta_os/metaos/docs/architecture/LAYERS.md)
-- [Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
-
-Execution hierarchy:
-- GENESIS -> METAOS-A -> METAOS-B -> METAOS-C
-
-Canonical execution ownership:
-- GENESIS is the canonical execution kernel.
-- METAOS-A, METAOS-B, and METAOS-C are the canonical higher layers.
-- Deprecated surfaces exist only for transitional import compatibility.
+What METAOS provides:
+- civilization-state control instead of ad hoc orchestrator-first control
+- `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
+- immutable artifacts as the universal evolution unit
+- multiple surviving lineages with health richer than survival count
+- explicit active, inactive, retired, and resurrectable domain lifecycle
+- bounded exploration economy instead of raw throughput maximization
+- self-tuning guardrails that stay inside GENESIS invariants
+- operator-light long-run observability and recovery

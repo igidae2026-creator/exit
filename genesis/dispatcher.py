@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from kernel.contracts import DispatchFrame
+from genesis.contracts import DispatchFrame
 
 
 def dispatch(

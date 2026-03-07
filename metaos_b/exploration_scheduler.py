@@ -14,7 +14,7 @@ def schedule(
     ecology: Mapping[str, Any],
     civilization_state: Mapping[str, Any],
 ) -> dict[str, Any]:
-    domain_names = list(artifact_outcomes) or list((civilization_state.get("domains", {}) if isinstance(civilization_state.get("domains"), Mapping) else {})) or ["code"]
+    domain_names = list(artifact_outcomes) or list((civilization_state.get("active_domains", {}) if isinstance(civilization_state.get("active_domains"), list) else (civilization_state.get("domains", {}) if isinstance(civilization_state.get("domains"), Mapping) else {}))) or ["code"]
     allocation = allocate_for_units(pressure, ecology, {"population_counts": {}}, domain_names)
     ranking = select_experiments(artifact_outcomes)
     comparison = compare_strategies(artifact_outcomes)

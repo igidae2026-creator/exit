@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping, Sequence
 
-from kernel.contracts import QuotaFrame
+from genesis.contracts import QuotaFrame
 from metaos.runtime.quota_allocator import allocate
 
 

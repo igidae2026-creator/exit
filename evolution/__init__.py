@@ -1,1 +1,1 @@
-"""Civilization MVP evolution helpers."""
+"""Deprecated compatibility shims for legacy evolution imports."""

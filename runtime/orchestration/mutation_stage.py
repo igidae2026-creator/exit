@@ -63,8 +63,15 @@ def apply_strategy_mutation(strategy: Mapping[str, float], mutation: Mapping[str
 
 
 def apply_evaluation_mutation(evaluation: Mapping[str, float], mutation: Mapping[str, float]) -> dict[str, float]:
-    merged = {key: round(clamp_weight(float(evaluation.get(key, 0.0)) + float(mutation.get(key, 0.0)), 0.05, 0.55), 4) for key in evaluation}
-    return normalize_weights(merged)
+    numeric_keys = [key for key, value in evaluation.items() if isinstance(value, (int, float))]
+    merged = {
+        key: round(clamp_weight(float(evaluation.get(key, 0.0)) + float(mutation.get(key, 0.0)), 0.05, 0.55), 4)
+        for key in numeric_keys
+    }
+    normalized = normalize_weights(merged)
+    out = {key: value for key, value in evaluation.items() if key not in numeric_keys}
+    out.update(normalized)
+    return out
 
 
 def build_mutation_frame(

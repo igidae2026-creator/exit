@@ -1,28 +1,36 @@
 # METAOS Final Definition
 
-GENESIS is the highest-order law for METAOS architecture and acceptance.
+METAOS is a bounded autonomous exploration civilization engine governed by GENESIS.
 
-METAOS is a bounded autonomous exploration civilization engine that:
-- continuously runs `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
-- derives runtime truth from append-only logs
-- preserves artifact immutability
-- keeps the kernel minimal
-- keeps domain logic outside the kernel
+Primary control surface:
+- `civilization_state`
 
-Canonical package boundaries:
-- `genesis`: canonical execution kernel
-- `metaos_a`: domain exploration unit
-- `metaos_b`: exploration manager
-- `metaos_c`: civilization engine
-- `kernel`: truth, replay, invariants, supervisor
-- `runtime`: orchestration, economy, pressure, civilization
-- `artifact`: storage, registry, lineage, archive
-- `domains`: domain contract and domain runtimes
-- `validation`: laws, contracts, gates
+Canonical control flow:
+- `civilization_state`
+- `-> pressure`
+- `-> allocation`
+- `-> questing`
+- `-> artifact evolution`
+- `-> domain evolution`
+- `-> memory accumulation`
 
-Primary references:
-- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
-- [METAOS Constitution](/home/meta_os/metaos/docs/00_METAOS_CONSTITUTION.md)
-- [METAOS Master Specification](/home/meta_os/metaos/docs/01_METAOS_MASTER_SPEC.md)
-- [Architecture Layers](/home/meta_os/metaos/docs/architecture/LAYERS.md)
-- [Architecture Boundaries](/home/meta_os/metaos/docs/architecture/BOUNDARIES.md)
+Canonical hierarchy:
+- `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
+
+Ownership:
+- `genesis/`: kernel law, append-only truth, replay, invariants
+- `runtime/`: civilization state, pressure, economy, orchestration
+- `artifact/`: immutable artifact registry, archive, lineage
+- `domains/`: domain logic and domain evolution helpers
+- `validation/`: invariant and boundary enforcement
+- `metaos_a/`: one domain exploration unit
+- `metaos_b/`: cross-unit allocation and experiment selection
+- `metaos_c/`: civilization memory, topology, and domain discovery
+
+Compatibility-only surfaces:
+- `core/`
+- `kernel/`
+- `evolution/`
+- `metaos/kernel/`
+- `metaos/runtime/`
+- `metaos/domains/`

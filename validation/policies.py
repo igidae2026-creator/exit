@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from kernel.contracts import POLICY_FAMILIES
+from genesis.contracts import POLICY_FAMILIES
 
 
 def validate_policy_bundle(payload: Mapping[str, Any]) -> dict[str, Any]:

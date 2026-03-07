@@ -3,7 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any, Iterable, Mapping
 
-from core.registry import read_registry
+from artifact.registry_view import read_registry
 
 
 def build_lineage_view(rows: Iterable[Mapping[str, Any]]) -> dict[str, list[str]]:

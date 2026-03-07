@@ -15,16 +15,16 @@ import metaos.observer.metrics_history as metrics_history
 import metaos.observer.pressure_engine as pressure_engine
 import metaos.registry.artifact_registry as artifact_registry
 import metaos.registry.lineage_graph as lineage_graph
-import metaos.runtime.artifact_civilization as artifact_civilization
-import metaos.runtime.domain_pool as domain_pool
-import metaos.runtime.domain_router as domain_router
-import metaos.runtime.exploration_strategy_artifact as exploration_strategy_artifact
+import runtime.artifact_civilization as artifact_civilization
+import runtime.domain_pool as domain_pool
+import runtime.domain_router as domain_router
+import runtime.exploration_strategy_artifact as exploration_strategy_artifact
 import runtime.oed_orchestrator as oed_orchestrator
-import metaos.runtime.strategy_of_strategy as strategy_of_strategy_registry
+import runtime.strategy_of_strategy as strategy_of_strategy_registry
 from metaos.archive.archive import save
 from metaos.archive.civilization_memory import remember
 from metaos.core.supervisor import guarded_step
-from metaos.runtime.collapse_guard import detect_guard_state
+from runtime.collapse_guard import detect_guard_state
 from runtime.oed_orchestrator import step as oed_step
 
 
@@ -80,8 +80,10 @@ def _metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[str, An
         "market": state.get("market", {}),
         "stabilized_market": state.get("stabilized_market", state.get("market", {})),
         "policy": state.get("policy", {}),
+        "evaluation": state.get("evaluation", {}),
         "budgets": state.get("budgets", {}),
         "routing": state.get("routing", {}),
+        "lineage": state.get("lineage", {}),
         "civilization_selection": state.get("civilization_selection", {}),
         "population": state.get("population", {}),
         "governance": state.get("governance", {}),
@@ -113,7 +115,9 @@ def _fast_metrics_row(tick: int, metrics: Mapping[str, float], state: Mapping[st
         "pressure": state.get("pressure", {}),
         "stabilized_pressure": state.get("stabilized_pressure", state.get("pressure", {})),
         "policy": state.get("policy", {}),
+        "evaluation": state.get("evaluation", {}),
         "routing": state.get("routing", {}),
+        "lineage": state.get("lineage", {}),
         "civilization_selection": state.get("civilization_selection", {}),
         "strategy_of_strategy": state.get("strategy_of_strategy", {}),
         "resource_allocation": state.get("resource_allocation", {}),
@@ -138,6 +142,7 @@ def _fast_guard_row(metrics: Mapping[str, float], state: Mapping[str, Any]) -> d
         "quest": state.get("quest", {}),
         "pressure": state.get("pressure", {}),
         "routing": state.get("routing", {}),
+        "lineage": state.get("lineage", {}),
         "repair": state.get("repair"),
         "guard": state.get("guard", {}),
         "cooldown": state.get("cooldown", {}),
@@ -393,6 +398,7 @@ class _FastSoakRuntime:
             "stabilized_pressure",
             "quest",
             "policy",
+            "evaluation",
             "guard",
             "repair",
             "resource_allocation",
@@ -410,6 +416,7 @@ class _FastSoakRuntime:
             "pressure_snapshot",
             "quest_artifact",
             "policy_artifact",
+            "evaluation_artifact",
             "repair_artifact",
             "resource_allocation",
             "civilization_state",
@@ -584,6 +591,7 @@ def _next_state(
         "tick": tick,
         "artifact_id": result.get("artifact_id"),
         "policy": result.get("policy", {}),
+        "evaluation": result.get("evaluation", {}),
         "workers": min(worker_cap, int(result.get("workers", workers))),
         "domain": result.get("domain", domain),
         "quest": result.get("quest", {}),
@@ -595,6 +603,7 @@ def _next_state(
         "stabilized_market": result.get("stabilized_market", result.get("market", {})),
         "budgets": result.get("budgets", {}),
         "routing": result.get("routing", {}),
+        "lineage": result.get("lineage", {}),
         "ecology": result.get("ecology", {}),
         "strategy_of_strategy": result.get("strategy_of_strategy", {}),
         "exploration_cycle": result.get("exploration_cycle", {}),

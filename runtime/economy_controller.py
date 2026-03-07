@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping
 
-from evolution.quota_allocator import allocate_quota
+from runtime.quota_policy import allocate_quota
 
 
 def _clamp(value: float, lo: float, hi: float) -> float:

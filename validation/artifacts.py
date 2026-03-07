@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from kernel.contracts import PRIMARY_ARTIFACT_CLASSES
+from genesis.contracts import PRIMARY_ARTIFACT_CLASSES
 
 
 def validate_artifact_classes(payload: Mapping[str, Any]) -> dict[str, Any]:

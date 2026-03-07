@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from metaos.runtime.resource_allocator import allocate
+from runtime.resource_allocator import allocate
 
 
 def allocate_for_units(
@@ -12,7 +12,7 @@ def allocate_for_units(
     domain_names: list[str],
 ) -> dict[str, Any]:
     shared = allocate(pressure, ecology, population)
-    per_unit_budget = round(float(shared["mutation_budget"]) / max(1, len(domain_names)), 4)
+    per_unit_budget = round(float(shared["exploration_budget"]) / max(1, len(domain_names)), 4)
     per_unit_slots = max(1, int(shared["runtime_slots"]) // max(1, len(domain_names)))
     return {
         "shared": shared,

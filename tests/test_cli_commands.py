@@ -24,7 +24,7 @@ def test_app_cli_status_commands_work() -> None:
         try:
             append_event("tick_started", {"tick": 1})
             append_metrics({"tick": 1, "score": 0.8, "quest": {"type": "exploration"}, "routing": {"selected_domain": "default"}})
-            for command in ("civilization-status", "lineage-status", "domain-status", "health"):
+            for command in ("civilization-status", "lineage-status", "domain-status", "economy-status", "stability-status", "safety-status", "health"):
                 completed = _run(root, command)
                 assert completed.returncode == 0, completed.stderr
                 json.loads(completed.stdout)

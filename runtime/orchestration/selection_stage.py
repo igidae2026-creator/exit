@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from metaos.runtime.civilization_selection import civilization_select
+from runtime.civilization_selection import civilization_select
 
 
 def candidate_summaries(
@@ -14,10 +14,11 @@ def candidate_summaries(
     diversity_gap = 1.0 - float(ecology.get("diversity_health", 0.5))
     exploration_gap = 1.0 - float(ecology.get("exploration_health", 0.5))
     repair_gap = 1.0 - float(ecology.get("repair_health", 0.5))
+    evaluation_gap = 1.0 - float(ecology.get("evaluation_diversity", market_state.get("evaluation_diversity", 0.5)))
     return [
         {"type": "strategy", "base_score": 0.22 + 0.06 * float(market_state.get("mutation_bias", 0.0)) + 0.03 * novelty_gap},
         {"type": "policy", "base_score": 0.32 + 0.08 * float(ecology.get("efficiency_health", 0.5)) + 0.05 * float(ecology.get("lineage_health", 0.5))},
-        {"type": "evaluation", "base_score": 0.35 + 0.22 * novelty_gap + 0.12 * diversity_gap},
+        {"type": "evaluation", "base_score": 0.35 + 0.22 * novelty_gap + 0.12 * diversity_gap + 0.10 * evaluation_gap},
         {"type": "exploration_strategy", "base_score": 0.18 + 0.08 * exploration_gap + 0.04 * float(pressure.get("novelty_pressure", 0.0))},
         {"type": "strategy_of_strategy", "base_score": 0.24 + 0.22 * exploration_gap + 0.12 * float(pressure.get("domain_shift_pressure", 0.0))},
         {"type": "domain", "base_score": 0.36 + 0.34 * diversity_gap + 0.18 * float(pressure.get("domain_shift_pressure", 0.0))},
@@ -55,6 +56,28 @@ def governed_selection(
     return out
 
 
+def pluralized_selection(selection: Mapping[str, Any], market_state: Mapping[str, Any], *, tick: int) -> dict[str, Any]:
+    out = {
+        "selected_artifact_type": str(selection.get("selected_artifact_type", "policy")),
+        "selection_scores": dict(selection.get("selection_scores", {})) if isinstance(selection.get("selection_scores"), Mapping) else {},
+    }
+    active_evaluations = int(market_state.get("active_evaluation_generations", 0) or 0)
+    evaluation_dominance = float(market_state.get("evaluation_dominance_index", 0.0) or 0.0)
+    if active_evaluations > 1 and evaluation_dominance < 0.75:
+        return out
+    if out["selected_artifact_type"] != "evaluation":
+        return out
+    if tick % 4 == 0:
+        return out
+    alternates = ["domain", "strategy_of_strategy", "policy"]
+    selected = alternates[tick % len(alternates)]
+    scores = dict(out["selection_scores"])
+    scores[selected] = round(max(scores.values(), default=0.5) + 0.0001, 4)
+    out["selected_artifact_type"] = selected
+    out["selection_scores"] = scores
+    return out
+
+
 def build_selection_frame(
     stabilized_pressure: Mapping[str, float],
     stabilized_market: Mapping[str, float],
@@ -65,7 +88,9 @@ def build_selection_frame(
     tick: int,
 ) -> dict[str, Any]:
     selection = civilization_select(candidate_summaries(stabilized_pressure, stabilized_market, ecology), stabilized_pressure, stabilized_market, ecology)
-    return {"civilization_selection": governed_selection(selection, population, governance, tick=tick)}
+    selection = governed_selection(selection, population, governance, tick=tick)
+    selection = pluralized_selection(selection, stabilized_market, tick=tick)
+    return {"civilization_selection": selection}
 
 
-__all__ = ["build_selection_frame", "candidate_summaries", "governed_selection"]
+__all__ = ["build_selection_frame", "candidate_summaries", "governed_selection", "pluralized_selection"]

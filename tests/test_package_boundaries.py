@@ -35,6 +35,10 @@ def test_runtime_avoids_deprecated_runtime_imports_when_canonical_exists() -> No
         "from metaos.runtime.lineage_ecology",
         "from metaos.runtime.pressure_model",
         "from metaos.runtime.resource_allocator",
+        "from kernel.",
+        "import kernel.",
+        "from metaos.kernel",
+        "import metaos.kernel",
     )
     for path in Path("runtime").rglob("*.py"):
         text = path.read_text(encoding="utf-8")

@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Mapping
 
 from artifact.registry import register_envelope
-from kernel.contracts import POLICY_FAMILIES
+from genesis.contracts import POLICY_FAMILIES
 
 
 def propose_policy_bundle(family_ids: Mapping[str, str], *, parent: str | None = None) -> str:

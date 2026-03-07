@@ -8,8 +8,8 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from artifact.store import get_body, put_body
-from kernel.contracts import PRIMARY_ARTIFACT_CLASSES, artifact_envelope
-from kernel.spine import append_jsonl
+from genesis.contracts import PRIMARY_ARTIFACT_CLASSES, artifact_envelope
+from genesis.spine import append_jsonl
 from validation.artifact_law import validate_artifact_law
 
 

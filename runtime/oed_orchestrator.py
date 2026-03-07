@@ -7,11 +7,11 @@ from metaos.archive.civilization_memory import remember
 from metaos.observer.metrics_history import novelty_drop, plateau
 from metaos.observer.metrics_history import tail as metrics_tail
 from metaos.policy.evaluation_artifact import load_all as load_evaluations
-from metaos.policy.evolve_evaluation import evolve_evaluation
+from runtime.evaluation_evolution import evolve_evaluations as evolve_evaluation
 from metaos.policy.evolve_policy import evolve as evolve_policy
 from metaos.registry.lineage_graph import concentration
 from runtime.orchestration.pipeline import step as _step
-from metaos.runtime.artifact_civilization import (
+from runtime.artifact_civilization import (
     register_allocator_artifact,
     register_civilization_selection_artifact,
     register_crossbred_domain_artifact,
@@ -23,18 +23,18 @@ from metaos.runtime.artifact_civilization import (
     register_quest_artifact,
     register_strategy_of_strategy_artifact,
 )
-from metaos.runtime.artifact_population import artifact_population
-from metaos.runtime.civilization_governor import civilization_governor
-from metaos.runtime.domain_pool import ensure_seed_domains, get_domain, register_domain
-from metaos.runtime.evaluation_ecology import evaluation_ecology
-from metaos.runtime.evolve_exploration_strategy import evolve_strategy
-from metaos.runtime.exploration_market_stability import stabilize_market
-from metaos.runtime.exploration_strategy_artifact import load_all as load_exploration_strategies
-from metaos.runtime.meta_exploration import meta_exploration
-from metaos.runtime.meta_quest_engine import meta_quest
-from metaos.runtime.recovery_allocator import recover_budgets
-from metaos.runtime.repair_system import emit_repair_artifact
-from metaos.runtime.strategy_of_strategy import evolve_strategy_of_strategy, load_all as load_strategy_of_strategy
+from runtime.artifact_population import artifact_population
+from runtime.civilization_governor import civilization_governor
+from runtime.domain_pool import ensure_seed_domains, get_domain, register_domain
+from runtime.evaluation_ecology import evaluation_ecology
+from runtime.evolve_exploration_strategy import evolve_strategy
+from runtime.exploration_market_stability import stabilize_market
+from runtime.exploration_strategy_artifact import load_all as load_exploration_strategies
+from runtime.meta_exploration import meta_exploration
+from runtime.meta_quest_engine import meta_quest
+from runtime.recovery_allocator import recover_budgets
+from runtime.repair_system import emit_repair_artifact
+from runtime.strategy_of_strategy import evolve_strategy_of_strategy, load_all as load_strategy_of_strategy
 from runtime.exploration_cycle import exploration_cycle
 from strategy.quota import quota_frame
 from strategy.quest_portfolio import active_quest, quest_slots

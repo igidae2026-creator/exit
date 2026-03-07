@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from metaos.runtime.civilization_stability import civilization_stability
-from metaos.runtime.domain_pool import ensure_seed_domains
+from runtime.civilization_state import civilization_state as canonical_civilization_state
+from runtime.civilization_stability import civilization_stability
+from runtime.domain_pool import ensure_seed_domains
 
 
 def civilization_snapshot(history: list[Mapping[str, Any]], population: Mapping[str, Any]) -> dict[str, Any]:
@@ -53,7 +54,15 @@ def build_civilization_frame(history: list[Mapping[str, Any]], population: Mappi
     civilization = civilization_snapshot(history, population)
     memory_state = memory_pressure_snapshot(history)
     stability = civilization_stability(ecology, civilization, memory_state)
-    return {"civilization_state": civilization, "memory_state": memory_state, "civilization_stability": stability}
+    canonical = canonical_civilization_state(
+        state={"knowledge_density": memory_state["knowledge_density"], "memory_growth": memory_state["memory_growth"]},
+        history=history,
+    )
+    return {
+        "civilization_state": {**civilization, **canonical},
+        "memory_state": memory_state,
+        "civilization_stability": stability,
+    }
 
 
 __all__ = ["build_civilization_frame", "civilization_snapshot", "memory_pressure_snapshot"]

@@ -1,1 +1,1 @@
-# METAOS core package
+"""Deprecated compatibility shims for legacy core imports."""

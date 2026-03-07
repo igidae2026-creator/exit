@@ -1,3 +1,3 @@
-from kernel.replay import CANONICAL_PRESSURE_KEYS, replay_state
+"""Deprecated compatibility shim. Canonical owner: genesis.replay"""
 
-__all__ = ["CANONICAL_PRESSURE_KEYS", "replay_state"]
+from genesis.replay import *  # noqa: F401,F403

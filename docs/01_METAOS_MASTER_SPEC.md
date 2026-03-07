@@ -1,5 +1,9 @@
 # METAOS Master Specification
 
+Highest-order reference:
+- [GENESIS](/home/meta_os/metaos/docs/core/GENESIS.md)
+- [METAOS Final Definition](/home/meta_os/metaos/docs/core/METAOS_FINAL_DEFINITION.md)
+
 This document defines the final structural architecture, layer boundaries, and system responsibilities of METAOS.
 
 ## 1. System Overview

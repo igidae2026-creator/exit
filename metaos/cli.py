@@ -5,8 +5,9 @@ import json
 import subprocess
 from typing import Sequence
 
-from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, status_projection
+from observer.projections import civilization_projection, domain_projection, economy_projection, lineage_projection, pressure_projection, replay_projection, safety_projection, stability_projection, status_projection
 from runtime.orchestrator import Orchestrator, OrchestratorConfig
+from runtime.long_run_validation import validate_long_run
 from validation.system_boundary import validate_system_boundary
 
 
@@ -62,6 +63,17 @@ def build_parser() -> argparse.ArgumentParser:
 
     economy_parser = subparsers.add_parser("economy-status", help="Inspect economy summary")
     economy_parser.set_defaults(func=cmd_economy_status)
+
+    stability_parser = subparsers.add_parser("stability-status", help="Inspect long-horizon stability summary")
+    stability_parser.set_defaults(func=cmd_stability_status)
+
+    safety_parser = subparsers.add_parser("safety-status", help="Inspect runtime safety and guardrail state")
+    safety_parser.set_defaults(func=cmd_safety_status)
+
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
+    long_run_parser.add_argument("--ticks", type=int, default=120)
+    long_run_parser.add_argument("--seed", type=int, default=42)
+    long_run_parser.set_defaults(func=cmd_long_run_check)
 
     build_release_parser = subparsers.add_parser("build-release", help="Build release zip")
     build_release_parser.set_defaults(func=cmd_build_release)
@@ -166,6 +178,22 @@ def cmd_pressure_status(args: argparse.Namespace) -> int:
 def cmd_economy_status(args: argparse.Namespace) -> int:
     print(json.dumps(economy_projection(), ensure_ascii=True))
     return 0
+
+
+def cmd_stability_status(args: argparse.Namespace) -> int:
+    print(json.dumps(stability_projection(), ensure_ascii=True))
+    return 0
+
+
+def cmd_safety_status(args: argparse.Namespace) -> int:
+    print(json.dumps(safety_projection(), ensure_ascii=True))
+    return 0
+
+
+def cmd_long_run_check(args: argparse.Namespace) -> int:
+    payload = validate_long_run(ticks=max(1, int(args.ticks)), seed=int(args.seed), fail_open=True)
+    print(json.dumps(payload, ensure_ascii=True))
+    return 0 if payload.get("healthy") else 1
 
 
 def _run_script(script_path: str) -> int:

@@ -8,4 +8,11 @@ fi
 
 python -m app.cli replay-check
 python -m app.cli health
+python -m app.cli civilization-status
+python -m app.cli lineage-status
+python -m app.cli domain-status
+python -m app.cli economy-status
+python -m app.cli stability-status
+python -m app.cli safety-status
+python -m app.cli long-run-check --ticks "${METAOS_LONG_RUN_TICKS:-120}" --seed "${METAOS_LONG_RUN_SEED:-42}" || true
 python -m app.cli validate-release

@@ -17,18 +17,27 @@ dev = [
     "ruff",
 ]
 
-[tool.setuptools]
-package-dir = {"" = "src"}
-
 [tool.setuptools.packages.find]
-where = ["src"]
+where = ["."]
+include = [
+    "app",
+    "artifact",
+    "domains",
+    "genesis",
+    "metaos",
+    "metaos_a",
+    "metaos_b",
+    "metaos_c",
+    "runtime",
+    "validation",
+]
 
 [project.scripts]
 metaos = "metaos.cli:main"
 
 [tool.ruff]
 line-length = 88
-extend-exclude = ["src", "config", "root", "build", "dist", "tests"]
+extend-exclude = ["config", "root", "build", "dist", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F"]
@@ -40,14 +49,18 @@ ignore = ["E501"]
 [tool.mypy]
 python_version = "3.11"
 files = [
+    "app",
+    "artifact",
+    "domains",
+    "genesis",
     "metaos",
-    "kernel",
-    "strategy",
-    "evolution",
-    "metrics",
-    "insights",
+    "metaos_a",
+    "metaos_b",
+    "metaos_c",
+    "runtime",
+    "validation",
 ]
-exclude = "^(docs|src|tests)/"
+exclude = "^(docs|tests)/"
 ignore_missing_imports = true
 follow_imports = "silent"
 disable_error_code = ["import-untyped", "type-var", "assignment", "call-overload", "union-attr", "arg-type", "valid-type", "attr-defined"]
@@ -59,5 +72,5 @@ show_error_codes = true
 testpaths = ["tests"]
 
 [tool.coverage.run]
-source = ["metaos"]
+source = ["app", "artifact", "domains", "genesis", "metaos", "metaos_a", "metaos_b", "metaos_c", "runtime", "validation"]
 omit = ["tests/*"]

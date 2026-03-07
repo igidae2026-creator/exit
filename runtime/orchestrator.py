@@ -7,9 +7,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from core.kernel_adapter import DEFAULT_RUNTIME_ROOT, KernelAdapter
-from core.replay import replay_state
-from core.supervisor import Supervisor
+from runtime.kernel_adapter import DEFAULT_RUNTIME_ROOT, KernelAdapter
+from runtime.replay_state import replay_state
+from runtime.supervisor import Supervisor
 
 
 @dataclass(slots=True)

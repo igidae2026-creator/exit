@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from kernel.contracts import QuestSlots
+from genesis.contracts import QuestSlots
 from metaos.runtime.meta_quest_engine import meta_quest
 from metaos.runtime.quest_system import spawn_quest as legacy_spawn_quest
 

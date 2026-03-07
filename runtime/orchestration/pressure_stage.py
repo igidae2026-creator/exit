@@ -3,9 +3,10 @@ from __future__ import annotations
 import math
 from typing import Any, Callable, Mapping
 
-from metaos.runtime.collapse_guard import detect_guard_state
-from metaos.runtime.meta_cooldown import quest_cooldown
-from signal.pressure import pressure_frame
+from runtime.civilization_state import civilization_state as build_civilization_state
+from runtime.collapse_guard import detect_guard_state
+from runtime.meta_cooldown import quest_cooldown
+from runtime.pressure_derivation import pressure_frame as derive_pressure_frame
 
 
 def recent_state(guard_history: list[dict[str, Any]]) -> dict[str, int]:
@@ -102,15 +103,33 @@ def build_pressure_frame(
     novelty_drop_fn: Callable[[], bool],
     concentration_fn: Callable[[], float],
 ) -> dict[str, Any]:
-    raw_signal = pressure_frame(metrics)
-    raw_pressure = dict(raw_signal["pressure"])
+    civilization_state = build_civilization_state(
+        state={"metrics": dict(metrics), "domain": domain},
+        history=history,
+    )
+    raw_pressure = derive_pressure_frame(civilization_state, recent_truth=history)
     plateau_hit = plateau_fn()
     lineage_high = concentration_fn() > 0.45
     novelty_low_sustained = novelty_drop_fn()
     preliminary_guard = detect_guard_state(history + [{"pressure": raw_pressure, "domain": domain, **dict(metrics)}])
-    signal_frame = pressure_frame(metrics, history=history, guard=preliminary_guard)
-    stabilized_pressure = dict(signal_frame["stabilized_pressure"])
-    raw_market = dict(signal_frame["market"])
+    previous = (
+        history[-1].get("stabilized_pressure")
+        if history and isinstance(history[-1].get("stabilized_pressure"), Mapping)
+        else history[-1].get("pressure", {})
+        if history and isinstance(history[-1].get("pressure"), Mapping)
+        else {}
+    )
+    stabilized_pressure = {
+        key: round((0.65 * float(previous.get(key, raw_pressure.get(key, 0.0)))) + (0.35 * float(raw_pressure.get(key, 0.0))), 4)
+        for key in raw_pressure
+    }
+    raw_market = {
+        "mutation_bias": round(min(1.0, 0.18 + (0.45 * float(stabilized_pressure.get("novelty_pressure", 0.0))) + (0.18 * float(stabilized_pressure.get("domain_shift_pressure", 0.0)))), 4),
+        "selection_bias": round(min(1.0, 0.20 + (0.40 * float(stabilized_pressure.get("efficiency_pressure", 0.0))) + (0.12 * float(stabilized_pressure.get("diversity_pressure", 0.0)))), 4),
+        "archive_bias": round(min(1.0, 0.18 + (0.40 * float(stabilized_pressure.get("repair_pressure", 0.0)))), 4),
+        "repair_bias": round(min(1.0, 0.16 + (0.50 * float(stabilized_pressure.get("repair_pressure", 0.0)))), 4),
+        "domain_budget_bias": round(min(1.0, 0.16 + (0.45 * float(stabilized_pressure.get("domain_shift_pressure", 0.0)))), 4),
+    }
     guard_seed = history + [{"pressure": stabilized_pressure, "stabilized_pressure": stabilized_pressure, "domain": domain, **dict(metrics)}]
     recent = recent_state(guard_seed)
     guard = detect_guard_state(guard_seed)
@@ -123,6 +142,7 @@ def build_pressure_frame(
         "guard": guard,
         "recent_state": recent,
         "cooldown_state": cooldown_state,
+        "civilization_state": civilization_state,
         "history": history,
         "plateau_hit": plateau_hit,
         "lineage_high": lineage_high,

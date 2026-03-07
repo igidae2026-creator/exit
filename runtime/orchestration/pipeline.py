@@ -2,11 +2,13 @@ from __future__ import annotations
 
 from typing import Any, Mapping
 
-from metaos.domains.domain_genome import DomainGenome
+from domains.domain_genome import DomainGenome
+from runtime.civilization_state import update_civilization_state
 from runtime.orchestration.archive_stage import persist_runtime_frames
 from runtime.orchestration.civilization_stage import build_civilization_frame
 from runtime.orchestration.domain_routing_stage import build_routing_frame, evolve_domain_genome
 from runtime.orchestration.economy_stage import build_economy_frame
+from runtime.lineage_branching import lineage_branching
 from runtime.orchestration.mutation_stage import apply_evaluation_mutation, apply_strategy_mutation, build_mutation_frame
 from runtime.orchestration.pressure_stage import build_pressure_frame
 from runtime.orchestration.recovery_stage import soften_worker_budget, validate_step_state
@@ -33,12 +35,28 @@ def step(
         novelty_drop_fn=deps["novelty_drop"],
         concentration_fn=deps["concentration"],
     )
+    civilization_state = update_civilization_state(
+        pressure.get("civilization_state", {}),
+        {"pressure_state": dict(pressure["stabilized_pressure"])},
+    )
     previous_market = history[-1].get("stabilized_market") if history and isinstance(history[-1].get("stabilized_market"), Mapping) else history[-1].get("market", {}) if history else {}
     stabilized_market = deps["stabilize_market"](pressure["market"], previous=previous_market, guard=pressure["guard"])
     mutation = build_mutation_frame(policy, pressure["stabilized_pressure"], stabilized_market, pressure["cooldown_state"])
     ecology = deps["evaluation_ecology"](history + [{"pressure": pressure["stabilized_pressure"], "quest": {"type": "work"}, **dict(metrics)}])
     evaluation_rows = deps["load_evaluations"]()
-    evaluation = deps["evolve_evaluation"](current=evaluation_rows[-1]["evaluation"] if evaluation_rows else None, pressure=pressure["stabilized_pressure"], market_state=stabilized_market)
+    evaluation_frame = deps["evolve_evaluation"](
+        current=evaluation_rows[-1]["evaluation"] if evaluation_rows else None,
+        pressure=pressure["stabilized_pressure"],
+        market_state={
+            **dict(stabilized_market),
+            "policy_stagnation": float(civilization_state.get("policy_stagnation", 0.0)),
+            "effective_lineage_diversity": float(civilization_state.get("effective_lineage_diversity", 0.0)),
+            "domain_activation_rate": float(civilization_state.get("domain_activation_rate", 0.0)),
+            "active_evaluation_generations": int(civilization_state.get("active_evaluation_generations", 0)),
+            "evaluation_dominance_index": float(civilization_state.get("evaluation_dominance_index", 0.0)),
+        },
+    )
+    evaluation = dict(evaluation_frame.get("evaluation", {})) if isinstance(evaluation_frame, Mapping) and isinstance(evaluation_frame.get("evaluation"), Mapping) else dict(evaluation_frame)
     strategy_rows = deps["load_exploration_strategies"]()
     exploration_strategy = deps["evolve_strategy"](current=strategy_rows[-1]["strategy"] if strategy_rows else None, pressure=pressure["stabilized_pressure"], market_state=stabilized_market)
     sos_rows = deps["load_strategy_of_strategy"]()
@@ -49,6 +67,10 @@ def step(
     strategy_of_strategy = apply_strategy_mutation(strategy_of_strategy, meta.get("strategy_mutation", {}) if isinstance(meta.get("strategy_mutation"), Mapping) else {})
     evaluation = apply_evaluation_mutation(evaluation, meta.get("evaluation_mutation", {}) if isinstance(meta.get("evaluation_mutation"), Mapping) else {})
     civilization = build_civilization_frame(history, population, ecology)
+    civilization_state = update_civilization_state(
+        civilization_state,
+        civilization["civilization_state"],
+    )
     if isinstance(meta.get("domain_creation"), Mapping) and meta["domain_creation"]:
         created_domain = deps["register_domain"](str(meta["domain_creation"].get("name", "meta_domain")), meta["domain_creation"])
         meta["domain_creation"] = dict(created_domain)
@@ -57,8 +79,34 @@ def step(
         mutation["policy_stack"]["mutation"]["rate"] = min(float(mutation["policy_stack"]["mutation"]["rate"]), 0.18)
     quota = deps["quota_frame"](pressure["stabilized_pressure"], workers, stabilized_market, tick=len(history) + 1, guard=pressure["guard"], history=history)
     budgets = deps["recover_budgets"](dict(quota.budgets), pressure["guard"], history=history)
-    economy = build_economy_frame(pressure["stabilized_pressure"], ecology, population, civilization["memory_state"], budgets)
-    selection = build_selection_frame(pressure["stabilized_pressure"], stabilized_market, ecology, population, governance, tick=len(history) + 1)
+    economy = build_economy_frame(
+        pressure["stabilized_pressure"],
+        ecology,
+        population,
+        civilization["memory_state"],
+        budgets,
+        civilization_state=civilization_state,
+    )
+    civilization_state = update_civilization_state(
+        civilization_state,
+        {
+            "exploration_budget": int(economy["budgets"].get("exploration_budget", 0)),
+            "pressure_state": dict(pressure["stabilized_pressure"]),
+        },
+    )
+    selection = build_selection_frame(
+        pressure["stabilized_pressure"],
+        {
+            **dict(stabilized_market),
+            "active_evaluation_generations": int(civilization_state.get("active_evaluation_generations", 0)),
+            "evaluation_dominance_index": float(civilization_state.get("evaluation_dominance_index", 0.0)),
+            "evaluation_diversity": float(civilization_state.get("evaluation_diversity", 0.0)),
+        },
+        ecology,
+        population,
+        governance,
+        tick=len(history) + 1,
+    )
     active_meta_quest = deps["meta_quest"](pressure["stabilized_pressure"], recent_state=pressure["recent_state"])
     if pressure["guard"]["force_meta"] and active_meta_quest is None and not pressure["cooldown_state"]["meta_locked"] and pressure["cooldown_state"]["preferred_type"] != "exploration":
         active_meta_quest = {"type": "meta", "priority": "high", "reasons": ["collapse_guard"], "quest_types": ["meta", "reframing", "repair"], "pressure": {key: round(float(value), 4) for key, value in pressure["stabilized_pressure"].items()}, "cooldown": pressure["cooldown_state"]}
@@ -95,6 +143,15 @@ def step(
     if cycle_transition["exhausted"]:
         quest = {"type": "reframing", "priority": "high", "reason": "exploration_budget_exhausted", "cooldown": pressure["cooldown_state"], "exploration_cycle": dict(cycle_transition)}
     routing = build_routing_frame(pressure["stabilized_pressure"], budgets, domain=domain, guard=pressure["guard"], ecology=ecology, civilization_selection=selection["civilization_selection"], history=history)
+    lineage_frame = lineage_branching(
+        history,
+        pressure["stabilized_pressure"],
+        domain=str(routing["routing"].get("selected_domain", domain)),
+        tick=len(history) + 1,
+        evaluation_generations=int(evaluation_frame.get("evaluation_generation_count", 0)) if isinstance(evaluation_frame, Mapping) else 0,
+        policy_stagnation=float(civilization_state.get("policy_stagnation", 0.0)),
+    )
+    routing["routing"]["selected_lineage"] = str(lineage_frame.get("selected_lineage", routing["routing"].get("selected_domain", domain)))
     allocator_artifact_id = deps["register_allocator_artifact"]({"market": stabilized_market}, pressure["stabilized_pressure"], int(budgets["effective_workers"]), budgets, parent=parent)
     domain_frame = evolve_domain_genome(pressure["stabilized_pressure"], domain=domain, genome=genome, active_meta_quest=active_meta_quest, routing=routing["routing"], ecology=ecology)
     crossbred_domain_artifact_id = None
@@ -116,6 +173,17 @@ def step(
         "allocator_artifact_id": allocator_artifact_id,
         "domain_artifact_id": domain_artifact_id,
         "evaluation": evaluation,
+        "evaluation_generation_count": int(evaluation_frame.get("evaluation_generation_count", 0)) if isinstance(evaluation_frame, Mapping) else 0,
+        "evaluation_turnover": float(evaluation_frame.get("evaluation_turnover", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "active_evaluation_generations": int(evaluation_frame.get("active_evaluation_generations", 0)) if isinstance(evaluation_frame, Mapping) else 0,
+        "dormant_evaluation_generations": int(evaluation_frame.get("dormant_evaluation_generations", 0)) if isinstance(evaluation_frame, Mapping) else 0,
+        "retired_evaluation_generations": int(evaluation_frame.get("retired_evaluation_generations", 0)) if isinstance(evaluation_frame, Mapping) else 0,
+        "evaluation_branch_rate": float(evaluation_frame.get("evaluation_branch_rate", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "evaluation_diversity": float(evaluation_frame.get("evaluation_diversity", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "evaluation_dominance_index": float(evaluation_frame.get("evaluation_dominance_index", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "evaluation_retirement_rate": float(evaluation_frame.get("evaluation_retirement_rate", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "evaluation_reactivation_rate": float(evaluation_frame.get("evaluation_reactivation_rate", 0.0)) if isinstance(evaluation_frame, Mapping) else 0.0,
+        "active_evaluation_distribution": dict(evaluation_frame.get("active_evaluation_distribution", {})) if isinstance(evaluation_frame, Mapping) else {},
         "ecology": ecology,
         "exploration_strategy": exploration_strategy,
         "strategy_of_strategy": strategy_of_strategy,
@@ -125,7 +193,7 @@ def step(
         "economy": economy["economy"],
         "exploration_economy_state": economy["economy"],
         "resource_allocation": economy["resource_allocation"],
-        "civilization_state": civilization["civilization_state"],
+        "civilization_state": civilization_state,
         "civilization_stability": civilization["civilization_stability"],
         "exploration_cycle": cycle_transition,
         "meta_exploration": meta,
@@ -139,6 +207,7 @@ def step(
         "stabilized_market": stabilized_market,
         "budgets": budgets,
         "routing": routing["routing"],
+        "lineage": lineage_frame,
         "domain": domain,
         "genome": domain_frame["genome"],
     }
