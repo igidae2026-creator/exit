@@ -15,7 +15,7 @@ from runtime.supervisor import Supervisor
 @dataclass(slots=True)
 class OrchestratorConfig:
     tick_seconds: float = 0.05
-    max_ticks: int = 6
+    max_ticks: int | None = None
     data_dir: Path = DEFAULT_RUNTIME_ROOT / "data"
     artifact_store_dir: Path = DEFAULT_RUNTIME_ROOT / "artifact_store"
     state_dir: Path = DEFAULT_RUNTIME_ROOT / "state"
@@ -27,7 +27,7 @@ class OrchestratorConfig:
         runtime_root = Path(os.getenv("METAOS_RUNTIME_ROOT", str(DEFAULT_RUNTIME_ROOT)))
         return cls(
             tick_seconds=_env_float("METAOS_TICK_SECONDS", 0.05),
-            max_ticks=_env_int("METAOS_MAX_TICKS", 6),
+            max_ticks=_env_optional_int("METAOS_MAX_TICKS"),
             data_dir=Path(os.getenv("METAOS_DATA_DIR", str(runtime_root / "data"))),
             artifact_store_dir=Path(os.getenv("METAOS_ARTIFACT_STORE", str(runtime_root / "artifact_store"))),
             state_dir=Path(os.getenv("METAOS_STATE_DIR", str(runtime_root / "state"))),
@@ -51,15 +51,18 @@ class Orchestrator:
     def run(self, *, max_ticks: int | None = None) -> list[dict[str, Any]]:
         limit = self.config.max_ticks if max_ticks is None else max_ticks
         reports: list[dict[str, Any]] = []
-        if limit <= 0:
+        if limit is not None and limit <= 0:
             limit = 1
-        for _ in range(limit):
+        remaining = limit
+        while remaining is None or remaining > 0:
             state = replay_state(self.config.data_dir, state_dir=self.config.state_dir, archive_dir=self.config.archive_dir)
             report = self.supervisor.run_cycle(state)
             reports.append(report)
             print(json.dumps(report, ensure_ascii=True, separators=(",", ":")), flush=True)
             if self.config.tick_seconds > 0:
                 time.sleep(self.config.tick_seconds)
+            if remaining is not None:
+                remaining -= 1
         return reports
 
     def validate(self) -> dict[str, Any]:
@@ -99,6 +102,20 @@ def _env_int(name: str, default: int) -> int:
         return int(raw)
     except ValueError:
         return default
+
+
+def _env_optional_int(name: str) -> int | None:
+    raw = os.getenv(name)
+    if raw is None:
+        return None
+    text = raw.strip().lower()
+    if text in {"", "none", "null", "unbounded", "infinite", "continuous"}:
+        return None
+    try:
+        value = int(raw)
+    except ValueError:
+        return None
+    return None if value <= 0 else value
 
 
 def run() -> None:

@@ -70,9 +70,11 @@ def build_parser() -> argparse.ArgumentParser:
     safety_parser = subparsers.add_parser("safety-status", help="Inspect runtime safety and guardrail state")
     safety_parser.set_defaults(func=cmd_safety_status)
 
-    long_run_parser = subparsers.add_parser("long-run-check", help="Run bounded long-run validation")
-    long_run_parser.add_argument("--ticks", type=int, default=120)
+    long_run_parser = subparsers.add_parser("long-run-check", help="Run long-run validation with profile-driven acceptance")
+    long_run_parser.add_argument("--profile", choices=["smoke", "soak", "endurance"], default="smoke")
+    long_run_parser.add_argument("--ticks", type=int, default=None)
     long_run_parser.add_argument("--seed", type=int, default=42)
+    long_run_parser.add_argument("--fail-open", action="store_true", help="Allow guarded continuation during step errors (debug only)")
     long_run_parser.set_defaults(func=cmd_long_run_check)
 
     build_release_parser = subparsers.add_parser("build-release", help="Build release zip")
@@ -191,7 +193,12 @@ def cmd_safety_status(args: argparse.Namespace) -> int:
 
 
 def cmd_long_run_check(args: argparse.Namespace) -> int:
-    payload = validate_long_run(ticks=max(1, int(args.ticks)), seed=int(args.seed), fail_open=True)
+    payload = validate_long_run(
+        profile=str(getattr(args, "profile", "smoke")),
+        ticks=args.ticks,
+        seed=int(args.seed),
+        fail_open=bool(getattr(args, "fail_open", False)),
+    )
     print(json.dumps(payload, ensure_ascii=True))
     return 0 if payload.get("healthy") else 1
 

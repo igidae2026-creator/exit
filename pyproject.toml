@@ -30,6 +30,15 @@ include = [
     "metaos_c",
     "runtime",
     "validation",
+    "observer",
+    "signal",
+    "strategy",
+    "ecosystem",
+    "federation",
+    "evolution",
+    "core",
+    "kernel",
+    "loop",
 ]
 
 [project.scripts]
@@ -59,6 +68,15 @@ files = [
     "metaos_c",
     "runtime",
     "validation",
+    "observer",
+    "signal",
+    "strategy",
+    "ecosystem",
+    "federation",
+    "evolution",
+    "core",
+    "kernel",
+    "loop",
 ]
 exclude = "^(docs|tests)/"
 ignore_missing_imports = true
