@@ -22,7 +22,9 @@ Operator actions:
 - inspect economy status: `python -m app.cli economy-status`
 - inspect stability status: `python -m app.cli stability-status`
 - inspect safety status: `python -m app.cli safety-status`
-- run long-run validation: `python -m app.cli long-run-check`
+- run smoke validation: `python -m app.cli long-run-check --tier smoke`
+- run bounded validation: `python -m app.cli long-run-check --tier bounded`
+- run soak validation: `python -m app.cli long-run-check --tier soak`
 - rotate runtime safely: `bash ops/rotate-runtime.sh`
 - clean transient runtime state: `bash ops/cleanup-runtime.sh`
 
