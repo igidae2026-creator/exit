@@ -1,3 +1,3 @@
-from validation.artifacts import validate_artifact_classes
+"""Validation package for GENESIS/METAOS invariant checks."""
 
-__all__ = ["validate_artifact_classes"]
+__all__ = []

@@ -9,6 +9,13 @@ Canonical control flow:
 - `-> domain evolution`
 - `-> memory accumulation`
 
+
+Boundary truth map:
+- `docs/architecture/BOUNDARY_TRUTH_MAP.md`
+
+Invariant traceability:
+- `docs/architecture/INVARIANT_TRACEABILITY.md`
+
 Hierarchy:
 - `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
 
