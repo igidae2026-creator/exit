@@ -2,6 +2,7 @@ from pathlib import Path
 
 
 DOCS = [
+    "GENESIS.md",
     "README.md",
     "RUNBOOK.md",
     "docs/core/GENESIS.md",
@@ -15,14 +16,9 @@ DOCS = [
 ]
 
 
-def test_docs_sync_mentions_civilization_state_and_flow() -> None:
+def test_docs_sync_mentions_canonical_loop_and_derived_state() -> None:
     combined = "\n".join(Path(path).read_text(encoding="utf-8") for path in DOCS)
+    assert "signal -> generate -> evaluate -> select -> mutate -> archive -> repeat" in combined
     assert "civilization_state" in combined
-    assert "-> pressure" in combined
-    assert "-> allocation" in combined
-    assert "-> questing" in combined
-    assert "-> artifact evolution" in combined
-    assert "-> domain evolution" in combined
-    assert "-> memory accumulation" in combined
+    assert "derived operational state" in combined or "replay-derived" in combined
     assert "GENESIS -> METAOS-A -> METAOS-B -> METAOS-C" in combined
-

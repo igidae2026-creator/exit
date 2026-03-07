@@ -1,10 +1,7 @@
 # Recovery
 
 GENESIS recovery law:
-- invalid state -> replay restore
-- repair failure -> repair escalation
-- plateau -> exploration or reframing
-- collapse -> diversity pressure
+- `plateau -> exploration_collapse -> diversity_repair_failure -> repair_escalation -> invalid_state -> replay_restore`
 
 Operator steps:
 - `python -m app.cli replay-check`
@@ -22,8 +19,9 @@ Recovery truth:
 - operators intervene only when guardrails keep firing, replay fails, or long-run health drops
 
 Failure classes:
-- plateau: recover through reframing or exploration pressure increase
-- exploration collapse: recover through diversity pressure and branch forcing
+- plateau: recover through reframing pressure, novelty pressure, and knowledge-guided quest regeneration
+- exploration collapse: recover through diversity protection, resurrection, and domain opportunity forcing
+- diversity repair failure: recover through escalation when diversity repair fails to restore ecology floors
 - invalid state: recover through replay restore and safe mode
 - missing artifact references: recover by replay reconstruction or explicit repair path
 - corrupted derived state: discard derived state and rebuild from append-only truth

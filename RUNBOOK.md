@@ -2,14 +2,12 @@
 
 This runbook covers the installed CLI, source release validation, replay restore, and operator escalation boundaries.
 
-Canonical control flow:
-- `civilization_state`
-- `-> pressure`
-- `-> allocation`
-- `-> questing`
-- `-> artifact evolution`
-- `-> domain evolution`
-- `-> memory accumulation`
+Canonical loop:
+- `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+
+Derived runtime state:
+- `civilization_state` summarizes replay-derived operational state
+- pressure, allocation, quest generation, policy selection, mutation, archive, and recovery are operator-visible consequences of the canonical loop
 
 Boundary truth map:
 - `docs/architecture/BOUNDARY_TRUTH_MAP.md`
@@ -59,10 +57,7 @@ Automatic actions:
 - replay-compatible continuation
 
 Failure protocol:
-- plateau -> exploration pressure
-- collapse -> diversity repair
-- repair failure -> repair escalation
-- invalid state -> replay restore
+- `plateau -> exploration_collapse -> diversity_repair_failure -> repair_escalation -> invalid_state -> replay_restore`
 
 Escalate manually when:
 - `metaos replay-check` fails

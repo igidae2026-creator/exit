@@ -2,17 +2,11 @@
 
 METAOS is an autonomous exploration civilization engine governed by GENESIS, with bounded validation modes and an unbounded production mode.
 
-Primary control surface:
-- `civilization_state`
+Canonical loop:
+- `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
 
-Canonical control flow:
-- `civilization_state`
-- `-> pressure`
-- `-> allocation`
-- `-> questing`
-- `-> artifact evolution`
-- `-> domain evolution`
-- `-> memory accumulation`
+Primary operational control surface:
+- `civilization_state` as replay-derived runtime state
 
 Canonical hierarchy:
 - `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`

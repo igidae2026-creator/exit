@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import json
 import os
+from collections import Counter, deque
 from pathlib import Path
 from typing import Any
-from collections import Counter
 
 from artifact.archive import append_archive, latest_archive, load_archive, remember_extinction
 from artifact.civilization_registry import civilization_memory_snapshot as artifact_civilization_memory_snapshot
@@ -27,7 +27,8 @@ def _memory_rows() -> list[dict[str, Any]]:
     path = _memory_path()
     if not path.exists():
         return []
-    rows: list[dict[str, Any]] = []
+    limit = max(1, int(os.environ.get("METAOS_MEMORY_SCAN_LIMIT", "4096")))
+    rows: deque[dict[str, Any]] = deque(maxlen=limit)
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             try:
@@ -36,7 +37,7 @@ def _memory_rows() -> list[dict[str, Any]]:
                 continue
             if isinstance(row, dict):
                 rows.append(row)
-    return rows
+    return list(rows)
 
 
 def _metrics_path() -> Path:
@@ -52,7 +53,8 @@ def _metrics_rows() -> list[dict[str, Any]]:
     path = _metrics_path()
     if not path.exists():
         return []
-    rows: list[dict[str, Any]] = []
+    limit = max(1, int(os.environ.get("METAOS_METRIC_SCAN_LIMIT", "4096")))
+    rows: deque[dict[str, Any]] = deque(maxlen=limit)
     with path.open("r", encoding="utf-8") as handle:
         for line in handle:
             try:
@@ -61,7 +63,7 @@ def _metrics_rows() -> list[dict[str, Any]]:
                 continue
             if isinstance(row, dict):
                 rows.append(row)
-    return rows
+    return list(rows)
 
 
 def metrics_window(limit: int = 64) -> list[dict[str, Any]]:

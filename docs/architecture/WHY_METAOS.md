@@ -1,11 +1,11 @@
 # Why METAOS
 
-METAOS is for bounded autonomous exploration under GENESIS law.
+METAOS is for autonomous exploration under GENESIS law, with bounded verification modes and an unbounded production runtime.
 
 Use METAOS when:
 - you need `civilization_state` to govern long-running exploration
 - you need replayable append-only truth
-- you need artifact evolution, policy evolution, and bounded domain expansion
+- you need artifact evolution, policy evolution, and domain expansion without core mutation
 - you need observable civilization, lineage ecology, domain lifecycle, economy balance, guardrail interventions, and replay status
 
 Do not use METAOS when:
@@ -14,12 +14,13 @@ Do not use METAOS when:
 - the operator wants direct manual control over generation and selection internals
 
 What METAOS provides:
-- civilization-state control instead of ad hoc orchestrator-first control
+- the single external GENESIS loop instead of multiple competing loop vocabularies
+- civilization-state control as derived operational state instead of ad hoc orchestrator-first control
 - `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
 - immutable artifacts as the universal evolution unit
 - multiple surviving lineages with health richer than survival count
 - explicit active, inactive, retired, and resurrectable domain lifecycle
-- bounded exploration economy instead of raw throughput maximization
+- pressure-coupled exploration economy instead of raw throughput maximization
 - self-tuning guardrails that stay inside GENESIS invariants
 - operator-light long-run observability and recovery
 

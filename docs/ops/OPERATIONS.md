@@ -16,8 +16,9 @@ Operator surfaces:
 - `python -m app.cli long-run-check`
 
 Observed status:
-- `civilization_state` is the primary control summary
-- healthy operation means bounded exploration, bounded churn, live replay continuity, and explicit guardrail actions when pressure drifts
+- the canonical external sequence is `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+- `civilization_state` is the replay-derived control summary
+- healthy operation means unbounded production exploration, bounded verification modes, live replay continuity, and explicit guardrail actions when pressure drifts
 - domain reporting distinguishes `created_domains`, `active_domains`, `inactive_domains`, `retired_domains`, and `resurrectable_domains`
 - `active_domain_distribution` is the active-share view
 - lineage health distinguishes coexistence, dominance lock-in, dormancy, and zombie lineages

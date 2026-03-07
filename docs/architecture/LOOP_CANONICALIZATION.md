@@ -4,18 +4,18 @@
 
 `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
 
-## Runtime Control Flow
+## Derived Runtime Frame
 
-`civilization_state -> pressure -> allocation -> questing -> artifact evolution -> domain evolution -> memory accumulation`
+`civilization_state -> pressure/allocation/quest/policy/domain/knowledge summaries`
 
 ## Mapping
 
-- `signal`: replay state, signals, and current civilization pressure inputs
-- `generate`: quest generation, policy proposal, domain expansion candidates
-- `evaluate`: score vectors, guardrails, selection pressure, stability assessment
-- `select`: active quest and lineage choice, policy swap, allocation choice
-- `mutate`: artifact creation, lineage branching, domain mutation, repair action
-- `archive`: append-only log, registry, archive snapshots as derived caches
+- `signal`: replay state, truth-derived signals, and active pressure inputs
+- `generate`: quest generation, policy proposal, candidate creation, domain opportunity generation
+- `evaluate`: score vectors, guardrails, selection pressure, stability assessment, knowledge retrieval
+- `select`: active quest and lineage choice, policy swap, allocation choice, repair path choice
+- `mutate`: artifact creation, lineage branching, policy replacement, domain mutation, repair action
+- `archive`: append-only log, registry, archive facts, and knowledge accumulation inputs
 - `repeat`: next tick from replayed state, never by mutable hidden truth
 
 ## Enforcement

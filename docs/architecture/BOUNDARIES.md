@@ -3,7 +3,7 @@
 GENESIS defines the boundary model.
 
 Ownership truth:
-- `runtime/` owns `civilization_state`, pressure, allocation, and orchestration stages
+- `runtime/` owns replay-derived `civilization_state`, pressure derivation, allocation, and canonical loop orchestration
 - `domains/` owns domain logic and domain evolution helpers
 - `artifact/` owns immutable artifact storage, registry, lineage, and archive
 - `validation/` owns invariant and boundary enforcement

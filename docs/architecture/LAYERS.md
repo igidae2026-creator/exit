@@ -16,14 +16,11 @@ Canonical layers:
 - `metaos_c/`: civilization engine
 - `app/`: CLI and operator entrypoints only
 
-Canonical control flow:
-- `civilization_state`
-- `-> pressure`
-- `-> allocation`
-- `-> questing`
-- `-> artifact evolution`
-- `-> domain evolution`
-- `-> memory accumulation`
+Canonical loop:
+- `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+
+Derived runtime frame:
+- `civilization_state` is the replay-derived runtime aggregate consumed by runtime, observer, and CLI surfaces
 
 Compatibility-only layers:
 - `core/`

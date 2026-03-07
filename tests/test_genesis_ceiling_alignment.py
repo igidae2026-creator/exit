@@ -45,5 +45,5 @@ def test_failure_protocol_state_uses_ceiling_thresholds() -> None:
             active_domains=8,
             dominance_index=0.46,
         )
-        == "diversity_repair"
+        == "diversity_repair_failure"
     )

@@ -6,6 +6,14 @@ from federation.federation_state import federation_state
 from genesis.replay import replay_state
 from runtime.civilization_state import civilization_status as state_civilization_status
 from runtime.civilization_memory import civilization_state
+from runtime.genesis_ceiling import (
+    CANONICAL_EXPLORATION_LOOP,
+    DOMAIN_ECOLOGY,
+    DOMINANCE_CAP,
+    DOMINANCE_EMERGENCY,
+    FAILURE_PROTOCOL_STATES,
+    LINEAGE_ECOLOGY,
+)
 from runtime.lineage_ecology import assess_lineages
 from runtime.replay_state import replay_ops_state
 from runtime.runtime_safety import runtime_safety
@@ -127,7 +135,27 @@ def replay_summary() -> dict[str, Any]:
 def runtime_summary() -> dict[str, Any]:
     civ = civilization_state()
     federation = federation_state()
+    safety = runtime_safety()
     return {
+        "canonical_loop": list(CANONICAL_EXPLORATION_LOOP),
+        "canonical_ownership": {
+            "genesis": "append-only truth, replay, invariant law, recovery law",
+            "runtime": "canonical loop orchestration, replay-derived state, pressure, allocation, failure protocol",
+            "artifact": "immutable registry, lineage, archive",
+            "domains": "domain contracts, loaders, genomes, lifecycle hooks",
+            "validation": "boundary, ownership, constitution, and artifact law gates",
+            "observer": "read-only black-box projections",
+        },
+        "failure_protocol": {
+            "states": list(FAILURE_PROTOCOL_STATES),
+            "current_state": str(safety.get("failure_protocol_state", "plateau")),
+            "lineage_floor": LINEAGE_ECOLOGY.minimum,
+            "lineage_preferred": LINEAGE_ECOLOGY.preferred,
+            "domain_floor": DOMAIN_ECOLOGY.minimum,
+            "domain_preferred": DOMAIN_ECOLOGY.preferred,
+            "dominance_cap": DOMINANCE_CAP,
+            "dominance_emergency_threshold": DOMINANCE_EMERGENCY,
+        },
         "replay": replay_summary(),
         "civilization": civilization_summary(),
         "lineages": lineage_summary(),
@@ -151,7 +179,7 @@ def runtime_summary() -> dict[str, Any]:
             "tail_yield_score": float(civ.get("tail_yield_score", 0.0)),
         },
         "economy": economy_summary(),
-        "safety": runtime_safety(),
+        "safety": safety,
         "stability": {
             "stability_score": float(civ.get("stability_score", 0.0)),
             "drift_score": float(civ.get("drift_score", 0.0)),

@@ -353,7 +353,7 @@ def run_long_run_validation(
         "preferred_domains": domain_count >= DOMAIN_ECOLOGY.preferred,
         "dominance_cap_ok": float(payload["dominance_index"]) <= DOMINANCE_CAP,
         "dominance_emergency": float(payload["dominance_index"]) > DOMINANCE_EMERGENCY,
-        "failure_protocol_state": str(safety.get("failure_protocol_state", "resume")),
+        "failure_protocol_state": str(safety.get("failure_protocol_state", "plateau")),
     }
     payload["healthy_smoke"] = (
         bool(payload["replay_ok"])

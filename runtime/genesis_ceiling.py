@@ -16,12 +16,10 @@ CANONICAL_EXPLORATION_LOOP = (
 FAILURE_PROTOCOL_STATES = (
     "plateau",
     "exploration_collapse",
-    "diversity_repair",
+    "diversity_repair_failure",
     "repair_escalation",
     "invalid_state",
     "replay_restore",
-    "safe_mode",
-    "resume",
 )
 
 
@@ -52,12 +50,12 @@ def failure_protocol_state(
     if repair_pressure >= 0.9:
         return "repair_escalation"
     if dominance_index > DOMINANCE_EMERGENCY:
-        return "diversity_repair"
+        return "diversity_repair_failure"
     if surviving_lineages < LINEAGE_ECOLOGY.minimum or active_domains < DOMAIN_ECOLOGY.minimum:
         return "exploration_collapse"
     if repair_pressure >= 0.75:
         return "plateau"
-    return "resume"
+    return "plateau"
 
 
 __all__ = [

@@ -5,12 +5,13 @@ Owner: `runtime/genesis_ceiling.py`, `runtime/runtime_safety.py`, `runtime/long_
 State model:
 - `plateau`
 - `exploration_collapse`
-- `diversity_repair`
+- `diversity_repair_failure`
 - `repair_escalation`
 - `invalid_state`
 - `replay_restore`
-- `safe_mode`
-- `resume`
+
+Runtime mode:
+- `safe_mode` is an execution mode, not a canonical failure-protocol state
 
 Event schema:
 - `trigger`: observed runtime condition
@@ -25,10 +26,10 @@ Replay semantics:
 ## Canonical Triggers
 
 - plateau -> exploration pressure and reframing
-- collapse -> diversity repair
+- exploration collapse -> diversity repair attempts
 - diversity repair failure -> repair escalation
 - invalid state -> replay restore
-- dominance `> 0.45` -> diversity repair and dormant lineage resurrection
+- dominance `> 0.45` -> diversity repair failure state and dormant lineage resurrection
 - active lineages `< 8` or active domains `< 4` -> exploration collapse
 
 ## Runtime Handling
@@ -62,6 +63,6 @@ Replay semantics:
 
 ## Test Obligations
 
-- tests must assert the canonical state set remains exactly `plateau`, `exploration_collapse`, `diversity_repair`, `repair_escalation`, `invalid_state`, `replay_restore`, `safe_mode`, `resume`
+- tests must assert the canonical state set remains exactly `plateau`, `exploration_collapse`, `diversity_repair_failure`, `repair_escalation`, `invalid_state`, `replay_restore`
 - tests must validate lineage floor `< 8`, domain floor `< 4`, and dominance emergency `> 0.45` transitions
 - release verification must confirm CLI, replay, and documentation surfaces agree on the same state names

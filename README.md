@@ -3,7 +3,7 @@
 METAOS is an autonomous exploration civilization engine for replayable, pressure-driven solution evolution under GENESIS law.
 
 Primary references:
-- [GENESIS](docs/core/GENESIS.md)
+- [GENESIS](GENESIS.md)
 - [METAOS Final Definition](docs/core/METAOS_FINAL_DEFINITION.md)
 - [Architecture Layers](docs/architecture/LAYERS.md)
 - [Architecture Boundaries](docs/architecture/BOUNDARIES.md)
@@ -18,16 +18,14 @@ Invariant traceability:
 
 ## What METAOS Is
 
-METAOS is organized around `civilization_state` as the primary control surface.
+METAOS is organized around append-only truth, immutable artifacts, and replay-derived operational state.
 
-Canonical control flow:
-- `civilization_state`
-- `-> pressure`
-- `-> allocation`
-- `-> questing`
-- `-> artifact evolution`
-- `-> domain evolution`
-- `-> memory accumulation`
+Canonical loop:
+- `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+
+Derived operational frame:
+- `civilization_state` is the replay-derived control summary
+- pressure, allocation, quest generation, policy evolution, domain lifecycle, and knowledge reuse are derived runtime behaviors inside the canonical loop
 
 Canonical hierarchy:
 - `GENESIS -> METAOS-A -> METAOS-B -> METAOS-C`
@@ -114,7 +112,8 @@ Release truth:
 
 ## Long-Run Status
 
-- civilization-state architecture is the live control model
+- the GENESIS loop is the only canonical external loop
+- civilization-state architecture is the replay-derived live control model
 - replay is append-only and deterministic under GENESIS rules
 - created, active, inactive, retired, and resurrectable domains are tracked separately
 - lineage health distinguishes active, dormant, zombie, and dominant lock-in cases

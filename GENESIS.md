@@ -1,6 +1,6 @@
 # GENESIS
 
-GENESIS is the top-level law for METAOS.
+GENESIS is the supreme law for METAOS.
 
 Human defines only:
 - goal
@@ -16,27 +16,25 @@ System performs:
 - mutation
 - archival
 - repetition
-- implementation
-- validation
-- evolution
-- expansion
+- policy evolution
+- domain expansion
 
-State law:
-- state = append-only history + replayed effective state
-- append-only truth is the sole authority
-- `civilization_state` is derived operational state above the kernel, not an alternate external loop
-
-Core loop:
+Canonical loop:
 - `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
+
+Operational state law:
+- append-only truth is the sole authority
+- replay reconstructs effective state from truth
+- `civilization_state` is derived operational state, never an alternate canonical loop
 
 Invariants:
 - append-only truth
 - replayable effective state
 - immutable artifacts
-- minimal kernel
+- minimal core
 - domain autonomy
-- multiple lineages survive
-- pressure drives allocation, selection, mutation, and quest generation
+- lineage ecology
+- pressure-coupled exploration
 
 Artifact law:
 - everything that evolves is an artifact
