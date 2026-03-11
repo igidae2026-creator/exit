@@ -14,6 +14,7 @@ Operator surfaces:
 - `python -m app.cli safety-status`
 - `python -m app.cli replay-check`
 - `python -m app.cli long-run-check`
+- `docs/ops/OPERATIONAL_AUTONOMY_STATUS.md`
 
 Observed status:
 - the canonical external sequence is `signal -> generate -> evaluate -> select -> mutate -> archive -> repeat`
@@ -23,6 +24,7 @@ Observed status:
 - `active_domain_distribution` is the active-share view
 - lineage health distinguishes coexistence, dominance lock-in, dormancy, and zombie lineages
 - economy balance tracks budget skew, not just total budget volume
+- active unattended threshold status must remain synchronized with `docs/ops/OPERATIONAL_AUTONOMY_STATUS.md`
 
 Installed CLI truth:
 - supported installed command: `metaos`

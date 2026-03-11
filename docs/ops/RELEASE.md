@@ -49,3 +49,4 @@ Long-horizon release gates:
 - `stability_score` and `economy_balance_score` must be present in validation output
 - domain lifecycle must report active, inactive, and retired sets explicitly
 - guardrail interventions must remain bounded and replay-derived
+- active unattended threshold evidence must stay synchronized with `docs/ops/OPERATIONAL_AUTONOMY_STATUS.md`

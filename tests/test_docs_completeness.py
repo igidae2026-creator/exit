@@ -9,6 +9,7 @@ CANONICAL_DOCS = {
     "docs/runtime/SUPERVISOR_SPEC.md": ("## Purpose", "## Scope", "## Invariants", "## Inputs", "## Outputs", "## Failure Modes", "## Recovery Behavior", "## Ownership", "## Test Mapping", "## Operator Examples"),
     "docs/runtime/RUNTIME_FAILURE_HANDLING.md": ("## Purpose", "## Scope", "## Invariants", "## Inputs", "## Outputs", "## Failure Modes", "## Recovery Behavior", "## Ownership", "## Test Mapping", "## Operator Examples"),
     "docs/ops/OPERATIONS.md": ("# Operations",),
+    "docs/ops/OPERATIONAL_AUTONOMY_STATUS.md": ("# Operational Autonomy Status",),
     "docs/ops/RECOVERY.md": ("# Recovery",),
     "docs/ops/RELEASE.md": ("# Release",),
     "docs/architecture/OWNERSHIP_MATRIX.md": ("## Purpose", "## Machine-Readable Source", "## Canonical Packages", "## Compatibility Shims", "## Release-Only Surfaces", "## Repo-Only Surfaces", "## Invariants", "## Test Mapping"),

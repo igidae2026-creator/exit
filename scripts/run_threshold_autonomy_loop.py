@@ -99,6 +99,10 @@ def _repo_threshold_snapshot_path() -> Path:
     return REPO_ROOT / "docs" / "runtime" / "THRESHOLD_OPERATING_SNAPSHOT.md"
 
 
+def _repo_operational_status_path() -> Path:
+    return REPO_ROOT / "docs" / "ops" / "OPERATIONAL_AUTONOMY_STATUS.md"
+
+
 def _artifact_metrics(task: dict | None) -> dict[str, float]:
     task = dict(task or {})
     artifact_input = dict(task.get("artifact_input") or {})
@@ -387,6 +391,81 @@ def _write_repo_threshold_snapshot(
         ]
     )
     _repo_threshold_snapshot_path().write_text("\n".join(lines), encoding="utf-8")
+
+
+def _write_repo_operational_status(
+    payload: dict,
+    maintenance: dict,
+    regression: dict,
+    longer_soak: dict,
+    identity_guard: dict,
+    fault_injection: dict,
+    auto_onboarding: dict,
+) -> None:
+    progress = dict(payload.get("threshold_progress") or {})
+    autonomous = dict(payload.get("autonomous_loop_stats") or {})
+    human_lift = dict(payload.get("human_lift") or {})
+    horizon = dict(longer_soak.get("horizon_health") or {})
+    fault_rows = list(fault_injection.get("faults") or [])
+    lines = [
+        "# Operational Autonomy Status",
+        "",
+        "## Read This When",
+        "",
+        "You need the shortest ops/release-facing summary of the active unattended runtime status.",
+        "",
+        "## Current Gate Status",
+        "",
+        f"- execution threshold: `{'pass' if int(autonomous.get('generated', 0) or 0) > 0 and int(autonomous.get('executed', 0) or 0) > 0 and int(autonomous.get('failed', 0) or 0) == 0 else 'watch'}`",
+        f"- operational threshold: `{'pass' if bool(maintenance.get('maintenance_ok')) and bool(regression.get('regression_free')) and bool(longer_soak.get('long_soak_ok')) else 'watch'}`",
+        f"- autonomy threshold: `{'pass' if bool(progress.get('threshold_reached')) and bool(auto_onboarding.get('auto_onboarding_ok')) else 'watch'}`",
+        f"- final threshold: `{'pass' if bool(identity_guard.get('identity_guard_ok')) and float(human_lift.get('mean_quality_lift', 1.0) or 0.0) <= 0.01 else 'watch'}`",
+        "",
+        "## Current Runtime Evidence",
+        "",
+        f"- threshold progress: `{float(progress.get('threshold_progress_pct', 0.0) or 0.0):.1f}%`",
+        f"- threshold reached: `{str(bool(progress.get('threshold_reached'))).lower()}`",
+        f"- steady-state cycles: `{int(progress.get('steady_state_cycles', 0) or 0)}`",
+        f"- mean autonomous accept rate: `{float(autonomous.get('mean_accept_rate', 0.0) or 0.0):.4f}`",
+        f"- autonomous failures: `{int(autonomous.get('failed', 0) or 0)}`",
+        f"- mean human quality lift: `{float(human_lift.get('mean_quality_lift', 0.0) or 0.0):.4f}`",
+        f"- long soak iterations: `{int(longer_soak.get('iterations', 0) or 0)}`",
+        f"- false hold total: `{int(horizon.get('false_hold_total', 0) or 0)}`",
+        f"- false reject total: `{int(horizon.get('false_reject_total', 0) or 0)}`",
+        f"- false escalate total: `{int(horizon.get('false_escalate_total', 0) or 0)}`",
+        f"- false promote total: `{int(horizon.get('false_promote_total', 0) or 0)}`",
+        "",
+        "## Fault Handling",
+        "",
+    ]
+    lines.extend(
+        f"- `{row.get('fault')}` -> `{row.get('verdict')}`"
+        for row in fault_rows
+    )
+    lines.extend(
+        [
+            f"- append-only truth preserved: `{str(bool(fault_injection.get('append_only_truth_preserved'))).lower()}`",
+            f"- lineage and replayability preserved: `{str(bool(fault_injection.get('lineage_replayability_preserved'))).lower()}`",
+            "",
+            "## Operating Interpretation",
+            "",
+            "- release and operations surfaces may treat the current runtime as threshold-reached only while the above gates stay green",
+            "- runtime convenience remains subordinate to exploration, lineage, replayability, and append-only truth",
+            "- new consumer families should enter operations only through conformance, soak, and identity-safe onboarding",
+            "",
+            "## Source Of Truth",
+            "",
+            "- `docs/runtime/THRESHOLD_OPERATING_SNAPSHOT.md`",
+            "- `/tmp/metaos_threshold_autonomy_clean/latest_status.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/maintenance_status.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/regression_watch.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/long_soak_report.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/fault_injection_report.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/metaos_identity_guard.json`",
+            "",
+        ]
+    )
+    _repo_operational_status_path().write_text("\n".join(lines), encoding="utf-8")
 
 
 def _load_local_adapter_manifest(consumer_name: str):
@@ -854,6 +933,7 @@ def _metaos_identity_guard(log_root: Path, payload: dict) -> dict:
         "human_threshold": Path("/home/meta_os/metaos/docs/runtime/HUMAN_INTERVENTION_THRESHOLD.md").exists(),
         "platform_framing": Path("/home/meta_os/metaos/docs/runtime/PLATFORM_LAYER_FRAMING.md").exists(),
         "threshold_operating_snapshot": _repo_threshold_snapshot_path().exists(),
+        "operational_autonomy_status": _repo_operational_status_path().exists(),
     }
     append_only_surfaces = {
         "threshold_loop_jsonl": threshold_loop.exists() and threshold_loop.stat().st_size > 0,
@@ -1228,9 +1308,26 @@ def main() -> int:
         false_verdict = _remeasure_false_verdicts(log_root)
         longer_soak = _run_longer_soak(log_root)
         candidates = _consumer_family_candidates(consumers)
-        identity_guard = _metaos_identity_guard(log_root, payload)
         fault_injection = _fault_injection_report(log_root)
         auto_onboarding = _auto_onboarding_report(log_root)
+        _write_repo_threshold_snapshot(
+            payload,
+            maintenance,
+            regression,
+            longer_soak,
+            {"identity_guard_ok": False},
+            auto_onboarding,
+        )
+        _write_repo_operational_status(
+            payload,
+            maintenance,
+            regression,
+            longer_soak,
+            {"identity_guard_ok": False},
+            fault_injection,
+            auto_onboarding,
+        )
+        identity_guard = _metaos_identity_guard(log_root, payload)
         _write_json(_maintenance_status_path(log_root), maintenance)
         _write_json(_regression_watch_path(log_root), regression)
         _write_json(_false_verdict_path(log_root), false_verdict)
@@ -1245,6 +1342,15 @@ def main() -> int:
             regression,
             longer_soak,
             identity_guard,
+            auto_onboarding,
+        )
+        _write_repo_operational_status(
+            payload,
+            maintenance,
+            regression,
+            longer_soak,
+            identity_guard,
+            fault_injection,
             auto_onboarding,
         )
         if max_cycles > 0 and cycle >= max_cycles:

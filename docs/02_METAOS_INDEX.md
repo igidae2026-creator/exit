@@ -11,7 +11,7 @@
 
 ## 런타임/운영 문서
 - Runtime specs: `docs/runtime/*.md`
-- Ops: `docs/ops/OPERATIONS.md`, `docs/ops/RECOVERY.md`, `docs/ops/RELEASE.md`
+- Ops: `docs/ops/OPERATIONS.md`, `docs/ops/RECOVERY.md`, `docs/ops/RELEASE.md`, `docs/ops/OPERATIONAL_AUTONOMY_STATUS.md`
 - Runbook: `RUNBOOK.md`
 
 ## Canonical 구현 경로

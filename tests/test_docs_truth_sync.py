@@ -11,6 +11,7 @@ DOCS = [
     "docs/architecture/BOUNDARIES.md",
     "docs/architecture/WHY_METAOS.md",
     "docs/ops/OPERATIONS.md",
+    "docs/ops/OPERATIONAL_AUTONOMY_STATUS.md",
     "docs/ops/RECOVERY.md",
     "docs/ops/RELEASE.md",
 ]
