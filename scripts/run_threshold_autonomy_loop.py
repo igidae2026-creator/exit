@@ -95,6 +95,10 @@ def _auto_onboarding_path(log_root: Path) -> Path:
     return log_root / "auto_onboarding_report.json"
 
 
+def _ceiling_convergence_path(log_root: Path) -> Path:
+    return log_root / "ceiling_convergence_report.json"
+
+
 def _repo_threshold_snapshot_path() -> Path:
     return REPO_ROOT / "docs" / "runtime" / "THRESHOLD_OPERATING_SNAPSHOT.md"
 
@@ -401,6 +405,7 @@ def _write_repo_operational_status(
     identity_guard: dict,
     fault_injection: dict,
     auto_onboarding: dict,
+    convergence: dict,
 ) -> None:
     progress = dict(payload.get("threshold_progress") or {})
     autonomous = dict(payload.get("autonomous_loop_stats") or {})
@@ -435,6 +440,13 @@ def _write_repo_operational_status(
         f"- false escalate total: `{int(horizon.get('false_escalate_total', 0) or 0)}`",
         f"- false promote total: `{int(horizon.get('false_promote_total', 0) or 0)}`",
         "",
+        "## Conservative Convergence",
+        "",
+        f"- bundled loops: `runtime_stability`, `autonomous_expansion`, `identity_release_closure`",
+        f"- current bundled pass streak: `{int(convergence.get('bundled_pass_streak', 0) or 0)}`",
+        f"- conservative target streak: `{int(convergence.get('conservative_target_streak', 0) or 0)}`",
+        f"- conservative ceiling-like status: `{str(bool(convergence.get('conservative_ceiling_like'))).lower()}`",
+        "",
         "## Fault Handling",
         "",
     ]
@@ -466,6 +478,72 @@ def _write_repo_operational_status(
         ]
     )
     _repo_operational_status_path().write_text("\n".join(lines), encoding="utf-8")
+
+
+def _cycle_bundle_pass(row: dict) -> bool:
+    progress = dict(row.get("threshold_progress") or {})
+    stats = dict(row.get("autonomous_loop_stats") or {})
+    return bool(
+        progress.get("threshold_reached")
+        and int(progress.get("steady_state_cycles", 0) or 0) >= 3
+        and int(stats.get("failed", 0) or 0) == 0
+        and float(stats.get("mean_accept_rate", 0.0) or 0.0) >= 0.95
+    )
+
+
+def _trailing_bundle_streak(recent_cycles: list[dict]) -> int:
+    streak = 0
+    for row in reversed(recent_cycles):
+        if not _cycle_bundle_pass(row):
+            break
+        streak += 1
+    return streak
+
+
+def _ceiling_convergence_report(
+    recent_cycles: list[dict],
+    payload: dict,
+    maintenance: dict,
+    regression: dict,
+    longer_soak: dict,
+    identity_guard: dict,
+    fault_injection: dict,
+    auto_onboarding: dict,
+) -> dict:
+    runtime_stability = bool(
+        maintenance.get("maintenance_ok")
+        and regression.get("regression_free")
+        and longer_soak.get("long_soak_ok")
+    )
+    autonomous_expansion = bool(
+        (payload.get("threshold_progress") or {}).get("threshold_reached")
+        and auto_onboarding.get("auto_onboarding_ok")
+        and int((payload.get("autonomous_loop_stats") or {}).get("failed", 0) or 0) == 0
+        and float((payload.get("autonomous_loop_stats") or {}).get("mean_accept_rate", 0.0) or 0.0) >= 0.95
+        and len(payload.get("consumers") or []) >= 5
+    )
+    identity_release_closure = bool(
+        identity_guard.get("identity_guard_ok")
+        and fault_injection.get("append_only_truth_preserved")
+        and fault_injection.get("lineage_replayability_preserved")
+        and all(bool(value) for value in (identity_guard.get("docs_present") or {}).values())
+    )
+    bundled_pass = runtime_stability and autonomous_expansion and identity_release_closure
+    streak = _trailing_bundle_streak(recent_cycles)
+    if bundled_pass:
+        streak = max(1, streak)
+    conservative_target = 15
+    return {
+        "bundles": {
+            "runtime_stability": runtime_stability,
+            "autonomous_expansion": autonomous_expansion,
+            "identity_release_closure": identity_release_closure,
+        },
+        "bundled_pass": bundled_pass,
+        "bundled_pass_streak": streak,
+        "conservative_target_streak": conservative_target,
+        "conservative_ceiling_like": bool(bundled_pass and streak >= conservative_target),
+    }
 
 
 def _load_local_adapter_manifest(consumer_name: str):
@@ -1326,8 +1404,19 @@ def main() -> int:
             {"identity_guard_ok": False},
             fault_injection,
             auto_onboarding,
+            {"bundled_pass_streak": 0, "conservative_target_streak": 15, "conservative_ceiling_like": False},
         )
         identity_guard = _metaos_identity_guard(log_root, payload)
+        convergence = _ceiling_convergence_report(
+            _read_recent_cycles(ledger_path, window=15),
+            payload,
+            maintenance,
+            regression,
+            longer_soak,
+            identity_guard,
+            fault_injection,
+            auto_onboarding,
+        )
         _write_json(_maintenance_status_path(log_root), maintenance)
         _write_json(_regression_watch_path(log_root), regression)
         _write_json(_false_verdict_path(log_root), false_verdict)
@@ -1336,6 +1425,7 @@ def main() -> int:
         _write_json(_identity_guard_path(log_root), identity_guard)
         _write_json(_fault_injection_path(log_root), fault_injection)
         _write_json(_auto_onboarding_path(log_root), auto_onboarding)
+        _write_json(_ceiling_convergence_path(log_root), convergence)
         _write_repo_threshold_snapshot(
             payload,
             maintenance,
@@ -1352,6 +1442,7 @@ def main() -> int:
             identity_guard,
             fault_injection,
             auto_onboarding,
+            convergence,
         )
         if max_cycles > 0 and cycle >= max_cycles:
             return 0

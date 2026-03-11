@@ -25,6 +25,13 @@ You need the shortest ops/release-facing summary of the active unattended runtim
 - false escalate total: `0`
 - false promote total: `0`
 
+## Conservative Convergence
+
+- bundled loops: `runtime_stability`, `autonomous_expansion`, `identity_release_closure`
+- current bundled pass streak: `12`
+- conservative target streak: `15`
+- conservative ceiling-like status: `false`
+
 ## Fault Handling
 
 - `missing_adapter` -> `hold`
