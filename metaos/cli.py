@@ -5,8 +5,13 @@ import json
 import subprocess
 from typing import Sequence
 
+from metaos.runtime.adapter_scaffold import generate_consumer_scaffold
+from metaos.runtime.consumer_api import consumer_migration_plan
 from observer.projections import (
     civilization_projection,
+    consumer_intervention_apply_projection,
+    consumer_projection,
+    consumer_intervention_projection,
     domain_projection,
     economy_projection,
     external_artifact_projection,
@@ -72,6 +77,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     health_parser = subparsers.add_parser("health", help="Inspect runtime health")
     health_parser.set_defaults(func=cmd_health)
+
+    consumer_parser = subparsers.add_parser("consumer-status", help="Inspect consumer lifecycle operating report")
+    consumer_parser.set_defaults(func=cmd_consumer_status)
+
+    consumer_intervention_parser = subparsers.add_parser("consumer-interventions", help="Inspect recommended consumer operating interventions")
+    consumer_intervention_parser.set_defaults(func=cmd_consumer_interventions)
+
+    consumer_apply_parser = subparsers.add_parser("consumer-apply-interventions", help="Apply recommended consumer operating interventions")
+    consumer_apply_parser.set_defaults(func=cmd_consumer_apply_interventions)
 
     civilization_parser = subparsers.add_parser("civilization-status", help="Inspect civilization state")
     civilization_parser.set_defaults(func=cmd_civilization_status)
@@ -142,6 +156,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     validate_release_parser = subparsers.add_parser("validate-release", help="Validate release tree")
     validate_release_parser.set_defaults(func=cmd_validate_release)
+
+    scaffold_parser = subparsers.add_parser("generate-consumer-scaffold", help="Generate adapter consumer scaffold")
+    scaffold_parser.add_argument("consumer_name")
+    scaffold_parser.add_argument("--output-root", default=".")
+    scaffold_parser.set_defaults(func=cmd_generate_consumer_scaffold)
+
+    migration_parser = subparsers.add_parser("consumer-migration-plan", help="Inspect migration plan between consumer versions")
+    migration_parser.add_argument("from_version")
+    migration_parser.add_argument("to_version")
+    migration_parser.set_defaults(func=cmd_consumer_migration_plan)
     return parser
 
 
@@ -240,6 +264,21 @@ def cmd_health(args: argparse.Namespace) -> int:
     ok = bool(payload.get("replay", {}).get("replay_ok")) if isinstance(payload.get("replay"), dict) else False
     print(json.dumps(payload, ensure_ascii=True))
     return 0 if ok else 1
+
+
+def cmd_consumer_status(args: argparse.Namespace) -> int:
+    print(json.dumps(consumer_projection(), ensure_ascii=True))
+    return 0
+
+
+def cmd_consumer_interventions(args: argparse.Namespace) -> int:
+    print(json.dumps(consumer_intervention_projection(), ensure_ascii=True))
+    return 0
+
+
+def cmd_consumer_apply_interventions(args: argparse.Namespace) -> int:
+    print(json.dumps(consumer_intervention_apply_projection(), ensure_ascii=True))
+    return 0
 
 
 def cmd_civilization_status(args: argparse.Namespace) -> int:
@@ -364,6 +403,18 @@ def cmd_build_release(args: argparse.Namespace) -> int:
 
 def cmd_validate_release(args: argparse.Namespace) -> int:
     return _run_script("scripts/validate_release_tree.sh")
+
+
+def cmd_generate_consumer_scaffold(args: argparse.Namespace) -> int:
+    payload = generate_consumer_scaffold(args.output_root, args.consumer_name)
+    print(json.dumps(payload, ensure_ascii=True))
+    return 0
+
+
+def cmd_consumer_migration_plan(args: argparse.Namespace) -> int:
+    payload = consumer_migration_plan(args.from_version, args.to_version)
+    print(json.dumps(payload, ensure_ascii=True))
+    return 0 if payload.get("available") else 1
 
 
 def main(argv: Sequence[str] | None = None) -> int:

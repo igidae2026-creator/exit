@@ -6,6 +6,9 @@ from ecosystem.ecosystem_state import ecosystem_state
 from federation.federation_state import federation_state
 from runtime.observability import (
     civilization_summary,
+    consumer_intervention_apply_status,
+    consumer_status,
+    consumer_intervention_status,
     domain_summary,
     economy_summary,
     external_artifact_status,
@@ -34,6 +37,18 @@ def status_projection() -> dict[str, Any]:
 
 def runtime_projection() -> dict[str, Any]:
     return runtime_summary()
+
+
+def consumer_projection() -> dict[str, Any]:
+    return consumer_status()
+
+
+def consumer_intervention_projection() -> dict[str, Any]:
+    return consumer_intervention_status()
+
+
+def consumer_intervention_apply_projection() -> dict[str, Any]:
+    return consumer_intervention_apply_status()
 
 
 def civilization_projection() -> dict[str, Any]:

@@ -17,6 +17,8 @@ from runtime.genesis_ceiling import (
 from runtime.lineage_ecology import assess_lineages
 from runtime.replay_state import replay_ops_state
 from runtime.runtime_safety import runtime_safety
+from runtime.consumer_reporting import consumer_operating_report
+from runtime.consumer_interventions import apply_interventions, intervention_status
 
 
 def pressure_summary() -> dict[str, Any]:
@@ -196,6 +198,7 @@ def runtime_summary() -> dict[str, Any]:
             "policy_staleness_score": float(civ.get("policy_staleness_score", 0.0)),
             "active_external_policies": int(civ.get("active_external_policies", 0)),
         },
+        "consumers": consumer_operating_report(),
     }
 
 
@@ -229,6 +232,18 @@ def stability_status() -> dict[str, Any]:
 
 def safety_status() -> dict[str, Any]:
     return runtime_safety()
+
+
+def consumer_status() -> dict[str, Any]:
+    return consumer_operating_report()
+
+
+def consumer_intervention_status() -> dict[str, Any]:
+    return intervention_status()
+
+
+def consumer_intervention_apply_status() -> dict[str, Any]:
+    return apply_interventions()
 
 
 def federation_summary() -> dict[str, Any]:
@@ -338,6 +353,8 @@ def hydration_guardrail_status() -> dict[str, Any]:
 __all__ = [
     "civilization_summary",
     "civilization_status",
+    "consumer_status",
+    "consumer_intervention_status",
     "domain_summary",
     "domain_status",
     "economy_summary",

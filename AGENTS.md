@@ -32,3 +32,6 @@ This repository is converged around four ownership streams and one integration r
 - System evolves artifacts and policies under append-only truth.
 - Production runtime must remain explicitly unbounded unless an operator supplies a bound.
 - New domains integrate through contracts and onboarding, not core edits.
+- `docs/AUTONOMY_TARGET.md` defines the unattended execution standard for operator involvement and quality preservation.
+- Preferred autonomy substrate: append-only event log, typed snapshots, job queue, and supervisor as the four core primitives, with policy layered on top.
+- Do not treat loop-plus-state-file-plus-background-execution alone as sufficient architecture for 24-hour autonomous quality claims.
