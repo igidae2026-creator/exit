@@ -525,6 +525,18 @@ def _deep_identity_fault_report(log_root: Path) -> dict:
             checkpoint.parent.mkdir(parents=True, exist_ok=True)
             checkpoint.write_text("{invalid checkpoint", encoding="utf-8")
 
+            registry_path = runtime_root / "artifact_registry.jsonl"
+            with registry_path.open("a", encoding="utf-8") as handle:
+                handle.write("{broken-registry-row}\n")
+
+            events_path = runtime_root / "events.jsonl"
+            with events_path.open("a", encoding="utf-8") as handle:
+                handle.write("{broken-event-row}\n")
+
+            metrics_path = runtime_root / "metrics.jsonl"
+            with metrics_path.open("a", encoding="utf-8") as handle:
+                handle.write("{broken-metric-row}\n")
+
             archive_path = runtime_root / "archive" / "archive.jsonl"
             with archive_path.open("a", encoding="utf-8") as handle:
                 handle.write("{not-json}\n")
@@ -536,17 +548,24 @@ def _deep_identity_fault_report(log_root: Path) -> dict:
             return {
                 "faults": {
                     "corrupted_checkpoint": True,
+                    "malformed_registry_tail": True,
+                    "malformed_event_tail": True,
+                    "malformed_metric_tail": True,
                     "malformed_archive_tail": True,
                 },
                 "replay_tick_restored": int(replayed.tick or 0),
                 "archive_rows_after_corruption": len(archive_rows),
                 "lineages_after_replay": lineages,
                 "derived_state_corruption_recovered": bool(int(replayed.tick or 0) >= 3),
+                "registry_corruption_tolerated": bool(len(lineages) >= 2),
+                "event_corruption_tolerated": bool(int(replayed.tick or 0) >= 3),
+                "metric_corruption_tolerated": bool(int(replayed.tick or 0) >= 3 and float(replayed.best_score or 0.0) >= 0.81),
                 "archive_corruption_tolerated": bool(len(archive_rows) >= 2),
                 "lineage_diversity_preserved": lineage_diversity_preserved,
                 "deep_faults_ok": bool(
                     int(replayed.tick or 0) >= 3
                     and len(archive_rows) >= 2
+                    and float(replayed.best_score or 0.0) >= 0.81
                     and lineage_diversity_preserved
                 ),
             }
