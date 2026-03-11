@@ -1,4 +1,8 @@
-# Next Operating Priority
+# Priority Queue: Highest-Value Runtime Work Next
+
+## Read This When
+
+You need to decide what runtime work is still worth doing next, without reopening settled architecture.
 
 ## Immediate Priority
 
@@ -7,7 +11,7 @@
 3. rollout profile separation for different intervention sensitivity
 4. top false-hold reasons relaxed before deeper redesign
 
-## Why
+## Why These Are Next
 
 The core architecture is already mostly locked.
 
@@ -25,7 +29,7 @@ These priorities should still be evaluated under higher MetaOS law:
 - `replayability`
 - `append-only truth`
 
-## Rule
+## Selection Rule
 
 Prefer platform operating truth over new design prose.
 
@@ -40,4 +44,6 @@ If a new document does not improve:
 it is lower priority than code or tests.
 
 Reference:
+- `docs/runtime/RUNTIME_DOCS_INDEX.md`
 - `docs/runtime/PLATFORM_LAYER_FRAMING.md`
+- `docs/runtime/HUMAN_INTERVENTION_THRESHOLD.md`

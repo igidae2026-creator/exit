@@ -1,10 +1,10 @@
-# Platform Layer Framing
+# Identity Guardrail: Platform Layer Under MetaOS Law
 
-## Purpose
+## Read This When
 
-This note prevents runtime/platform work from drifting away from the higher MetaOS identity.
+You need to decide whether current runtime or platform work is valid, and what higher law it must stay under.
 
-## Position
+## Layer Position
 
 The current work is valid platform-layer work:
 
@@ -15,9 +15,9 @@ The current work is valid platform-layer work:
 - operating reports
 - intervention rules
 
-But this is not the top identity of MetaOS.
+But this is not the top identity of MetaOS, and should never silently replace it.
 
-## Higher Constraints
+## Higher MetaOS Constraints
 
 All platform decisions should remain subordinate to:
 
@@ -26,7 +26,7 @@ All platform decisions should remain subordinate to:
 3. `replayability`
 4. `append-only truth`
 
-## Rule
+## Non-Negotiable Rule
 
 If a platform convenience conflicts with:
 
@@ -37,7 +37,7 @@ If a platform convenience conflicts with:
 
 the platform layer should bend, not the higher MetaOS law.
 
-## Working Interpretation
+## Practical Interpretation
 
 Platform work is valid only when it strengthens:
 
@@ -47,3 +47,7 @@ Platform work is valid only when it strengthens:
 - append-only observable governance
 
 It should not silently redefine MetaOS into a generic orchestration shell.
+
+Reference:
+- `docs/runtime/RUNTIME_DOCS_INDEX.md`
+- `docs/runtime/HUMAN_INTERVENTION_THRESHOLD.md`

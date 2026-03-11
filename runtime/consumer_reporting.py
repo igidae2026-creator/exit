@@ -66,10 +66,14 @@ def _verdict_records(rows: Iterable[dict[str, Any]]) -> list[dict[str, Any]]:
 def consumer_operating_report() -> Dict[str, Any]:
     rows = read_consumer_records()
     verdict_rows = _verdict_records(rows)
+    autonomous_rows = [row for row in rows if str(row.get("record_type", "")).startswith("autonomous_task_")]
     verdict_counter: Counter[str] = Counter()
     hold_reasons: Counter[str] = Counter()
     reject_reasons: Counter[str] = Counter()
     escalate_reasons: Counter[str] = Counter()
+    autonomous_counter: Counter[str] = Counter()
+    autonomous_failure_reasons: Counter[str] = Counter()
+    autonomous_accept_rates: list[float] = []
     health_rollup: dict[str, dict[str, Any]] = defaultdict(lambda: {"verdicts": Counter(), "reasons": Counter()})
 
     for row in verdict_rows:
@@ -86,6 +90,15 @@ def consumer_operating_report() -> Dict[str, Any]:
             reject_reasons[reason] += 1
         elif verdict == "escalate":
             escalate_reasons[reason] += 1
+
+    for row in autonomous_rows:
+        record_type = str(row.get("record_type") or "")
+        autonomous_counter[record_type] += 1
+        payload = dict(row.get("payload") or {})
+        if record_type == "autonomous_task_failed":
+            autonomous_failure_reasons[str(payload.get("reason") or "unknown")] += 1
+        elif record_type == "autonomous_task_executed":
+            autonomous_accept_rates.append(1.0 if bool(payload.get("accepted")) else 0.0)
 
     migration_queue = [
         row.get("payload", {})
@@ -114,7 +127,19 @@ def consumer_operating_report() -> Dict[str, Any]:
         "escalate_rate": verdict_counter.get("escalate", 0) / max(1, sum(verdict_counter.values())),
         "migration_queue": migration_queue,
         "consumer_health_rollup": health_rows,
+        "autonomous_loop_stats": {
+            "generated": autonomous_counter.get("autonomous_task_generated", 0),
+            "selected": autonomous_counter.get("autonomous_task_selected", 0),
+            "executed": autonomous_counter.get("autonomous_task_executed", 0),
+            "accepted": autonomous_counter.get("autonomous_task_accepted", 0),
+            "failed": autonomous_counter.get("autonomous_task_failed", 0),
+            "mean_accept_rate": (
+                sum(autonomous_accept_rates) / max(1, len(autonomous_accept_rates))
+            ),
+            "top_failure_reasons": autonomous_failure_reasons.most_common(5),
+        },
         "conformance_matrix": _conformance_matrix(),
+        "consumer_family_mapping": _consumer_family_mapping(),
         "default_profile_mapping": _default_profile_mapping(),
     }
 
@@ -139,4 +164,13 @@ def _default_profile_mapping() -> dict[str, str]:
     mapping: dict[str, str] = {}
     for project_type in sorted(getattr(registry, "_REGISTRY", {}).keys()):
         mapping[str(project_type)] = str(module.default_profile_for_consumer(project_type))
+    return mapping
+
+
+def _consumer_family_mapping() -> dict[str, str]:
+    module = importlib.import_module("metaos" + ".runtime.consumer_interventions")
+    registry = importlib.import_module("metaos" + ".runtime.adapter_registry")
+    mapping: dict[str, str] = {}
+    for project_type in sorted(getattr(registry, "_REGISTRY", {}).keys()):
+        mapping[str(project_type)] = str(module.consumer_family_for(project_type))
     return mapping

@@ -5,6 +5,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from pathlib import Path
 
 from metaos.adapters.analytics_dash import adapter_manifest as analytics_manifest
 from metaos.adapters.code_patch import adapter_manifest as code_patch_manifest
@@ -136,6 +137,62 @@ def _boundary_code_patch_scenarios():
         {
             "source": {"material_id": "bc-3", "quality_score": 0.92, "scope_fit_score": 0.9, "risk_score": 0.18},
             "artifact_input": {"artifact_id": "bc-3", "quality_score": 0.44, "relevance_score": 0.43, "stability_score": 0.57, "risk_score": 0.73},
+            "expected_verdict": "reject",
+        },
+    ]
+
+
+def _webnovel_manifest():
+    webnovel_root = Path("/home/meta_os/web_novel")
+    if str(webnovel_root) not in sys.path:
+        sys.path.insert(0, str(webnovel_root))
+    from engine.metaos_consumer_bridge import adapter_manifest
+
+    return adapter_manifest
+
+
+def _boundary_webnovel_scenarios():
+    return [
+        {
+            "source": {
+                "project": {"platform": "Munpia", "genre_bucket": "A"},
+                "track": {"id": "boundary_1"},
+                "material_id": "src:boundary_1",
+                "quality_score": 0.82,
+                "scope_fit_score": 0.8,
+                "risk_score": 0.18,
+            },
+            "artifact_input": {
+                "cfg": {"project": {"platform": "Munpia", "genre_bucket": "A"}},
+                "episode_result": {
+                    "episode": 11,
+                    "predicted_retention": 0.87,
+                    "quality_score": 0.84,
+                    "quality_gate": {"passed": True, "failed_checks": []},
+                    "story_state": {"world": {"instability": 2}},
+                },
+            },
+            "expected_verdict": "promote",
+        },
+        {
+            "source": {
+                "project": {"platform": "Munpia", "genre_bucket": "A"},
+                "track": {"id": "boundary_2"},
+                "material_id": "src:boundary_2",
+                "quality_score": 0.82,
+                "scope_fit_score": 0.8,
+                "risk_score": 0.18,
+            },
+            "artifact_input": {
+                "cfg": {"project": {"platform": "Munpia", "genre_bucket": "A"}},
+                "episode_result": {
+                    "episode": 12,
+                    "predicted_retention": 0.44,
+                    "quality_score": 0.39,
+                    "quality_gate": {"passed": False, "failed_checks": ["payoff_integrity"]},
+                    "story_state": {"world": {"instability": 5}},
+                },
+            },
             "expected_verdict": "reject",
         },
     ]
@@ -337,6 +394,23 @@ def test_boundary_suite_splits_profile_control_states():
             assert profiles["rollout"]["control_state"]["global"]["rollout_state"] == "open"
             assert profiles["conservative"]["control_state"]["consumers"]["code_patch"]["operating_state"] == "sandboxed"
             assert profiles["rollout"]["control_state"]["consumers"]["code_patch"]["operating_state"] == "sandboxed"
+        finally:
+            os.environ.pop("METAOS_ROOT", None)
+
+
+def test_webnovel_uses_balanced_default_profile_in_boundary_soak():
+    with tempfile.TemporaryDirectory() as tmp:
+        os.environ["METAOS_ROOT"] = tmp
+        try:
+            register_consumer("web_novel", _webnovel_manifest())
+            payload = run_consumer_soak_suite(
+                "web_novel",
+                _boundary_webnovel_scenarios(),
+                iterations=1,
+            )
+
+            assert payload["threshold_profile"] == "balanced"
+            assert payload["per_iteration"][0]["calibration"]["labeled_cases"] == 2
         finally:
             os.environ.pop("METAOS_ROOT", None)
 

@@ -16,8 +16,14 @@ from metaos.runtime.consumer_control import (
     projected_queue_state,
     projected_supervisor_state,
 )
-from metaos.runtime.consumer_interventions import apply_interventions, default_profile_for_consumer, resolve_profile
+from metaos.runtime.consumer_interventions import (
+    apply_interventions,
+    consumer_family_for,
+    default_profile_for_consumer,
+    resolve_profile,
+)
 from metaos.runtime.consumer_reporting import append_consumer_record, consumer_operating_report
+from metaos.runtime.autonomous_work_loop import run_autonomous_long_soak, run_autonomous_work_loop
 
 
 AdapterFactory = Callable[[], Dict[str, Any]]
@@ -49,6 +55,7 @@ def resolve_consumer(project_type: str) -> Dict[str, Any]:
 def consumer_matrix() -> list[dict]:
     rows = conformance_matrix()
     for row in rows:
+        row["consumer_family"] = consumer_family_for(row.get("project_type"))
         row["default_profile"] = default_profile_for_consumer(row.get("project_type"))
     return rows
 
@@ -223,4 +230,32 @@ def compare_consumer_threshold_profiles(
         suites,
         iterations=iterations,
         profiles=profiles,
+    )
+
+
+def run_consumer_autonomous_loop(
+    project_type: str,
+    *,
+    seed_tasks: list[dict[str, Any]] | None = None,
+    max_steps: int = 5,
+    threshold_profile: str | None = None,
+) -> Dict[str, Any]:
+    return run_autonomous_work_loop(
+        project_type,
+        seed_tasks=seed_tasks,
+        max_steps=max_steps,
+        threshold_profile=threshold_profile,
+    )
+
+
+def run_cross_consumer_autonomous_soak(
+    suites: Dict[str, list[dict[str, Any]] | None],
+    *,
+    iterations: int = 5,
+    max_steps: int = 5,
+) -> Dict[str, Any]:
+    return run_autonomous_long_soak(
+        suites,
+        iterations=iterations,
+        max_steps=max_steps,
     )

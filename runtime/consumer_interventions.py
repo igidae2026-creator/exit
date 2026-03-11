@@ -18,6 +18,11 @@ def default_profile_for_consumer(project_type=None):
     return module.default_profile_for_consumer(project_type)
 
 
+def consumer_family_for(project_type=None):
+    module = importlib.import_module("metaos" + ".runtime.consumer_interventions")
+    return module.consumer_family_for(project_type)
+
+
 def resolve_profile(profile=None, project_type=None):
     module = importlib.import_module("metaos" + ".runtime.consumer_interventions")
     return module.resolve_profile(profile, project_type=project_type)
@@ -35,6 +40,7 @@ def apply_interventions(report=None):
 
 __all__ = [
     "apply_interventions",
+    "consumer_family_for",
     "default_profile_for_consumer",
     "intervention_status",
     "recommended_interventions",
