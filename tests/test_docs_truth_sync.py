@@ -37,6 +37,12 @@ def test_runtime_threshold_truth_chains_into_ops_and_release_docs() -> None:
     assert "/tmp/metaos_threshold_autonomy_clean/deep_identity_fault_report.json" in ops_status
     assert "conservative ceiling-like status: `true`" in ops_status
     assert "deep replay and archive faults preserved truth: `true`" in ops_status
+    assert "derived state corruption recovered: `true`" in ops_status
+    assert "registry corruption tolerated: `true`" in ops_status
+    assert "event corruption tolerated: `true`" in ops_status
+    assert "metric corruption tolerated: `true`" in ops_status
+    assert "archive corruption tolerated: `true`" in ops_status
+    assert "lineage diversity preserved: `true`" in ops_status
     assert "OPERATIONAL_AUTONOMY_STATUS.md" in ops_doc
     assert "OPERATIONAL_AUTONOMY_STATUS.md" in release_doc
     assert "conservative convergence" in release_doc.lower()

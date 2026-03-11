@@ -55,6 +55,16 @@ if "conservative ceiling-like status: `true`" not in ops_status:
     raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing conservative ceiling-like pass")
 if "deep replay and archive faults preserved truth: `true`" not in ops_status:
     raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing deep fault pass")
+for token in (
+    "derived state corruption recovered: `true`",
+    "registry corruption tolerated: `true`",
+    "event corruption tolerated: `true`",
+    "metric corruption tolerated: `true`",
+    "archive corruption tolerated: `true`",
+    "lineage diversity preserved: `true`",
+):
+    if token not in ops_status:
+        raise SystemExit(f"docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing deep fault detail: {token}")
 if "OPERATIONAL_AUTONOMY_STATUS.md" not in ops_doc:
     raise SystemExit("docs/ops/OPERATIONS.md missing operational autonomy status reference")
 if "OPERATIONAL_AUTONOMY_STATUS.md" not in release_doc:
