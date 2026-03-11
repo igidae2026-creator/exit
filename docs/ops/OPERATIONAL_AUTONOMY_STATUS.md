@@ -28,9 +28,9 @@ You need the shortest ops/release-facing summary of the active unattended runtim
 ## Conservative Convergence
 
 - bundled loops: `runtime_stability`, `autonomous_expansion`, `identity_release_closure`
-- current bundled pass streak: `12`
+- current bundled pass streak: `15`
 - conservative target streak: `15`
-- conservative ceiling-like status: `false`
+- conservative ceiling-like status: `true`
 
 ## Fault Handling
 
