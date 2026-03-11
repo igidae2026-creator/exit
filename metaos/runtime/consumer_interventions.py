@@ -12,18 +12,24 @@ THRESHOLD_PROFILES: Dict[str, Dict[str, float]] = {
         "consumer_hold_rate": 0.4,
         "consumer_reject_rate": 0.4,
         "consumer_escalate_rate": 0.2,
+        "autonomous_mean_accept_rate_min": 0.65,
+        "autonomous_failure_rate_max": 0.45,
     },
     "conservative": {
         "global_escalate_rate": 0.15,
         "consumer_hold_rate": 0.3,
         "consumer_reject_rate": 0.3,
         "consumer_escalate_rate": 0.15,
+        "autonomous_mean_accept_rate_min": 0.72,
+        "autonomous_failure_rate_max": 0.35,
     },
     "rollout": {
         "global_escalate_rate": 0.25,
         "consumer_hold_rate": 0.45,
         "consumer_reject_rate": 0.45,
         "consumer_escalate_rate": 0.25,
+        "autonomous_mean_accept_rate_min": 0.60,
+        "autonomous_failure_rate_max": 0.50,
     },
 }
 
@@ -32,6 +38,19 @@ DEFAULT_PROFILE_BY_CONSUMER: Dict[str, str] = {
     "code_patch": "balanced",
     "analytics_dash": "balanced",
     "web_novel": "balanced",
+    "ops_runbook": "conservative",
+    "incident_postmortem": "conservative",
+    "release_notes": "balanced",
+}
+
+CONSUMER_FAMILY_BY_TYPE: Dict[str, str] = {
+    "research_note": "knowledge_dense_review",
+    "code_patch": "high_risk_execution",
+    "analytics_dash": "reporting_and_monitoring",
+    "web_novel": "creative_production",
+    "ops_runbook": "operations_and_runbooks",
+    "incident_postmortem": "governance_and_reliability",
+    "release_notes": "reporting_and_monitoring",
 }
 
 
@@ -43,6 +62,12 @@ def default_profile_for_consumer(project_type: str | None = None) -> str:
     if not project_type:
         return "balanced"
     return str(DEFAULT_PROFILE_BY_CONSUMER.get(str(project_type), "balanced"))
+
+
+def consumer_family_for(project_type: str | None = None) -> str:
+    if not project_type:
+        return "general"
+    return str(CONSUMER_FAMILY_BY_TYPE.get(str(project_type), "general"))
 
 
 def resolve_profile(profile: str | None = None, *, project_type: str | None = None) -> str:
@@ -73,6 +98,15 @@ def recommended_interventions(
             actions.append({"action": "sandbox_consumer", "project_type": project_type, "reason": "high_reject_rate", "profile": profile})
         if float(row.get("escalate_rate", 0.0) or 0.0) >= thresholds["consumer_escalate_rate"]:
             actions.append({"action": "require_human_review", "project_type": project_type, "reason": "high_escalate_rate", "profile": profile})
+    autonomous = dict(report.get("autonomous_loop_stats") or {})
+    mean_accept_rate = float(autonomous.get("mean_accept_rate", 1.0) or 0.0)
+    failed = int(autonomous.get("failed", 0) or 0)
+    executed = max(1, int(autonomous.get("executed", 0) or 0))
+    failure_rate = failed / executed
+    if mean_accept_rate < thresholds["autonomous_mean_accept_rate_min"]:
+        actions.append({"action": "inspect_consumer", "reason": "autonomous_quality_below_threshold", "profile": profile})
+    if failure_rate > thresholds["autonomous_failure_rate_max"]:
+        actions.append({"action": "pause_new_rollouts", "reason": "autonomous_failure_rate_high", "profile": profile})
     return actions
 
 

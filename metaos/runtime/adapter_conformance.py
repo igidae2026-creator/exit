@@ -30,7 +30,7 @@ def _apply_promotion_policy(artifact: Dict[str, Any]) -> Dict[str, Any]:
         return {"verdict": "escalate", "reason": "high_risk_exception", "artifact_id": artifact_id}
     if quality >= 0.85 and relevance >= 0.8 and stability >= 0.75 and risk <= 0.3:
         return {"verdict": "promote", "reason": "promotion_ready", "artifact_id": artifact_id}
-    if quality <= 0.45 or relevance <= 0.4 or risk >= 0.72:
+    if quality < 0.44 or relevance < 0.43 or risk >= 0.72:
         return {"verdict": "reject", "reason": "not_promotion_worthy", "artifact_id": artifact_id}
     return {"verdict": "hold", "reason": "borderline_candidate", "artifact_id": artifact_id}
 
@@ -70,6 +70,12 @@ def run_adapter_conformance(project_type: str, source: Dict[str, Any], artifact_
 
     artifact = manifest["artifact_from_output"](artifact_input)
     promote_decision = _apply_promotion_policy(artifact)
+    if scope_decision.get("verdict") == "hold" and promote_decision.get("verdict") == "promote":
+        promote_decision = {
+            "verdict": "hold",
+            "reason": "scope_buffer_required",
+            "artifact_id": str(artifact.get("artifact_id") or "unknown_artifact"),
+        }
     promote_ok, promote_reason = validate_policy_decision(promote_decision)
     if not promote_ok:
         return {"ok": False, "stage": "promotion_policy", "reason": promote_reason}

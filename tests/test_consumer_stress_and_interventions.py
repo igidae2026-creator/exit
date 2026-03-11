@@ -17,6 +17,7 @@ from metaos.runtime.consumer_api import (
     run_consumer_stress,
 )
 from metaos.runtime.consumer_interventions import (
+    consumer_family_for,
     default_profile_for_consumer,
     recommended_interventions,
     resolve_profile,
@@ -114,9 +115,19 @@ def test_threshold_profiles_shift_sensitivity():
 
 
 def test_consumer_default_profile_mapping_is_policy():
+    assert consumer_family_for("research_note") == "knowledge_dense_review"
+    assert consumer_family_for("code_patch") == "high_risk_execution"
+    assert consumer_family_for("analytics_dash") == "reporting_and_monitoring"
+    assert consumer_family_for("web_novel") == "creative_production"
+    assert consumer_family_for("ops_runbook") == "operations_and_runbooks"
+    assert consumer_family_for("incident_postmortem") == "governance_and_reliability"
+    assert consumer_family_for("release_notes") == "reporting_and_monitoring"
     assert default_profile_for_consumer("research_note") == "conservative"
     assert default_profile_for_consumer("code_patch") == "balanced"
     assert default_profile_for_consumer("analytics_dash") == "balanced"
+    assert default_profile_for_consumer("ops_runbook") == "conservative"
+    assert default_profile_for_consumer("incident_postmortem") == "conservative"
+    assert default_profile_for_consumer("release_notes") == "balanced"
     assert resolve_profile(None, project_type="research_note") == "conservative"
     assert resolve_profile(None, project_type="unknown_consumer") == "balanced"
 
@@ -138,3 +149,29 @@ def test_cli_consumer_interventions_returns_payload():
         assert completed.returncode == 0, completed.stderr
         payload = json.loads(completed.stdout)
         assert "recommended_actions" in payload
+
+
+def test_autonomous_loop_stats_can_trigger_interventions():
+    report = {
+        "verdict_distribution": {"promote": 2},
+        "hold_top_reasons": [],
+        "reject_top_patterns": [],
+        "escalate_rate": 0.0,
+        "migration_queue": [],
+        "consumer_health_rollup": [],
+        "conformance_matrix": [],
+        "autonomous_loop_stats": {
+            "generated": 6,
+            "selected": 6,
+            "executed": 6,
+            "accepted": 2,
+            "failed": 4,
+            "mean_accept_rate": 0.33,
+            "top_failure_reasons": [("quality_gate_failed:quality_score", 2)],
+        },
+    }
+
+    actions = recommended_interventions(report, profile="balanced")
+
+    assert any(action["action"] == "inspect_consumer" and action["reason"] == "autonomous_quality_below_threshold" for action in actions)
+    assert any(action["action"] == "pause_new_rollouts" and action["reason"] == "autonomous_failure_rate_high" for action in actions)
