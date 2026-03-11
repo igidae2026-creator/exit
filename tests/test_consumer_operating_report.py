@@ -76,6 +76,7 @@ def test_consumer_operating_report_exposes_verdicts_and_migration_queue():
             assert "promote" in report["verdict_distribution"]
             assert report["migration_queue"]
             assert report["consumer_health_rollup"]
+            assert report["default_profile_mapping"]["research_note"] == "conservative"
         finally:
             os.environ.pop("METAOS_ROOT", None)
 

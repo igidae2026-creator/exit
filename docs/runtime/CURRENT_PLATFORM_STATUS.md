@@ -17,6 +17,7 @@ It now has:
 - threshold-profiled intervention control
 - consumer-type default profile mapping
 - soak calibration summaries for labeled scenarios
+- operating report visibility for default profile mapping
 
 ## Proven Consumers
 

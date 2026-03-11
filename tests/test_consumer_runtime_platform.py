@@ -69,6 +69,10 @@ def test_two_real_consumers_share_same_contracts_and_matrix():
     assert len(rows) == 2
     assert {row["project_type"] for row in rows} == {"web_novel", "research_note"}
     assert all(row["status"] == "ready" for row in rows)
+    assert {row["project_type"]: row["default_profile"] for row in rows} == {
+        "web_novel": "balanced",
+        "research_note": "conservative",
+    }
 
     research = run_consumer_conformance(
         "research_note",

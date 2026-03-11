@@ -115,6 +115,7 @@ def consumer_operating_report() -> Dict[str, Any]:
         "migration_queue": migration_queue,
         "consumer_health_rollup": health_rows,
         "conformance_matrix": _conformance_matrix(),
+        "default_profile_mapping": _default_profile_mapping(),
     }
 
 
@@ -130,3 +131,12 @@ __all__ = [
 def _conformance_matrix() -> list[dict]:
     module = importlib.import_module("metaos" + ".runtime.adapter_registry")
     return module.conformance_matrix()
+
+
+def _default_profile_mapping() -> dict[str, str]:
+    module = importlib.import_module("metaos" + ".runtime.consumer_interventions")
+    registry = importlib.import_module("metaos" + ".runtime.adapter_registry")
+    mapping: dict[str, str] = {}
+    for project_type in sorted(getattr(registry, "_REGISTRY", {}).keys()):
+        mapping[str(project_type)] = str(module.default_profile_for_consumer(project_type))
+    return mapping

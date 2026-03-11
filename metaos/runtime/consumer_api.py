@@ -16,7 +16,7 @@ from metaos.runtime.consumer_control import (
     projected_queue_state,
     projected_supervisor_state,
 )
-from metaos.runtime.consumer_interventions import apply_interventions, resolve_profile
+from metaos.runtime.consumer_interventions import apply_interventions, default_profile_for_consumer, resolve_profile
 from metaos.runtime.consumer_reporting import append_consumer_record, consumer_operating_report
 
 
@@ -47,7 +47,10 @@ def resolve_consumer(project_type: str) -> Dict[str, Any]:
 
 
 def consumer_matrix() -> list[dict]:
-    return conformance_matrix()
+    rows = conformance_matrix()
+    for row in rows:
+        row["default_profile"] = default_profile_for_consumer(row.get("project_type"))
+    return rows
 
 
 def run_consumer_conformance(project_type: str, source: Dict[str, Any], artifact_input: Dict[str, Any]) -> Dict[str, Any]:
