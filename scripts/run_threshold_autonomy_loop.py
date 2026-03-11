@@ -95,6 +95,10 @@ def _auto_onboarding_path(log_root: Path) -> Path:
     return log_root / "auto_onboarding_report.json"
 
 
+def _repo_threshold_snapshot_path() -> Path:
+    return REPO_ROOT / "docs" / "runtime" / "THRESHOLD_OPERATING_SNAPSHOT.md"
+
+
 def _artifact_metrics(task: dict | None) -> dict[str, float]:
     task = dict(task or {})
     artifact_input = dict(task.get("artifact_input") or {})
@@ -297,6 +301,92 @@ def _persist_threshold_milestone(log_root: Path, payload: dict) -> None:
 
 def _write_json(path: Path, payload: dict | list) -> None:
     path.write_text(json.dumps(payload, ensure_ascii=True, indent=2), encoding="utf-8")
+
+
+def _write_repo_threshold_snapshot(
+    payload: dict,
+    maintenance: dict,
+    regression: dict,
+    longer_soak: dict,
+    identity_guard: dict,
+    auto_onboarding: dict,
+) -> None:
+    consumers = [f"`{consumer}`" for consumer in payload.get("consumers") or []]
+    human_lift = dict(payload.get("human_lift") or {})
+    progress = dict(payload.get("threshold_progress") or {})
+    autonomous = dict(payload.get("autonomous_loop_stats") or {})
+    horizon = dict(longer_soak.get("horizon_health") or {})
+    lines = [
+        "# Threshold Operating Snapshot",
+        "",
+        "## Read This When",
+        "",
+        "You need the shortest repo-facing summary of the active threshold loop outcome without reading `/tmp` runtime files directly.",
+        "",
+        "## Current Runtime Threshold State",
+        "",
+        "Active threshold loop status derived from the running `metaos-threshold-clean` session:",
+        "",
+        "- consumers in active loop:",
+    ]
+    lines.extend(f"  - {consumer}" for consumer in consumers)
+    lines.extend(
+        [
+            f"- threshold progress: `{float(progress.get('threshold_progress_pct', 0.0) or 0.0):.1f}%`",
+            f"- threshold reached: `{str(bool(progress.get('threshold_reached'))).lower()}`",
+            f"- autonomous accept rate: `{float(autonomous.get('mean_accept_rate', 0.0) or 0.0):.4f}`",
+            f"- autonomous failures: `{int(autonomous.get('failed', 0) or 0)}`",
+            f"- maintenance status: `{str(bool(maintenance.get('maintenance_ok'))).lower()}`",
+            f"- regression watch: `{'clean' if bool(regression.get('regression_free')) else 'alerting'}`",
+            f"- identity guard: `{str(bool(identity_guard.get('identity_guard_ok'))).lower()}`",
+            f"- auto onboarding status: `{str(bool(auto_onboarding.get('auto_onboarding_ok'))).lower()}`",
+            "",
+            "## Evidence Summary",
+            "",
+            "Current runtime evidence from the active threshold loop:",
+            "",
+            f"- steady-state cycles: `{int(progress.get('steady_state_cycles', 0) or 0)}`",
+            f"- zero-failure streak: `{int(maintenance.get('zero_failure_streak', 0) or 0)}`",
+            f"- mean human quality lift: `{float(human_lift.get('mean_quality_lift', 0.0) or 0.0):.4f}`",
+            f"- max human quality lift: `{float(human_lift.get('max_quality_lift', 0.0) or 0.0):.4f}`",
+            f"- longer isolated labeled soak: `{int(longer_soak.get('iterations', 0) or 0)}` iterations",
+            f"- isolated false hold total: `{int(horizon.get('false_hold_total', 0) or 0)}`",
+            f"- isolated false reject total: `{int(horizon.get('false_reject_total', 0) or 0)}`",
+            f"- isolated false escalate total: `{int(horizon.get('false_escalate_total', 0) or 0)}`",
+            f"- isolated false promote total: `{int(horizon.get('false_promote_total', 0) or 0)}`",
+            "",
+            "## Meaning",
+            "",
+            "The current runtime/platform layer is no longer only proving that a loop runs.",
+            "",
+            "It is currently proving:",
+            "",
+            "- unattended work generation and continuation",
+            "- quality-gated promotion flow",
+            "- stable steady/noop maintenance behavior",
+            "- replayable and append-only threshold reporting",
+            "- consumer-family expansion without reopening runtime-core design",
+            "",
+            "## Source Of Truth",
+            "",
+            "Primary live files:",
+            "",
+            "- `/tmp/metaos_threshold_autonomy_clean/latest_status.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/maintenance_status.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/regression_watch.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/long_soak_report.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/metaos_identity_guard.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/auto_onboarding_report.json`",
+            "",
+            "Reference:",
+            "",
+            "- `CURRENT_PLATFORM_STATUS.md`",
+            "- `HUMAN_INTERVENTION_THRESHOLD.md`",
+            "- `PLATFORM_LAYER_FRAMING.md`",
+            "",
+        ]
+    )
+    _repo_threshold_snapshot_path().write_text("\n".join(lines), encoding="utf-8")
 
 
 def _load_local_adapter_manifest(consumer_name: str):
@@ -763,6 +853,7 @@ def _metaos_identity_guard(log_root: Path, payload: dict) -> dict:
         "autonomy_target": Path("/home/meta_os/metaos/docs/AUTONOMY_TARGET.md").exists(),
         "human_threshold": Path("/home/meta_os/metaos/docs/runtime/HUMAN_INTERVENTION_THRESHOLD.md").exists(),
         "platform_framing": Path("/home/meta_os/metaos/docs/runtime/PLATFORM_LAYER_FRAMING.md").exists(),
+        "threshold_operating_snapshot": _repo_threshold_snapshot_path().exists(),
     }
     append_only_surfaces = {
         "threshold_loop_jsonl": threshold_loop.exists() and threshold_loop.stat().st_size > 0,
@@ -1148,6 +1239,14 @@ def main() -> int:
         _write_json(_identity_guard_path(log_root), identity_guard)
         _write_json(_fault_injection_path(log_root), fault_injection)
         _write_json(_auto_onboarding_path(log_root), auto_onboarding)
+        _write_repo_threshold_snapshot(
+            payload,
+            maintenance,
+            regression,
+            longer_soak,
+            identity_guard,
+            auto_onboarding,
+        )
         if max_cycles > 0 and cycle >= max_cycles:
             return 0
         time.sleep(sleep_seconds)

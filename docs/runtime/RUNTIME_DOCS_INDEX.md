@@ -7,12 +7,14 @@ Use this read order when deciding what MetaOS runtime work means and what should
 - `PLATFORM_LAYER_FRAMING.md`
 - `HUMAN_INTERVENTION_THRESHOLD.md`
 - `CURRENT_PLATFORM_STATUS.md`
+- `THRESHOLD_OPERATING_SNAPSHOT.md`
 
 Read these first when the question is:
 
 - what layer are we working in
 - what is the real success threshold
 - what should not drift
+- what the active threshold loop is currently proving
 
 ## 2. Runtime Core And Consumer Contracts
 

@@ -23,6 +23,9 @@ It now has:
 - consumer-type default profile mapping
 - soak calibration summaries for labeled scenarios
 - operating report visibility for default profile mapping
+- autonomous work generation, repair, and next-task progression
+- threshold maintenance, regression watch, fault injection, and longer-soak reporting
+- auto-onboarding loop coverage for new consumer families
 
 ## Proven Consumers
 
@@ -30,6 +33,11 @@ The shared core is currently proven against:
 
 - `web_novel`
 - `research_note`
+- `analytics_dash`
+- `code_patch`
+- `ops_runbook`
+- `incident_postmortem`
+- `release_notes`
 
 These consumers pass the same contract and conformance path without changing the shared runtime contracts.
 
@@ -60,13 +68,23 @@ The runtime only counts as truly successful when:
 - outputs are filtered by quality and policy gates
 - human intervention adds little or no further quality lift
 
+Current threshold status:
+
+- threshold reached under the active threshold loop
+- maintenance status green
+- regression watch clean
+- long soak clean under 24 isolated labeled iterations
+- identity guard green for constitution, invariants, replayable snapshots, and append-only surfaces
+
 ## Highest-Value Remaining Work
 
-- longer cross-consumer soak for threshold calibration
-- false hold / false reject / false escalate tracking under labeled soak cases
-- rollout profile tuning for different operating sensitivity modes
+- keep repo-facing threshold snapshot synced with the active threshold loop
+- extend repo-facing reporting beyond snapshot status into broader release and ops truth surfaces
+- continue consumer family expansion only when conformance, soak, and identity guard stay green
+- extend fault injection beyond consumer-runtime policy faults into deeper replay and lineage fault families
 
 Reference:
 - `docs/runtime/RUNTIME_DOCS_INDEX.md`
 - `docs/runtime/PLATFORM_LAYER_FRAMING.md`
 - `docs/runtime/HUMAN_INTERVENTION_THRESHOLD.md`
+- `docs/runtime/THRESHOLD_OPERATING_SNAPSHOT.md`
