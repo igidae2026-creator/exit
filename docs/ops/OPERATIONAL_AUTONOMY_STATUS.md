@@ -37,6 +37,12 @@ You need the shortest ops/release-facing summary of the active unattended runtim
 - `missing_adapter` -> `hold`
 - `migration_pending` -> `hold`
 - `sandboxable_low_quality` -> `reject`
+- derived state corruption recovered: `true`
+- registry corruption tolerated: `true`
+- event corruption tolerated: `true`
+- metric corruption tolerated: `true`
+- archive corruption tolerated: `true`
+- lineage diversity preserved: `true`
 - append-only truth preserved: `true`
 - lineage and replayability preserved: `true`
 - deep replay and archive faults preserved truth: `true`

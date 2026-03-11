@@ -421,6 +421,14 @@ def _write_repo_operational_status(
     human_lift = dict(payload.get("human_lift") or {})
     horizon = dict(longer_soak.get("horizon_health") or {})
     fault_rows = list(fault_injection.get("faults") or [])
+    deep_fault_rows = [
+        ("derived state corruption recovered", bool(deep_faults.get("derived_state_corruption_recovered"))),
+        ("registry corruption tolerated", bool(deep_faults.get("registry_corruption_tolerated"))),
+        ("event corruption tolerated", bool(deep_faults.get("event_corruption_tolerated"))),
+        ("metric corruption tolerated", bool(deep_faults.get("metric_corruption_tolerated"))),
+        ("archive corruption tolerated", bool(deep_faults.get("archive_corruption_tolerated"))),
+        ("lineage diversity preserved", bool(deep_faults.get("lineage_diversity_preserved"))),
+    ]
     lines = [
         "# Operational Autonomy Status",
         "",
@@ -464,12 +472,16 @@ def _write_repo_operational_status(
         for row in fault_rows
     )
     lines.extend(
+        f"- {label}: `{str(value).lower()}`"
+        for label, value in deep_fault_rows
+    )
+    lines.extend(
         [
             f"- append-only truth preserved: `{str(bool(fault_injection.get('append_only_truth_preserved'))).lower()}`",
             f"- lineage and replayability preserved: `{str(bool(fault_injection.get('lineage_replayability_preserved'))).lower()}`",
             f"- deep replay and archive faults preserved truth: `{str(bool(deep_faults.get('deep_faults_ok'))).lower()}`",
-            "",
-            "## Operating Interpretation",
+        "",
+        "## Operating Interpretation",
             "",
             "- release and operations surfaces may treat the current runtime as threshold-reached only while the above gates stay green",
             "- runtime convenience remains subordinate to exploration, lineage, replayability, and append-only truth",
