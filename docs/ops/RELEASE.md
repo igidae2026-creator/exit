@@ -50,3 +50,5 @@ Long-horizon release gates:
 - domain lifecycle must report active, inactive, and retired sets explicitly
 - guardrail interventions must remain bounded and replay-derived
 - active unattended threshold evidence must stay synchronized with `docs/ops/OPERATIONAL_AUTONOMY_STATUS.md`
+- conservative convergence should remain at or above the configured ceiling-like target before release promotion
+- deep replay/archive fault evidence should remain green before release promotion

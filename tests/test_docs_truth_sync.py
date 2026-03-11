@@ -34,5 +34,10 @@ def test_runtime_threshold_truth_chains_into_ops_and_release_docs() -> None:
     assert "THRESHOLD_OPERATING_SNAPSHOT.md" in runtime_status
     assert "/tmp/metaos_threshold_autonomy_clean/latest_status.json" in runtime_snapshot
     assert "docs/runtime/THRESHOLD_OPERATING_SNAPSHOT.md" in ops_status
+    assert "/tmp/metaos_threshold_autonomy_clean/deep_identity_fault_report.json" in ops_status
+    assert "conservative ceiling-like status: `true`" in ops_status
+    assert "deep replay and archive faults preserved truth: `true`" in ops_status
     assert "OPERATIONAL_AUTONOMY_STATUS.md" in ops_doc
     assert "OPERATIONAL_AUTONOMY_STATUS.md" in release_doc
+    assert "conservative convergence" in release_doc.lower()
+    assert "deep replay/archive fault evidence" in release_doc

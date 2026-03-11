@@ -49,10 +49,20 @@ if "/tmp/metaos_threshold_autonomy_clean/latest_status.json" not in runtime_snap
     raise SystemExit("docs/runtime/THRESHOLD_OPERATING_SNAPSHOT.md missing live threshold source reference")
 if "docs/runtime/THRESHOLD_OPERATING_SNAPSHOT.md" not in ops_status:
     raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing runtime snapshot reference")
+if "/tmp/metaos_threshold_autonomy_clean/deep_identity_fault_report.json" not in ops_status:
+    raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing deep fault source reference")
+if "conservative ceiling-like status: `true`" not in ops_status:
+    raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing conservative ceiling-like pass")
+if "deep replay and archive faults preserved truth: `true`" not in ops_status:
+    raise SystemExit("docs/ops/OPERATIONAL_AUTONOMY_STATUS.md missing deep fault pass")
 if "OPERATIONAL_AUTONOMY_STATUS.md" not in ops_doc:
     raise SystemExit("docs/ops/OPERATIONS.md missing operational autonomy status reference")
 if "OPERATIONAL_AUTONOMY_STATUS.md" not in release_doc:
     raise SystemExit("docs/ops/RELEASE.md missing operational autonomy status reference")
+if "conservative convergence" not in release_doc.lower():
+    raise SystemExit("docs/ops/RELEASE.md missing conservative convergence release gate")
+if "deep replay/archive fault evidence" not in release_doc:
+    raise SystemExit("docs/ops/RELEASE.md missing deep replay/archive fault gate")
 PY
 
 grep -q "Deprecated Files" docs/architecture/DEPRECATED_FILES.md
