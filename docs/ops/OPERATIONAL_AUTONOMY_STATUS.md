@@ -39,6 +39,7 @@ You need the shortest ops/release-facing summary of the active unattended runtim
 - `sandboxable_low_quality` -> `reject`
 - append-only truth preserved: `true`
 - lineage and replayability preserved: `true`
+- deep replay and archive faults preserved truth: `true`
 
 ## Operating Interpretation
 
@@ -54,4 +55,5 @@ You need the shortest ops/release-facing summary of the active unattended runtim
 - `/tmp/metaos_threshold_autonomy_clean/regression_watch.json`
 - `/tmp/metaos_threshold_autonomy_clean/long_soak_report.json`
 - `/tmp/metaos_threshold_autonomy_clean/fault_injection_report.json`
+- `/tmp/metaos_threshold_autonomy_clean/deep_identity_fault_report.json`
 - `/tmp/metaos_threshold_autonomy_clean/metaos_identity_guard.json`

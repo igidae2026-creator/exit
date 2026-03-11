@@ -27,6 +27,10 @@ from metaos.runtime.consumer_api import (
     run_consumer_stress,
 )
 from metaos.runtime.consumer_reporting import clear_consumer_records, consumer_ledger_path, read_consumer_records
+from artifact.archive import append_archive, load_archive
+from artifact.registry import register_envelope
+from genesis.event_log import append_event, append_metric
+from runtime.replay_state import replay_state
 from validation.constitution import validate_constitution
 from validation.genesis_invariants import validate_genesis_invariants
 
@@ -93,6 +97,10 @@ def _fault_injection_path(log_root: Path) -> Path:
 
 def _auto_onboarding_path(log_root: Path) -> Path:
     return log_root / "auto_onboarding_report.json"
+
+
+def _deep_fault_report_path(log_root: Path) -> Path:
+    return log_root / "deep_identity_fault_report.json"
 
 
 def _ceiling_convergence_path(log_root: Path) -> Path:
@@ -404,6 +412,7 @@ def _write_repo_operational_status(
     longer_soak: dict,
     identity_guard: dict,
     fault_injection: dict,
+    deep_faults: dict,
     auto_onboarding: dict,
     convergence: dict,
 ) -> None:
@@ -458,6 +467,7 @@ def _write_repo_operational_status(
         [
             f"- append-only truth preserved: `{str(bool(fault_injection.get('append_only_truth_preserved'))).lower()}`",
             f"- lineage and replayability preserved: `{str(bool(fault_injection.get('lineage_replayability_preserved'))).lower()}`",
+            f"- deep replay and archive faults preserved truth: `{str(bool(deep_faults.get('deep_faults_ok'))).lower()}`",
             "",
             "## Operating Interpretation",
             "",
@@ -473,11 +483,82 @@ def _write_repo_operational_status(
             "- `/tmp/metaos_threshold_autonomy_clean/regression_watch.json`",
             "- `/tmp/metaos_threshold_autonomy_clean/long_soak_report.json`",
             "- `/tmp/metaos_threshold_autonomy_clean/fault_injection_report.json`",
+            "- `/tmp/metaos_threshold_autonomy_clean/deep_identity_fault_report.json`",
             "- `/tmp/metaos_threshold_autonomy_clean/metaos_identity_guard.json`",
             "",
         ]
     )
     _repo_operational_status_path().write_text("\n".join(lines), encoding="utf-8")
+
+
+def _deep_identity_fault_report(log_root: Path) -> dict:
+    previous_root = os.environ.get("METAOS_ROOT")
+    previous_archive = os.environ.get("METAOS_ARCHIVE")
+    try:
+        with tempfile.TemporaryDirectory(prefix="metaos_threshold_deep_fault_", dir=str(log_root)) as tmp:
+            runtime_root = Path(tmp)
+            os.environ["METAOS_ROOT"] = str(runtime_root)
+            os.environ.pop("METAOS_ARCHIVE", None)
+
+            alpha = register_envelope(
+                artifact_id="alpha-root",
+                aclass="domain",
+                atype="domain_genome",
+                spec={"metadata": {"lineage_id": "alpha"}, "routing": {"selected_domain": "alpha"}},
+            )
+            beta = register_envelope(
+                artifact_id="beta-root",
+                aclass="domain",
+                atype="domain_genome",
+                spec={"metadata": {"lineage_id": "beta"}, "routing": {"selected_domain": "beta"}},
+            )
+            append_metric({"tick": 3, "score": 0.81}, data_dir=runtime_root)
+            append_event(
+                "tick_completed",
+                {"tick": 3, "best_score": 0.81, "supervisor_mode": "normal"},
+                data_dir=runtime_root,
+            )
+            append_archive("artifact", {"artifact_id": alpha, "lineage_id": "alpha"})
+            append_archive("artifact", {"artifact_id": beta, "lineage_id": "beta"})
+
+            checkpoint = runtime_root / "state" / "checkpoint.json"
+            checkpoint.parent.mkdir(parents=True, exist_ok=True)
+            checkpoint.write_text("{invalid checkpoint", encoding="utf-8")
+
+            archive_path = runtime_root / "archive" / "archive.jsonl"
+            with archive_path.open("a", encoding="utf-8") as handle:
+                handle.write("{not-json}\n")
+
+            replayed = replay_state(runtime_root)
+            archive_rows = load_archive()
+            lineages = dict(replayed.lineages)
+            lineage_diversity_preserved = bool(len(lineages) >= 2 and "alpha-root" in lineages and "beta-root" in lineages)
+            return {
+                "faults": {
+                    "corrupted_checkpoint": True,
+                    "malformed_archive_tail": True,
+                },
+                "replay_tick_restored": int(replayed.tick or 0),
+                "archive_rows_after_corruption": len(archive_rows),
+                "lineages_after_replay": lineages,
+                "derived_state_corruption_recovered": bool(int(replayed.tick or 0) >= 3),
+                "archive_corruption_tolerated": bool(len(archive_rows) >= 2),
+                "lineage_diversity_preserved": lineage_diversity_preserved,
+                "deep_faults_ok": bool(
+                    int(replayed.tick or 0) >= 3
+                    and len(archive_rows) >= 2
+                    and lineage_diversity_preserved
+                ),
+            }
+    finally:
+        if previous_root is None:
+            os.environ.pop("METAOS_ROOT", None)
+        else:
+            os.environ["METAOS_ROOT"] = previous_root
+        if previous_archive is None:
+            os.environ.pop("METAOS_ARCHIVE", None)
+        else:
+            os.environ["METAOS_ARCHIVE"] = previous_archive
 
 
 def _cycle_bundle_pass(row: dict) -> bool:
@@ -508,6 +589,7 @@ def _ceiling_convergence_report(
     longer_soak: dict,
     identity_guard: dict,
     fault_injection: dict,
+    deep_faults: dict,
     auto_onboarding: dict,
 ) -> dict:
     runtime_stability = bool(
@@ -526,6 +608,7 @@ def _ceiling_convergence_report(
         identity_guard.get("identity_guard_ok")
         and fault_injection.get("append_only_truth_preserved")
         and fault_injection.get("lineage_replayability_preserved")
+        and deep_faults.get("deep_faults_ok")
         and all(bool(value) for value in (identity_guard.get("docs_present") or {}).values())
     )
     bundled_pass = runtime_stability and autonomous_expansion and identity_release_closure
@@ -1387,6 +1470,7 @@ def main() -> int:
         longer_soak = _run_longer_soak(log_root)
         candidates = _consumer_family_candidates(consumers)
         fault_injection = _fault_injection_report(log_root)
+        deep_faults = _deep_identity_fault_report(log_root)
         auto_onboarding = _auto_onboarding_report(log_root)
         _write_repo_threshold_snapshot(
             payload,
@@ -1403,6 +1487,7 @@ def main() -> int:
             longer_soak,
             {"identity_guard_ok": False},
             fault_injection,
+            deep_faults,
             auto_onboarding,
             {"bundled_pass_streak": 0, "conservative_target_streak": 15, "conservative_ceiling_like": False},
         )
@@ -1415,6 +1500,7 @@ def main() -> int:
             longer_soak,
             identity_guard,
             fault_injection,
+            deep_faults,
             auto_onboarding,
         )
         _write_json(_maintenance_status_path(log_root), maintenance)
@@ -1424,6 +1510,7 @@ def main() -> int:
         _write_json(_consumer_family_candidates_path(log_root), candidates)
         _write_json(_identity_guard_path(log_root), identity_guard)
         _write_json(_fault_injection_path(log_root), fault_injection)
+        _write_json(_deep_fault_report_path(log_root), deep_faults)
         _write_json(_auto_onboarding_path(log_root), auto_onboarding)
         _write_json(_ceiling_convergence_path(log_root), convergence)
         _write_repo_threshold_snapshot(
@@ -1441,6 +1528,7 @@ def main() -> int:
             longer_soak,
             identity_guard,
             fault_injection,
+            deep_faults,
             auto_onboarding,
             convergence,
         )
